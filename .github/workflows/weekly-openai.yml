@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '0 4 * * 1'  # Monday 04:00 UTC
   workflow_dispatch:
+permissions:
+  contents: read
 
 jobs:
   openai-smoke:
