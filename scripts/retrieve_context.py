@@ -115,7 +115,7 @@ def _cli() -> None:
     parser = argparse.ArgumentParser(description="Context retrieval over Memory Bank")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    cmd_rebuild = sub.add_parser("rebuild", help="Rebuild vector index from scratch")
+    # cmd_rebuild = sub.add_parser("rebuild", help="Rebuild vector index from scratch")
 
     cmd_add = sub.add_parser("add", help="Add a new chunk to the index (stdin)")
     cmd_add.add_argument("--source", default="activeContext", help="Source label for chunk")
