@@ -1,11 +1,3 @@
-import argparse
-import os
-import sys
-from datetime import datetime
-from pathlib import Path
-from typing import List
-from retrieve_context import add_chunk
-
 """summarize_chat.py
 
 Generates an abstractive summary of the most recent conversation turns and writes the
@@ -28,12 +20,21 @@ Usage examples:
     cat logs/current_chat.txt | python scripts/summarize_chat.py --stdin
 """
 
+import argparse
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import List
+from retrieve_context import add_chunk
+
+
 MEMORY_BANK_PATH = Path("memory-bank/activeContext.md")
 
 try:
     import openai  # type: ignore
 except ImportError:
-    openai = None  # Will trigger fallback summarizer later
+    openai = None  # type: ignore[assignment]  # Will trigger fallback summarizer later
 
 
 # ---------------------------- Helper functions ----------------------------- #
@@ -65,7 +66,7 @@ def call_openai_summarize(chat_lines: List[str], model: str = "gpt-3.5-turbo") -
     prompt_user = "\n".join(chat_lines)
 
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.ChatCompletion.create(  # type: ignore[attr-defined]
             model=model,
             messages=[
                 {"role": "system", "content": prompt_system},

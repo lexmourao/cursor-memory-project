@@ -3,6 +3,7 @@ import os
 import pickle
 from pathlib import Path
 from typing import List, Tuple
+import sys
 
 import numpy as np
 
@@ -14,7 +15,7 @@ except ImportError as e:
 try:
     import openai  # type: ignore
 except ImportError:
-    openai = None
+    openai = None  # type: ignore[assignment]
 
 MEMORY_BANK_DIR = Path("memory-bank")
 INDEX_FILE = MEMORY_BANK_DIR / "embeddings.faiss"
@@ -27,7 +28,7 @@ def get_openai_embedding(text: str) -> np.ndarray:
     if openai is None or os.getenv("OPENAI_API_KEY") is None:
         # fallback zero vector
         return np.zeros(EMBED_DIM, dtype="float32")
-    response = openai.Embedding.create(input=[text], model=EMBED_MODEL)
+    response = openai.Embedding.create(input=[text], model=EMBED_MODEL)  # type: ignore[attr-defined]
     vec = np.array(response["data"][0]["embedding"], dtype="float32")
     return vec
 
@@ -129,14 +130,14 @@ def _cli() -> None:
     if args.cmd == "rebuild":
         rebuild_index()
     elif args.cmd == "add":
-        chunk_text = os.sys.stdin.read().strip()
+        chunk_text = sys.stdin.read().strip()
         if not chunk_text:
             print("Provide chunk text via stdin.")
             return
         add_chunk(chunk_text, source=args.source)
         print("[retrieve_context] Chunk added to index.")
     elif args.cmd == "query":
-        qtext = args.text or os.sys.stdin.read().strip()
+        qtext = args.text or sys.stdin.read().strip()
         if not qtext:
             print("Provide query text via --text or stdin.")
             return
