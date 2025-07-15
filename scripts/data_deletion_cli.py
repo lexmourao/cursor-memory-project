@@ -2,10 +2,6 @@ import argparse
 import re
 from pathlib import Path
 import subprocess
-import shutil
-import tarfile
-from datetime import datetime
-import os
 
 MEMORY_DIR = Path("memory-bank")
 BACKUP_DIR = Path("backups")

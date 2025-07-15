@@ -32,7 +32,6 @@ def run_benchmark(chunk_count: int, output_file: Path):
     rebuild_sec = time.perf_counter() - start
 
     # Measure single query
-    import requests, subprocess as sp
 
     q_start = time.perf_counter()
     subprocess.check_call(["python", "scripts/retrieve_context.py", "query", "--text", "test"], cwd=PROJECT_ROOT, stdout=subprocess.DEVNULL)

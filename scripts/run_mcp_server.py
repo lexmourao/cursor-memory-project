@@ -5,7 +5,6 @@ from typing import List, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from threading import Thread
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST

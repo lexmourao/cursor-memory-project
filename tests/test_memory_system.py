@@ -1,7 +1,6 @@
 import importlib
 from pathlib import Path
 
-import pytest
 
 # Import modules dynamically to avoid circular CLI execution
 summarize_chat = importlib.import_module("scripts.summarize_chat")

@@ -1,4 +1,5 @@
-import subprocess, tarfile, time
+import subprocess
+import tarfile
 from pathlib import Path
 
 def test_backup_creation(tmp_path, monkeypatch):
