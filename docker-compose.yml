@@ -1,0 +1,51 @@
+version: "3.9"
+services:
+  memory:
+    build: .
+    ports:
+      - "7331:7331"
+    volumes:
+      - ./memory-bank:/app/memory-bank
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+      GPG_KEY_ID_FILE: /run/secrets/gpg_key_id
+    secrets:
+      - openai_api_key
+      - gpg_key_id
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - memory
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/htpasswd:/etc/nginx/htpasswd:ro
+    ports:
+      - "443:443"
+    restart: unless-stopped 
+
+secrets:
+  openai_api_key:
+    file: ./secrets/openai_api_key
+  gpg_key_id:
+    file: ./secrets/gpg_key_id 
+
+   prometheus:
+     image: prom/prometheus
+     volumes:
+       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+     ports:
+       - "9090:9090"
+   grafana:
+     image: grafana/grafana-oss
+     ports:
+       - "3000:3000"
+     depends_on:
+       - prometheus 

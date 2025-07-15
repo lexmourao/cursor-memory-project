@@ -1,0 +1,36 @@
+name: nightly-integration
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 01:00 UTC daily
+  workflow_dispatch:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run full test suite
+        run: pytest -q
+      - name: Run backup
+        run: scripts/backup_data.sh
+      - name: Validate restore
+        run: scripts/restore_validate.sh
+      - name: Slack alert on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "❌ Nightly integration tests failed in cursor-memory-project. <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

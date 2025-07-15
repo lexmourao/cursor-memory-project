@@ -1,0 +1,19 @@
+name: security-scan
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bandit
+        run: pip install bandit
+      - name: Run bandit
+        run: bandit -q -ll -r scripts tests
+      - name: TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          scan: . 

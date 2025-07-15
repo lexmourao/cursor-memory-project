@@ -1,0 +1,20 @@
+name: nightly-backup
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create archive
+        run: |
+          tar -czf backup.tar.gz memory-bank logs status
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-memory-backup
+          path: backup.tar.gz
+          retention-days: 7 

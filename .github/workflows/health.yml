@@ -1,0 +1,16 @@
+name: health-check
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          pip install requests fastapi uvicorn
+      - name: Run health check
+        run: python scripts/health_check.py 
