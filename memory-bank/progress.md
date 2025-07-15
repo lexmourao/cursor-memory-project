@@ -20,3 +20,5 @@
 2. …
 
 <!-- Last updated: YYYY-MM-DD --> 
+
+- [2024-06-09] Diagnosed ruff CI error ('unrecognized subcommand "."'), documented the cause, and established a rule to always check ruff command syntax for the installed version. Action: update CI to use `ruff check .`. 
