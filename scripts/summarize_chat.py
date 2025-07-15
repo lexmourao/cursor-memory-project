@@ -3,7 +3,8 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List
+from retrieve_context import add_chunk
 
 """summarize_chat.py
 
@@ -34,7 +35,6 @@ try:
 except ImportError:
     openai = None  # Will trigger fallback summarizer later
 
-from retrieve_context import add_chunk  # new import
 
 # ---------------------------- Helper functions ----------------------------- #
 
