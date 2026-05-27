@@ -50,6 +50,18 @@ The system is organized around five core ideas:
 5. **Quality and automation practices**  
    CI, linting, type checking, smoke tests, dependency/security checks, and CodeQL help keep the public workflow maintainable.
 
+## Memory-Bank Template Mode
+
+The `memory-bank/` directory is initialized as a starter template. In a new project, these files begin mostly empty by design and are populated only after real discovery, implementation, decisions, errors, and milestones occur.
+
+This prevents fake or outdated context from contaminating future Cursor, ChatGPT, Codex, or AI-assisted development work.
+
+See:
+
+```text
+memory-bank/README.md
+```
+
 ## Quickstart — Full Memory System
 
 These steps get the summarization, retrieval, and MCP server working locally. Cursor can automatically load memory via `.cursor-rules.md`.
@@ -63,7 +75,7 @@ pip install -r requirements.txt
 2. Copy the environment template and optionally add your OpenAI key:
 
 ```bash
-cp .env.example .env
+cp env.template .env
 ```
 
 If `OPENAI_API_KEY` is present, automated summaries and embeddings can use OpenAI.  
@@ -118,7 +130,7 @@ Some backup and end-to-end tests require environment-specific configuration such
 
 ## Environment Variables
 
-The project reads the following variables. See `.env.example` or `env.template`.
+The project reads the following variables. See `env.template`.
 
 | Variable | Purpose |
 |---|---|
@@ -141,7 +153,7 @@ or your preferred shell mechanism.
 |---|---|
 | `cursor_setup_instructions/` | Canonical setup guide and Cursor workflow instructions |
 | `docs/` | Architecture, security, deployment, and technical documentation |
-| `memory-bank/` | Persistent context, active memory, and project knowledge |
+| `memory-bank/` | Starter memory template for persistent context, active memory, and project knowledge |
 | `scripts/` | Automation, summarization, retrieval, backups, logging, and status scripts |
 | `tests/` | Unit, smoke, and validation tests |
 | `status/` | Current status, checklists, and roadmap |
