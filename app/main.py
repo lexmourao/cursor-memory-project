@@ -1,6 +1,6 @@
 """FastAPI application entry point for the Cursor Memory Project backend."""
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
@@ -8,6 +8,7 @@ from app.api.routes_health import router as health_router
 from app.api.routes_memory import router as memory_router
 from app.api.routes_retrieval import router as retrieval_router
 from app.api.routes_summarization import router as summarization_router
+from app.core.security import require_local_api_token
 
 
 app = FastAPI(
@@ -36,7 +37,7 @@ async def count_requests(request, call_next):
     return response
 
 
-@app.get("/metrics")
+@app.get("/metrics", dependencies=[Depends(require_local_api_token)])
 def metrics() -> Response:
     """Return Prometheus-compatible metrics."""
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
