@@ -1,7 +1,8 @@
 """Retrieval endpoint routes."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.core.security import require_local_api_token
 from app.models.retrieval import (
     RetrievalRequest,
     RetrievalResponse,
@@ -10,7 +11,11 @@ from app.models.retrieval import (
 from app.services.retrieval_service import RetrievalService
 
 
-router = APIRouter(prefix="/retrieval", tags=["retrieval"])
+router = APIRouter(
+    prefix="/retrieval",
+    tags=["retrieval"],
+    dependencies=[Depends(require_local_api_token)],
+)
 
 
 @router.get("/status", response_model=RetrievalStatusResponse)
