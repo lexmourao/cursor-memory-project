@@ -81,11 +81,23 @@
 - [x] Update `docs/BACKEND_DESIGN.md`.
 - [x] Update `status/roadmap.md`.
 
+### Slice 2D — Retrieval After Rebuild
+
+- [x] Add deeper retrieval behavior test after index rebuild.
+- [x] Use temporary memory-bank for retrieval rebuild test.
+- [x] Use temporary FAISS index and metadata file.
+- [x] Rebuild retrieval index inside isolated test state.
+- [x] Query retrieval API after rebuild.
+- [x] Validate returned source filename after rebuild.
+- [x] Validate returned chunk index after rebuild.
+- [x] Validate returned text content after rebuild.
+- [x] Avoid polluting real `memory-bank/`.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `status/roadmap.md`.
+
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
-- [ ] Add deeper retrieval behavior tests after index rebuild.
-- [ ] Add retrieval result source metadata value tests after index rebuild.
 - [ ] Add formal chunk metadata schema.
 - [ ] Decide whether retrieval metadata should remain pickle-based or move to JSON/SQLite.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
@@ -112,8 +124,6 @@
 - [ ] Add retrieval evaluation tests.
 - [ ] Add explicit retrieval index status endpoint or readiness check.
 - [ ] Add formal chunk metadata schema.
-- [ ] Add retrieval behavior tests after index rebuild.
-- [ ] Add retrieval result source metadata value tests after index rebuild.
 - [ ] Evaluate local embedding fallback instead of zero-vector fallback.
 - [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
 - [ ] Consider JSON or SQLite metadata instead of pickle for safer inspectability.
