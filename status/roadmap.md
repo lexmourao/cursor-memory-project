@@ -193,8 +193,21 @@
 - [x] Test backward-compatible `call_openai_summarize()` availability.
 - [x] Keep public CI green.
 
+### Slice 4 — Local Security Documentation
+
+- [x] Expand `docs/SECURITY.md`.
+- [x] Document local-first security assumptions.
+- [x] Document API exposure boundaries.
+- [x] Document local CORS assumptions.
+- [x] Document localhost vs Docker/Nginx exposure modes.
+- [x] Document authentication boundary for current local-first usage.
+- [x] Document generated-file and data-handling expectations.
+- [x] Document public CI vs secret-dependent workflow separation.
+- [x] Document future hardening items before public exposure.
+
 ## Next
 
+- [ ] Add optional local API token authentication for non-localhost usage.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
@@ -226,8 +239,8 @@
 
 ## Security & Reliability
 
-- [ ] Document local CORS assumptions.
-- [ ] Document localhost vs Docker/Nginx exposure modes.
+- [x] Document local CORS assumptions.
+- [x] Document localhost vs Docker/Nginx exposure modes.
 - [ ] Add optional local API token authentication for non-localhost usage.
 - [ ] Add configurable CORS settings for local vs Docker/Nginx modes.
 - [ ] Improve encrypted backup restore workflow.
