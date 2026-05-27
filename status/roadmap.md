@@ -95,10 +95,20 @@
 - [x] Update `docs/BACKEND_DESIGN.md`.
 - [x] Update `status/roadmap.md`.
 
+### Slice 2E — Formal Chunk Metadata Schema
+
+- [x] Add `app/models/chunk.py`.
+- [x] Add `ChunkMetadata`.
+- [x] Add `RetrievedChunk`.
+- [x] Update `RetrievalResult` to inherit from `RetrievedChunk`.
+- [x] Preserve existing retrieval API response shape.
+- [x] Keep retrieval API tests green.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `status/roadmap.md`.
+
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
-- [ ] Add formal chunk metadata schema.
 - [ ] Decide whether retrieval metadata should remain pickle-based or move to JSON/SQLite.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
@@ -123,7 +133,6 @@
 
 - [ ] Add retrieval evaluation tests.
 - [ ] Add explicit retrieval index status endpoint or readiness check.
-- [ ] Add formal chunk metadata schema.
 - [ ] Evaluate local embedding fallback instead of zero-vector fallback.
 - [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
 - [ ] Consider JSON or SQLite metadata instead of pickle for safer inspectability.
