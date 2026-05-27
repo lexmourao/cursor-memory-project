@@ -1,6 +1,6 @@
 # Demo Workflow – Cursor Memory Project
 
-> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, summarization, MCP-oriented context delivery, local-first backend structure, and CI/QA practices.
+> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, summarization, MCP-oriented context delivery, local-first backend structure, optional local API token protection, and CI/QA practices.
 
 ---
 
@@ -18,6 +18,7 @@ It shows:
 - retrieval status/readiness reporting for local index and metadata state
 - JSON metadata export for retrieval inspection
 - summarization API workflows for active context updates
+- optional local API token protection for sensitive local routes
 - MCP server structure for exposing memory to Cursor
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - fallback behavior when external API keys are unavailable
@@ -25,7 +26,7 @@ It shows:
 - GitHub code scanning / CodeQL security analysis through repository security configuration
 - documentation-first engineering practices
 - separation between public smoke tests and environment-specific integration workflows
-- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, and retrieval metadata
+- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, retrieval metadata, CLI compatibility, and local token security
 
 This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable setup method before a real project begins.
 
@@ -36,7 +37,7 @@ This demo is not intended to prove a complete production SaaS product. It is int
 A reviewer can inspect the repository in this order:
 
 1. `README.md`  
-   Public overview, system purpose, memory-bank template mode, scope, CI strategy, implemented backend slices, and production evolution path.
+   Public overview, system purpose, memory-bank template mode, scope, CI strategy, implemented backend slices, local token security, and production evolution path.
 
 2. `memory-bank/README.md`  
    Explains why memory-bank files start mostly empty and how they should be populated after real project kickoff.
@@ -45,51 +46,60 @@ A reviewer can inspect the repository in this order:
    System architecture, data flow, runtime modes, failure modes, tradeoffs, and production roadmap.
 
 4. `docs/BACKEND_DESIGN.md`  
-   Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, retrieval status, summarization API, tests, and next backend evolution steps.
+   Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, retrieval status, summarization API, optional local API token protection, tests, and next backend evolution steps.
 
 5. `docs/GENERATED_FILES.md`  
    Explains generated retrieval files, JSON metadata exports, backups, logs, secrets, caches, and version-control expectations.
 
-6. `docs/adr/0001-public-ci-vs-integration-tests.md`  
+6. `docs/SECURITY.md`  
+   Explains local-first security assumptions, API exposure boundaries, CORS assumptions, localhost vs Docker/Nginx exposure, token protection, and future hardening items.
+
+7. `docs/adr/0001-public-ci-vs-integration-tests.md`  
    Architecture Decision Record explaining public CI vs secret-dependent integration tests.
 
-7. `docs/adr/0002-retrieval-metadata-storage.md`  
+8. `docs/adr/0002-retrieval-metadata-storage.md`  
    Architecture Decision Record explaining pickle metadata compatibility, JSON export inspectability, and possible future SQLite evolution.
 
-8. `.cursor-rules.md`  
+9. `.cursor-rules.md`  
    Operational rules for how Cursor should use memory, logs, project rules, and context.
 
-9. `app/main.py`  
-   FastAPI backend entry point with health, memory, metrics, retrieval, retrieval status, and summarization routes.
+10. `app/main.py`  
+    FastAPI backend entry point with health, memory, metrics, retrieval, retrieval status, summarization routes, and metrics token dependency.
 
-10. `app/services/memory_service.py`  
+11. `app/core/config.py`  
+    Local-first runtime settings, including optional token settings.
+
+12. `app/core/security.py`  
+    Reusable optional local API token validation helper.
+
+13. `app/services/memory_service.py`  
     Reusable service layer for loading allowed memory-bank files.
 
-11. `app/services/retrieval_service.py`  
+14. `app/services/retrieval_service.py`  
     Reusable retrieval service that exposes metadata-aware retrieval results and retrieval readiness through typed backend responses.
 
-12. `app/services/summarization_service.py`  
+15. `app/services/summarization_service.py`  
     Reusable summarization service for manual mode, fallback mode, active context writing, and optional embedding.
 
-13. `app/api/routes_retrieval.py`  
+16. `app/api/routes_retrieval.py`  
     FastAPI routes for `GET /retrieval/status` and `POST /retrieval/query`.
 
-14. `app/api/routes_summarization.py`  
+17. `app/api/routes_summarization.py`  
     FastAPI route for `POST /summarization/summarize`.
 
-15. `scripts/retrieve_context.py`  
+18. `scripts/retrieve_context.py`  
     CLI retrieval workflow for building and querying the memory index, including metadata-aware retrieval and JSON metadata export.
 
-16. `scripts/summarize_chat.py`  
-    Existing CLI summarization workflow for converting recent session logs into active project context. This workflow is preserved.
+19. `scripts/summarize_chat.py`  
+    Existing CLI summarization workflow for converting recent session logs into active project context. This workflow is preserved and covered by CLI compatibility tests.
 
-17. `.github/workflows/ci.yml`  
+20. `.github/workflows/ci.yml`  
     Public CI workflow.
 
-18. `tests/test_api_health.py`, `tests/test_api_memory.py`, `tests/test_api_retrieval.py`, and `tests/test_api_summarization.py`  
-    FastAPI TestClient tests for the implemented backend slices, retrieval metadata fields, retrieval status, and summarization behavior.
+21. `tests/test_api_health.py`, `tests/test_api_memory.py`, `tests/test_api_retrieval.py`, `tests/test_api_summarization.py`, `tests/test_api_security.py`, and `tests/test_cli_summarize_chat.py`  
+    FastAPI TestClient and CLI tests for the implemented backend slices, retrieval metadata fields, retrieval status, summarization behavior, token security, metrics protection, and CLI compatibility.
 
-19. `status/roadmap.md`  
+22. `status/roadmap.md`  
     Roadmap for evolving the project toward a stronger local-first backend/service layer.
 
 ---
@@ -111,6 +121,15 @@ cp env.template .env
 If `OPENAI_API_KEY` is available, automated summarization and embeddings can use OpenAI-backed workflows.
 
 If no API key is configured, the system can still run in fallback/manual mode.
+
+Default local-first security behavior:
+
+```text
+ENABLE_LOCAL_API_TOKEN=false
+LOCAL_API_TOKEN=
+```
+
+With the default settings, protected routes remain open for local development.
 
 ---
 
@@ -150,6 +169,7 @@ app/
     routes_summarization.py
   core/
     config.py
+    security.py
   models/
     chunk.py
     health.py
@@ -174,6 +194,23 @@ POST /retrieval/query
 POST /summarization/summarize
 ```
 
+Protected when optional local API token mode is enabled:
+
+```text
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
+POST /retrieval/query
+POST /summarization/summarize
+```
+
+Intentionally public for local readiness checks:
+
+```text
+GET /health
+```
+
 It demonstrates:
 
 - FastAPI application structure
@@ -182,14 +219,19 @@ It demonstrates:
 - typed retrieval status model
 - typed summarization request/response models
 - centralized local-first configuration
+- optional local API token configuration
+- reusable security helper
 - service-layer separation
 - explicit route modules
 - metrics endpoint
+- metrics token protection
 - retrieval API
 - retrieval status API
 - summarization API
 - metadata-aware retrieval results
 - API tests
+- CLI compatibility tests
+- local token security tests
 
 ---
 
@@ -211,7 +253,7 @@ http://127.0.0.1:8000/metrics
 http://127.0.0.1:8000/retrieval/status
 ```
 
-Expected result:
+Expected result with default local-first settings:
 
 - `/health` returns service status and memory-bank availability
 - `/memory` returns allowed memory-bank markdown records
@@ -260,7 +302,119 @@ Expected result:
 
 ---
 
-### Step 4 — Generate or update active context through the CLI
+### Step 4 — Test optional local API token protection
+
+The backend is open by default for local-first development.
+
+To enable optional token protection, set the following in `.env`:
+
+```env
+ENABLE_LOCAL_API_TOKEN=true
+LOCAL_API_TOKEN=replace-with-a-local-dev-token
+```
+
+Restart the backend after changing `.env`.
+
+Protected routes then require:
+
+```text
+Authorization: Bearer <LOCAL_API_TOKEN>
+```
+
+Protected routes include:
+
+```text
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
+POST /retrieval/query
+POST /summarization/summarize
+```
+
+The health route remains public:
+
+```text
+GET /health
+```
+
+Expected behavior when token mode is enabled and the token is missing:
+
+```bash
+curl http://127.0.0.1:8000/memory
+```
+
+Expected result:
+
+```text
+401 Unauthorized
+```
+
+Expected behavior with the correct token:
+
+```bash
+curl http://127.0.0.1:8000/memory \
+  -H "Authorization: Bearer replace-with-a-local-dev-token"
+```
+
+Expected result:
+
+```text
+200 OK
+```
+
+Protected retrieval request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/retrieval/query \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer replace-with-a-local-dev-token" \
+  -d '{"query": "What is the project architecture?", "top_k": 5}'
+```
+
+Protected summarization request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/summarization/summarize \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer replace-with-a-local-dev-token" \
+  -d '{
+    "text": "Manual summary for protected route test.",
+    "model": "gpt-4o",
+    "manual": true,
+    "embed": false
+  }'
+```
+
+Protected metrics request:
+
+```bash
+curl http://127.0.0.1:8000/metrics \
+  -H "Authorization: Bearer replace-with-a-local-dev-token"
+```
+
+Public health check when token mode is enabled:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Expected result:
+
+```text
+200 OK
+```
+
+Fail-closed behavior:
+
+- If `ENABLE_LOCAL_API_TOKEN=true` but `LOCAL_API_TOKEN` is missing, protected routes return a server error instead of silently allowing access.
+- Missing or incorrect bearer tokens return `401 Unauthorized`.
+- Correct bearer tokens allow access.
+- `GET /health` remains public.
+
+---
+
+### Step 5 — Generate or update active context through the CLI
 
 Automated mode:
 
@@ -290,7 +444,7 @@ POST /summarization/summarize
 
 ---
 
-### Step 5 — Build the retrieval index
+### Step 6 — Build the retrieval index
 
 Run:
 
@@ -308,7 +462,7 @@ Expected result:
 
 ---
 
-### Step 6 — Export inspectable retrieval metadata
+### Step 7 — Export inspectable retrieval metadata
 
 Run:
 
@@ -343,7 +497,7 @@ docs/adr/0002-retrieval-metadata-storage.md
 
 ---
 
-### Step 7 — Query memory through the CLI retrieval workflow
+### Step 8 — Query memory through the CLI retrieval workflow
 
 Run:
 
@@ -373,7 +527,7 @@ text
 
 ---
 
-### Step 8 — Check retrieval readiness
+### Step 9 — Check retrieval readiness
 
 Call:
 
@@ -397,9 +551,15 @@ The `ready` field is conservative. It is true only when the FAISS index exists, 
 
 The JSON export is reported for inspection but is not required for runtime readiness.
 
+When token protection is enabled, include:
+
+```text
+Authorization: Bearer <LOCAL_API_TOKEN>
+```
+
 ---
 
-### Step 9 — Start the legacy/local memory server
+### Step 10 — Start the legacy/local memory server
 
 Run:
 
@@ -422,7 +582,7 @@ This script remains useful while the backend package evolves. Over time, it may 
 
 ---
 
-### Step 10 — Inspect operational status
+### Step 11 — Inspect operational status
 
 Review:
 
@@ -450,13 +610,15 @@ pip-audit --strict
 pytest tests/test_add_chunk.py tests/test_edge_cases.py -q
 ```
 
-Additional backend API tests exist in:
+Additional backend API and CLI tests exist in:
 
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 ```
 
 These demonstrate:
@@ -474,6 +636,20 @@ These demonstrate:
 - summarization fallback mode
 - summarization active context writing through an isolated temporary path
 - summarization disabled embedding behavior
+- CLI file input behavior
+- CLI manual stdin behavior
+- CLI empty stdin handling
+- CLI `--no-embed` behavior
+- backward-compatible `call_openai_summarize()` availability
+- optional local API token default-open behavior
+- missing token rejection
+- wrong token rejection
+- correct bearer token access
+- fail-closed token misconfiguration behavior
+- protected retrieval route behavior
+- protected summarization route behavior
+- protected metrics route behavior
+- public health route behavior
 - empty query validation
 - `top_k` validation
 - empty summarization text validation
@@ -522,6 +698,7 @@ app/api/routes_memory.py
 app/api/routes_retrieval.py
 app/api/routes_summarization.py
 app/core/config.py
+app/core/security.py
 app/models/health.py
 app/models/memory.py
 app/models/retrieval.py
@@ -531,9 +708,9 @@ app/services/retrieval_service.py
 app/services/summarization_service.py
 ```
 
-These files show the implemented backend slices: health, memory access, retrieval, retrieval status, summarization, typed models, service separation, metrics, and metadata-aware retrieval responses.
+These files show the implemented backend slices: health, memory access, retrieval, retrieval status, summarization, typed models, service separation, metrics, metadata-aware retrieval responses, and optional local token protection.
 
-### Backend API tests
+### Backend API and CLI tests
 
 Inspect:
 
@@ -542,9 +719,11 @@ tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 ```
 
-These files demonstrate FastAPI TestClient coverage for the implemented backend routes, retrieval metadata fields, retrieval status behavior, and summarization behavior.
+These files demonstrate FastAPI TestClient coverage for the implemented backend routes, retrieval metadata fields, retrieval status behavior, summarization behavior, optional token protection, metrics protection, public health behavior, and CLI compatibility.
 
 ### Retrieval workflow
 
@@ -595,6 +774,7 @@ app/models/summarization.py
 app/services/summarization_service.py
 app/api/routes_summarization.py
 tests/test_api_summarization.py
+tests/test_cli_summarize_chat.py
 ```
 
 These files demonstrate how session logs or supplied text can be transformed into rolling active context.
@@ -615,10 +795,40 @@ optional embedding
 typed response metadata
 ```
 
-The existing CLI workflow remains preserved:
+The existing CLI workflow remains preserved and covered by compatibility tests:
 
 ```text
 scripts/summarize_chat.py
+```
+
+### Local security workflow
+
+Inspect:
+
+```text
+app/core/config.py
+app/core/security.py
+tests/test_api_security.py
+docs/SECURITY.md
+```
+
+These files demonstrate optional local API token protection.
+
+The implementation protects sensitive local routes when enabled:
+
+```text
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
+POST /retrieval/query
+POST /summarization/summarize
+```
+
+and keeps this route public:
+
+```text
+GET /health
 ```
 
 ### MCP/context delivery
@@ -653,11 +863,12 @@ status/roadmap.md
 docs/DEMO_WORKFLOW.md
 docs/BACKEND_DESIGN.md
 docs/GENERATED_FILES.md
+docs/SECURITY.md
 docs/adr/0001-public-ci-vs-integration-tests.md
 docs/adr/0002-retrieval-metadata-storage.md
 ```
 
-These files show how the repository documents decisions, release assumptions, backend implementation status, generated-file expectations, and future backend evolution.
+These files show how the repository documents decisions, release assumptions, backend implementation status, generated-file expectations, security assumptions, and future backend evolution.
 
 ---
 
@@ -673,6 +884,8 @@ It demonstrates:
 - metadata-aware retrieval traceability
 - summarization workflow design
 - local automation
+- local-first security thinking
+- optional API token protection
 - CI and QA discipline
 - documentation maturity
 - production-evolution awareness
@@ -698,8 +911,9 @@ It should not be interpreted as a complete production SaaS application. Instead,
 - metadata-aware retrieval workflow
 - retrieval status/readiness endpoint
 - JSON metadata export
+- optional local API token protection
 - MCP-oriented local memory server
-- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, and summarization
+- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, and security behavior
 - public CI
 - GitHub code scanning / CodeQL through repository security configuration
 - Docker/Nginx starter configuration
@@ -719,6 +933,23 @@ POST /retrieval/query
 POST /summarization/summarize
 ```
 
+Protected when token mode is enabled:
+
+```text
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
+POST /retrieval/query
+POST /summarization/summarize
+```
+
+Public by design:
+
+```text
+GET /health
+```
+
 Implemented tests:
 
 ```text
@@ -726,6 +957,8 @@ tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 ```
 
 Implemented retrieval response fields:
@@ -760,29 +993,46 @@ wrote_active_context
 embedded
 ```
 
-### Current Backend Slice
-
-The summarization API slice has been implemented:
+Implemented local token behavior:
 
 ```text
-app/models/summarization.py
-app/services/summarization_service.py
-app/api/routes_summarization.py
-tests/test_api_summarization.py
+ENABLE_LOCAL_API_TOKEN=false by default
+Authorization: Bearer <LOCAL_API_TOKEN> required when enabled
+401 for missing or invalid token
+fail closed if enabled without LOCAL_API_TOKEN
+/health remains public
 ```
 
-The existing CLI workflow remains available:
+### Current Backend Slice
+
+The optional local API token protection slice has been implemented:
+
+```text
+app/core/config.py
+app/core/security.py
+app/api/routes_memory.py
+app/api/routes_retrieval.py
+app/api/routes_summarization.py
+app/main.py
+tests/test_api_security.py
+env.template
+```
+
+The existing CLI workflow remains available and tested:
 
 ```text
 scripts/summarize_chat.py
+tests/test_cli_summarize_chat.py
 ```
 
 ### Future Backend Evolution
 
 A stronger backend-oriented version of this workflow could add:
 
-- refactoring `scripts/summarize_chat.py` to call `SummarizationService`
-- authenticated API endpoints
+- configurable CORS settings
+- structured logging
+- request size limits
+- authenticated API endpoints beyond local token mode
 - external managed vector database
 - user/project isolation
 - background jobs for indexing and summarization
@@ -815,9 +1065,9 @@ This should be done later, after the backend documentation and implemented backe
 
 ## 10. Summary
 
-The demo shows how to structure an AI-assisted development environment that can preserve memory, retrieve context, summarize active context, support human review, maintain documentation, expose a local backend API, and keep public quality checks green.
+The demo shows how to structure an AI-assisted development environment that can preserve memory, retrieve context, summarize active context, support human review, maintain documentation, expose a local backend API, protect sensitive local routes when configured, and keep public quality checks green.
 
-The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, summarization, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, documentation, production-aware engineering decisions, and metadata-aware traceability.
+The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, summarization, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, local-first security boundaries, documentation, production-aware engineering decisions, and metadata-aware traceability.
 
 The health/memory backend slice is implemented, tested, documented, and green.
 
@@ -829,4 +1079,8 @@ The retrieval status endpoint is implemented, tested, documented, and green.
 
 The summarization API slice is implemented, tested, documented, and green.
 
-The next meaningful engineering step is deciding whether to refactor the existing CLI summarization script to call the shared backend summarization service.
+The summarization CLI compatibility slice is implemented, tested, documented, and green.
+
+The optional local API token protection slice is implemented, tested, documented, and green.
+
+The next meaningful engineering steps are updating the roadmap for optional token security, then adding configurable CORS settings and structured logging as final senior-backend hardening items.
