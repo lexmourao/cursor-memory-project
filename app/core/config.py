@@ -44,6 +44,8 @@ class Settings:
     local_api_token: str | None = None
     enable_cors: bool = False
     cors_allow_origins: tuple[str, ...] = ()
+    log_level: str = "INFO"
+    log_format: str = "plain"
 
 
 def get_settings() -> Settings:
@@ -58,4 +60,6 @@ def get_settings() -> Settings:
         local_api_token=os.getenv("LOCAL_API_TOKEN"),
         enable_cors=_env_flag("ENABLE_CORS", default=False),
         cors_allow_origins=_env_list("CORS_ALLOW_ORIGINS", default=()),
+        log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        log_format=os.getenv("LOG_FORMAT", "plain").lower(),
     )
