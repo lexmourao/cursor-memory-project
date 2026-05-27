@@ -1,13 +1,14 @@
 """Memory endpoint routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.config import get_settings
+from app.core.security import require_local_api_token
 from app.models.memory import MemoryListResponse, MemoryRecord
 from app.services.memory_service import MemoryService
 
 
-router = APIRouter(tags=["memory"])
+router = APIRouter(tags=["memory"], dependencies=[Depends(require_local_api_token)])
 
 
 @router.get("/memory", response_model=MemoryListResponse)
