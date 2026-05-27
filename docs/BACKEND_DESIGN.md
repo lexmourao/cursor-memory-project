@@ -74,6 +74,7 @@ The backend now has:
 - Prometheus-compatible metrics endpoint
 - metadata-aware retrieval responses with source file and chunk index
 - retrieval reliability coverage for missing and empty indexes
+- integration-style retrieval coverage after rebuilding a temporary index
 - API tests using FastAPI TestClient
 - green public CI for implemented backend slices
 
@@ -108,9 +109,10 @@ The implemented backend slices currently cover:
 - retrieval metadata traceability
 - missing-index reliability behavior
 - empty-index reliability behavior
+- retrieval behavior after index rebuild
 - API tests
 
-Future backend work should focus on deeper retrieval evaluation, summarization service extraction, structured logging, and local security hardening.
+Future backend work should focus on summarization service extraction, structured logging, local security hardening, and retrieval evaluation beyond smoke/integration coverage.
 
 ---
 
@@ -333,6 +335,7 @@ Purpose:
 - expose source file and chunk index for traceability
 - return an empty result list when the index is missing
 - return an empty result list when the index exists but has no vectors
+- return indexed memory after a rebuild from a temporary memory-bank
 
 Example request:
 
@@ -376,6 +379,7 @@ Reliability behavior:
 
 - missing FAISS index returns an empty `results` list instead of crashing
 - empty FAISS index returns an empty `results` list instead of crashing
+- rebuilt temporary index returns the expected indexed memory result without polluting the real `memory-bank/`
 
 ---
 
@@ -473,6 +477,7 @@ Responsibilities:
 - return typed retrieval result models
 - expose source filename and chunk index in API results
 - support missing and empty retrieval index behavior without API crashes
+- support rebuilt index retrieval behavior
 - support the backend retrieval route without breaking the CLI workflow
 
 Current implementation intentionally reuses the existing retrieval script instead of rewriting the retrieval system. This keeps the CLI workflow working while exposing retrieval through the backend API.
@@ -532,8 +537,12 @@ The retrieval API now has explicit test coverage for:
 - empty FAISS index
 - validation errors
 - metadata fields when results are returned
+- rebuilt temporary index returning expected memory content
+- rebuilt temporary index preserving expected source filename
+- rebuilt temporary index preserving expected chunk index
+- rebuilt temporary index isolation from the real `memory-bank/`
 
-The API returns empty results safely when retrieval storage is not ready.
+The API returns empty results safely when retrieval storage is not ready and returns indexed results when the index is rebuilt with valid memory-bank content.
 
 ### Summarization Service
 
@@ -610,6 +619,7 @@ Current safety behavior:
 - retrieval API uses typed request validation for query and `top_k`
 - retrieval API returns source filename and chunk index for traceability
 - retrieval API handles missing and empty index states safely
+- retrieval rebuild test uses a temporary memory-bank and temporary FAISS files to avoid polluting real starter memory
 - public CI remains secret-free
 - dependency checks remain active
 - GitHub code scanning remains enabled through the repository security configuration
@@ -658,6 +668,10 @@ Current backend tests cover:
 - `text` field type
 - missing retrieval index behavior
 - empty retrieval index behavior
+- retrieval behavior after temporary index rebuild
+- source filename after rebuild
+- chunk index after rebuild
+- retrieved text content after rebuild
 - empty query validation
 - invalid low `top_k` validation
 - invalid high `top_k` validation
@@ -666,9 +680,8 @@ Current backend tests cover:
 
 Future tests should cover:
 
-- retrieval behavior after an index rebuild
 - fallback mode without OpenAI key
-- retrieval result source metadata values after rebuild
+- additional retrieval evaluation metrics
 - summarization service behavior after backend extraction
 - configured API token behavior if enabled later
 
@@ -710,13 +723,13 @@ Step 15: retrieval service updated to return source metadata
 Step 16: retrieval API tests updated to validate metadata fields
 Step 17: missing retrieval index test added
 Step 18: empty retrieval index test added
+Step 19: retrieval-after-rebuild test added
 ```
 
 Next:
 
 ```text
-Step 19: update roadmap to reflect retrieval reliability tests
-Step 20: add deeper retrieval behavior tests after index rebuild
+Step 20: update roadmap to reflect retrieval-after-rebuild test
 Step 21: extract summarization service
 ```
 
@@ -738,6 +751,7 @@ This backend design demonstrates:
 - incremental delivery through green, auditable slices
 - traceable retrieval response design
 - defensive behavior for missing and empty retrieval indexes
+- integration-style retrieval verification after index rebuild
 
 The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, and extensible.
 
@@ -748,6 +762,8 @@ The second backend slice strengthened the AI systems/backend signal further by e
 The retrieval metadata improvement strengthens the system further by making retrieval results easier to inspect, debug, audit, and eventually display in a dashboard.
 
 The retrieval reliability tests strengthen the system by proving the API handles missing and empty local retrieval state safely.
+
+The retrieval-after-rebuild test strengthens the system by proving the API can return actual indexed memory content from an isolated temporary memory-bank without polluting the real starter memory.
 
 ---
 
@@ -791,6 +807,17 @@ The retrieval reliability tests strengthen the system by proving the API handles
 - [x] Test empty retrieval index behavior
 - [x] Confirm retrieval API returns empty results safely when local index state is not ready
 
+### Completed Retrieval After Rebuild Test
+
+- [x] Use temporary memory-bank for retrieval rebuild test
+- [x] Use temporary FAISS index and metadata file
+- [x] Rebuild retrieval index inside isolated test state
+- [x] Query retrieval API after rebuild
+- [x] Validate returned source filename
+- [x] Validate returned chunk index
+- [x] Validate returned text content
+- [x] Avoid polluting real `memory-bank/`
+
 ### Next Backend Slice: Summarization Service
 
 - [ ] Add `app/models/summarization.py`
@@ -827,6 +854,7 @@ template memory system
 → retrieval API
 → metadata-aware retrieval
 → retrieval reliability
+→ retrieval after rebuild
 → summarization API
 → optional production hardening
 ```
@@ -838,5 +866,7 @@ The second retrieval API slice is implemented, tested, documented, and green.
 The retrieval metadata improvement is implemented, tested, documented, and green.
 
 The retrieval reliability tests for missing and empty indexes are implemented, tested, documented, and green.
+
+The retrieval-after-rebuild test is implemented, tested, documented, and green.
 
 The next meaningful engineering step is to extract summarization into the backend service layer while preserving the existing CLI workflow.
