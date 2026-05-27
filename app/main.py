@@ -1,6 +1,7 @@
 """FastAPI application entry point for the Cursor Memory Project backend."""
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
@@ -8,8 +9,11 @@ from app.api.routes_health import router as health_router
 from app.api.routes_memory import router as memory_router
 from app.api.routes_retrieval import router as retrieval_router
 from app.api.routes_summarization import router as summarization_router
+from app.core.config import get_settings
 from app.core.security import require_local_api_token
 
+
+settings = get_settings()
 
 app = FastAPI(
     title="Cursor Memory Project Backend",
@@ -21,6 +25,15 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+if settings.enable_cors and settings.cors_allow_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(settings.cors_allow_origins),
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
 REQUEST_COUNT = Counter(
     "cursor_memory_backend_requests_total",
