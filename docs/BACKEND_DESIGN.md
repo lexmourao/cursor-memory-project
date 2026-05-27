@@ -1,20 +1,76 @@
 # Backend Design – Cursor Memory Project
 
-> This document describes the backend evolution path for the Cursor Memory Project as a local-first memory and retrieval service for Cursor, ChatGPT, Codex, and AI-assisted development workflows.
+> This document describes the backend architecture and evolution path for the Cursor Memory Project as a local-first memory and retrieval service for Cursor, ChatGPT, Codex, and AI-assisted development workflows.
 
 ---
 
 ## 1. Purpose
 
-The Cursor Memory Project currently provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
+The Cursor Memory Project provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
 
-The next backend evolution is to organize this functionality into a clearer FastAPI service layer with typed contracts, explicit routes, reusable services, configuration management, tests, and operational boundaries.
+The backend layer is now being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, and operational boundaries.
 
 The goal is not to turn this repository into a full production SaaS platform. The goal is to show how a local AI-assisted development memory system can evolve toward production-grade backend architecture while remaining useful as a developer tool.
 
 ---
 
-## 2. Backend Goals
+## 2. Current Backend Status
+
+The first backend slice has been implemented and tested.
+
+Implemented:
+
+```text
+app/
+  __init__.py
+  main.py
+  api/
+    __init__.py
+    routes_health.py
+    routes_memory.py
+  core/
+    __init__.py
+    config.py
+  models/
+    __init__.py
+    health.py
+    memory.py
+  services/
+    __init__.py
+    memory_service.py
+```
+
+Implemented endpoints:
+
+```text
+GET /health
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+```
+
+Implemented tests:
+
+```text
+tests/test_api_health.py
+tests/test_api_memory.py
+```
+
+The backend now has:
+
+- a FastAPI application entry point
+- typed health response model
+- typed memory response models
+- centralized local-first configuration
+- reusable memory service
+- route modules for health and memory
+- Prometheus-compatible metrics endpoint
+- API tests using FastAPI TestClient
+- green public CI for the first backend slice
+
+---
+
+## 3. Backend Goals
 
 The backend layer should provide:
 
@@ -30,9 +86,13 @@ The backend layer should provide:
 - testable business logic
 - clear separation between CLI scripts and backend services
 
+The first backend slice already covers memory access, health, metrics, typed response models, configuration, service separation, and API tests.
+
+The next backend slice should add retrieval.
+
 ---
 
-## 3. Non-Goals
+## 4. Non-Goals
 
 This backend design does not currently include:
 
@@ -50,7 +110,31 @@ These may be added later as production-evolution paths.
 
 ---
 
-## 4. Proposed Backend Structure
+## 5. Backend Structure
+
+### Current Structure
+
+```text
+app/
+  __init__.py
+  main.py
+  api/
+    __init__.py
+    routes_health.py
+    routes_memory.py
+  core/
+    __init__.py
+    config.py
+  models/
+    __init__.py
+    health.py
+    memory.py
+  services/
+    __init__.py
+    memory_service.py
+```
+
+### Planned Structure
 
 ```text
 app/
@@ -65,9 +149,9 @@ app/
     logging.py
     security.py
   models/
+    health.py
     memory.py
     retrieval.py
-    health.py
   services/
     memory_service.py
     retrieval_service.py
@@ -80,7 +164,7 @@ Existing `scripts/` should remain useful as CLI entry points. Over time, scripts
 
 ---
 
-## 5. API Surface
+## 6. API Surface
 
 ### Health
 
@@ -88,19 +172,28 @@ Existing `scripts/` should remain useful as CLI entry points. Over time, scripts
 GET /health
 ```
 
+Status:
+
+```text
+Implemented
+```
+
 Purpose:
 
 - confirm service is running
 - confirm memory-bank directory is readable
 - confirm basic runtime configuration
+- return memory record count
 
-Expected response:
+Current response shape:
 
 ```json
 {
   "status": "ok",
   "service": "cursor-memory-project",
-  "mode": "local"
+  "mode": "local",
+  "memory_bank_exists": true,
+  "memory_record_count": 7
 }
 ```
 
@@ -112,13 +205,20 @@ Expected response:
 GET /memory
 ```
 
+Status:
+
+```text
+Implemented
+```
+
 Purpose:
 
 - return available memory records
-- expose markdown memory files as structured records
+- expose allowed markdown memory files as structured records
 - support Cursor or AI-assisted tools loading project context
+- avoid exposing generated indexes, pickles, or non-memory files
 
-Expected response:
+Current response shape:
 
 ```json
 {
@@ -141,13 +241,21 @@ Expected response:
 GET /memory/{record_id}
 ```
 
+Status:
+
+```text
+Implemented
+```
+
 Purpose:
 
 - return one memory record by ID
 - support targeted context loading
+- return 404 for missing records
 
-Possible record IDs:
+Supported record IDs include:
 
+- `README`
 - `projectbrief`
 - `productContext`
 - `activeContext`
@@ -157,10 +265,36 @@ Possible record IDs:
 
 ---
 
+### Metrics
+
+```text
+GET /metrics
+```
+
+Status:
+
+```text
+Implemented
+```
+
+Purpose:
+
+- expose Prometheus-compatible metrics
+- support local monitoring
+- track request counts and service health indicators
+
+---
+
 ### Retrieval Query
 
 ```text
 POST /retrieval/query
+```
+
+Status:
+
+```text
+Planned for second backend slice
 ```
 
 Purpose:
@@ -195,41 +329,45 @@ Example response:
 
 ---
 
-### Metrics
+## 7. Typed Models
 
-```text
-GET /metrics
-```
+The backend uses typed models for API contracts.
 
-Purpose:
-
-- expose Prometheus-compatible metrics
-- support local monitoring
-- track request counts and service health indicators
-
----
-
-## 6. Typed Models
-
-The backend should use typed models for API contracts.
-
-Example model concepts:
+Implemented model concepts:
 
 ```python
+class HealthResponse(BaseModel):
+    status: str
+    service: str
+    mode: str
+    memory_bank_exists: bool
+    memory_record_count: int
+
+
 class MemoryRecord(BaseModel):
     id: str
     source: str
-    type: Literal["markdown"]
+    type: str
     content: str
 
+
+class MemoryListResponse(BaseModel):
+    records: list[MemoryRecord]
+```
+
+Planned retrieval model concepts:
+
+```python
 class RetrievalRequest(BaseModel):
     query: str
     top_k: int = Field(default=5, ge=1, le=20)
+
 
 class RetrievalResult(BaseModel):
     score: float
     source: str
     text: str
+
 
 class RetrievalResponse(BaseModel):
     query: str
@@ -240,20 +378,45 @@ Typed contracts make the API easier to test, document, and evolve.
 
 ---
 
-## 7. Service Layer
+## 8. Service Layer
 
-The backend should separate route handling from business logic.
+The backend separates route handling from business logic.
 
 ### Memory Service
+
+Status:
+
+```text
+Implemented
+```
 
 Responsibilities:
 
 - load memory-bank markdown files
 - validate allowed memory files
 - return memory records
-- prevent secrets or generated index files from being exposed as memory records
+- return one memory record by ID
+- prevent generated index files or unrelated files from being exposed as memory records
+
+Allowed memory files:
+
+```text
+README.md
+projectbrief.md
+productContext.md
+activeContext.md
+systemPatterns.md
+techContext.md
+progress.md
+```
 
 ### Retrieval Service
+
+Status:
+
+```text
+Planned for second backend slice
+```
 
 Responsibilities:
 
@@ -262,8 +425,15 @@ Responsibilities:
 - return top-K results
 - handle empty index states
 - support fallback behavior when embeddings are unavailable
+- avoid crashes when the memory index has not been built yet
 
 ### Summarization Service
+
+Status:
+
+```text
+Planned for later backend slice
+```
 
 Responsibilities:
 
@@ -274,33 +444,44 @@ Responsibilities:
 
 ---
 
-## 8. Configuration
+## 9. Configuration
 
-Configuration should be centralized.
-
-Example settings:
+Configuration is centralized in:
 
 ```text
-MEMORY_BANK_DIR=memory-bank
-EMBED_MODEL=text-embedding-3-small
-EMBED_DIM=1536
-OPENAI_API_KEY=
-HOST=127.0.0.1
-PORT=7331
-CORS_ORIGINS=http://localhost
-LOCAL_API_TOKEN=
+app/core/config.py
 ```
 
-Defaults should favor local-first security:
+Current settings:
+
+```text
+SERVICE_NAME=cursor-memory-project
+RUNTIME_MODE=local
+MEMORY_BANK_DIR=memory-bank
+HOST=127.0.0.1
+PORT=7331
+```
+
+Defaults favor local-first security:
 
 - bind to `127.0.0.1` by default
 - require explicit configuration for external exposure
 - avoid requiring private secrets in public CI
 - keep `env.template` safe to commit
 
+Future configuration may include:
+
+```text
+EMBED_MODEL=text-embedding-3-small
+EMBED_DIM=1536
+OPENAI_API_KEY=
+CORS_ORIGINS=http://localhost
+LOCAL_API_TOKEN=
+```
+
 ---
 
-## 9. Security Posture
+## 10. Security Posture
 
 The backend is local-first.
 
@@ -312,6 +493,14 @@ Default assumptions:
 - `env.template` is safe to commit
 - public CI should not require private secrets
 - Nginx is a starter reverse-proxy example, not a fully hardened production gateway
+
+Current safety behavior:
+
+- only explicitly allowed memory-bank markdown files are exposed through the memory service
+- generated FAISS and pickle files are not exposed as memory records
+- public CI remains secret-free
+- dependency checks remain active
+- GitHub code scanning remains enabled through the repository security configuration
 
 Future hardening may include:
 
@@ -325,31 +514,48 @@ Future hardening may include:
 
 ---
 
-## 10. Testing Strategy
+## 11. Testing Strategy
 
-Backend tests should cover:
-
-- `GET /health`
-- `GET /memory`
-- `GET /memory/{record_id}`
-- `POST /retrieval/query`
-- empty memory-bank behavior
-- missing retrieval index behavior
-- invalid `top_k`
-- fallback mode without OpenAI key
-- configured API token behavior if enabled later
-
-Suggested test files:
+### Implemented Tests
 
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+```
+
+Current backend tests cover:
+
+- `GET /health`
+- health response shape
+- service status
+- memory-bank existence field
+- memory record count field
+- `GET /memory`
+- memory list response shape
+- expected memory-bank README record
+- `GET /memory/{record_id}`
+- single record retrieval
+- 404 behavior for missing memory record
+
+### Planned Tests
+
+```text
 tests/test_api_retrieval.py
 ```
 
+Future retrieval tests should cover:
+
+- `POST /retrieval/query`
+- valid query returns 200
+- invalid `top_k` is rejected
+- empty index returns empty results safely
+- missing index does not crash the API
+- response shape is correct
+- fallback mode without OpenAI key
+
 ---
 
-## 11. Migration Path from Current Scripts
+## 12. Migration Path from Current Scripts
 
 Current scripts remain valuable.
 
@@ -364,9 +570,30 @@ Planned evolution:
 
 This avoids a risky rewrite and preserves the working current system.
 
+Current progress:
+
+```text
+Step 1: app package created
+Step 2: configuration layer created
+Step 3: typed health and memory models created
+Step 4: memory service created
+Step 5: health and memory routes created
+Step 6: FastAPI app entry point created
+Step 7: API tests for health and memory created
+```
+
+Next:
+
+```text
+Step 8: retrieval models
+Step 9: retrieval service
+Step 10: retrieval route
+Step 11: retrieval API tests
+```
+
 ---
 
-## 12. Senior Engineering Rationale
+## 13. Senior Engineering Rationale
 
 This backend design demonstrates:
 
@@ -378,39 +605,74 @@ This backend design demonstrates:
 - testability
 - operational awareness
 - clear public CI vs configured integration separation
-- a realistic evolution path from scripts to backend services
+- realistic evolution from scripts to backend services
+- incremental delivery through green, auditable slices
 
 The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, and extensible.
 
----
-
-## 13. Next Implementation Steps
-
-1. Create `app/` package structure.
-2. Add `app/core/config.py`.
-3. Add typed models in `app/models/`.
-4. Add `memory_service.py`.
-5. Add `retrieval_service.py`.
-6. Add route modules for health, memory, and retrieval.
-7. Add `app/main.py`.
-8. Add FastAPI API tests.
-9. Keep `scripts/run_mcp_server.py` working or convert it into a wrapper.
-10. Update README and demo workflow after the backend slice is implemented.
+The first backend slice strengthens the senior-backend signal because it moves the repository from documentation and scripts into a tested FastAPI service structure without breaking the existing workflow.
 
 ---
 
-## 14. Summary
+## 14. Next Implementation Steps
 
-The backend evolution should turn the current script-based memory system into a clearer local-first API service without overclaiming production SaaS maturity.
+### Completed First Backend Slice
 
-The correct direction is:
+- [x] Create `app/` package structure
+- [x] Add `app/core/config.py`
+- [x] Add typed health model
+- [x] Add typed memory models
+- [x] Add `memory_service.py`
+- [x] Add route module for health
+- [x] Add route module for memory
+- [x] Add `app/main.py`
+- [x] Add FastAPI health endpoint test
+- [x] Add FastAPI memory endpoint tests
+
+### Second Backend Slice: Retrieval
+
+- [ ] Add `app/models/retrieval.py`
+- [ ] Add `app/services/retrieval_service.py`
+- [ ] Add `app/api/routes_retrieval.py`
+- [ ] Register retrieval router in `app/main.py`
+- [ ] Add `tests/test_api_retrieval.py`
+- [ ] Keep existing `scripts/retrieve_context.py` working
+- [ ] Update docs after retrieval API is green
+
+### Later Backend Slices
+
+- [ ] Add summarization service layer
+- [ ] Add structured logging module
+- [ ] Add optional local API token security
+- [ ] Add configurable CORS
+- [ ] Add readiness endpoint
+- [ ] Add stronger integration tests
+- [ ] Add local backend run instructions
+- [ ] Consider converting `scripts/run_mcp_server.py` into a wrapper around `app.main`
+
+---
+
+## 15. Summary
+
+The backend evolution is turning the current script-based memory system into a clearer local-first API service without overclaiming production SaaS maturity.
+
+The current direction is:
 
 ```text
 template memory system
 → local scripts
 → typed FastAPI backend slice
 → tested service layer
+→ retrieval API
 → optional production hardening
 ```
 
-This path supports the repository’s real purpose while making the engineering implementation stronger and easier for technical reviewers to evaluate.
+The first FastAPI backend slice is now implemented, tested, and green.
+
+The next meaningful engineering step is the retrieval API slice:
+
+```text
+POST /retrieval/query
+```
+
+This will connect the backend more directly to the core value of the project: helping AI-assisted development tools retrieve relevant project memory across sessions.
