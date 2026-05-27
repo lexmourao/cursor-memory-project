@@ -2,6 +2,14 @@
 
 > Roadmap for evolving the Cursor Memory Project as a reusable Cursor/Codex/ChatGPT memory setup template and local-first AI-assisted development backend.
 
+## Current Version Scope
+
+This repository is considered complete for its current public scope: a local-first AI-assisted development backend demonstrating persistent memory, retrieval, summarization, metadata traceability, optional local API token protection, configurable CORS, structured logging, CLI compatibility, documentation, and public CI/QA discipline.
+
+The remaining roadmap items are not required for the current version to be useful or technically complete. They represent future production-evolution paths that could extend the project into a more advanced platform depending on real deployment needs.
+
+Future extensions may include retrieval evaluation tests, backup/restore hardening, MCP server consolidation, a memory/retrieval dashboard, and cloud deployment templates. These are intentionally kept as roadmap items to avoid overbuilding the current local-first demonstration.
+
 ## Current Focus
 
 - Keep the repository internally consistent as a public technical artifact.
@@ -13,6 +21,7 @@
 - Record important architecture decisions through ADRs before making risky storage, security, or infrastructure changes.
 - Keep generated runtime artifacts out of version control unless intentionally curated as safe examples.
 - Keep security and exposure controls explicit, local-first, and tested.
+- Keep future production-evolution items clearly separated from current release completeness.
 
 ## Completed Foundation
 
@@ -256,17 +265,59 @@
 - [x] Update `docs/DEMO_WORKFLOW.md`.
 - [x] Update `status/roadmap.md`.
 
-## Next
+### Slice 4D — Structured Logging
 
-- [ ] Add structured logging for backend service events.
-- [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
-- [ ] Improve backup/restore validation for encrypted archives.
-- [ ] Review MCP server defaults for local-first security.
-- [ ] Add retrieval evaluation tests.
+- [x] Add `LOG_LEVEL` setting to `app/core/config.py`.
+- [x] Add `LOG_FORMAT` setting to `app/core/config.py`.
+- [x] Add `app/core/logging.py`.
+- [x] Add `configure_logging(settings)`.
+- [x] Add `get_logger(name)`.
+- [x] Support `plain` log format.
+- [x] Support `compact` log format.
+- [x] Configure logging to stdout.
+- [x] Wire logging into `create_app(settings)`.
+- [x] Add safe startup logs for service name, runtime mode, token-protection status, and CORS status.
+- [x] Log configured CORS origin count without logging origin values.
+- [x] Avoid logging tokens, secrets, authorization headers, request bodies, memory-bank content, retrieved content, or summarized content.
+- [x] Update `env.template`.
+- [x] Update `README.md`.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `docs/DEMO_WORKFLOW.md`.
+- [x] Update `status/roadmap.md`.
+
+## Current Release Closure
+
+- [ ] Run final local QA.
+- [ ] Confirm public CI is green.
+- [ ] Freeze current version as the complete local-first backend showcase.
+- [ ] Optionally create a release tag or final release note.
+
+Recommended final QA commands:
+
+```bash
+pytest -q
+ruff check .
+mypy scripts tests
+```
+
+## Future Evolution, Not Required for Current Scope
+
+The current local-first backend showcase is complete. The items below are optional extensions for a later production-oriented version.
+
+- [ ] Retrieval evaluation tests for measuring search quality over time.
+- [ ] Backup/restore hardening for stronger operational recovery workflows.
+- [ ] MCP server wrapper around the FastAPI backend for consolidation.
+- [ ] Dashboard for inspecting memory records, summaries, retrieval chunks, and metadata.
+- [ ] Cloud deployment template for hosted or production-like environments.
+- [ ] Request size limits for stronger API safety.
+- [ ] Broader readiness endpoint if needed beyond retrieval status.
+- [ ] Configured integration CI examples that use GitHub Actions secrets.
+- [ ] Optional managed vector database integration such as Qdrant, Pinecone, or PgVector.
+- [ ] Terraform or infrastructure-as-code example if cloud deployment becomes a real target.
 
 ## Retrieval & Memory Improvements
 
-- [ ] Add retrieval evaluation tests.
+- [ ] Add retrieval evaluation tests as future production-evolution work.
 - [x] Add explicit retrieval index status endpoint or readiness check.
 - [x] Add JSON metadata export for inspectability.
 - [x] Validate JSON metadata export against current retrieval metadata shape.
@@ -310,12 +361,15 @@
 - [x] Document configurable CORS usage in README.
 - [x] Document configurable CORS usage in backend design.
 - [x] Document configurable CORS usage in demo workflow.
-- [ ] Improve encrypted backup restore workflow.
+- [x] Add structured logging for backend service events.
+- [x] Add logging settings for `LOG_LEVEL` and `LOG_FORMAT`.
+- [x] Add safe startup logging without token values, request bodies, authorization headers, secrets, or memory-bank content.
+- [x] Document structured logging usage in README.
+- [x] Document structured logging usage in backend design.
+- [x] Document structured logging usage in demo workflow.
+- [ ] Improve encrypted backup restore workflow as future production-evolution work.
 - [ ] Evaluate `age` as an alternative to current GPG-encrypted backup flow.
-- [ ] Add configured integration CI examples that use GitHub Actions secrets.
-- [ ] Add structured logging for backend service events.
-- [ ] Add readiness endpoint if broader service readiness is needed beyond retrieval status.
-- [ ] Add stronger integration tests.
+- [ ] Add stronger integration tests if deployment or production-like usage becomes a real target.
 
 ## Pending Non-Blocking Cleanup
 
@@ -327,9 +381,9 @@
 
 ## Later
 
-- [ ] Add cloud deployment template.
-- [ ] Add Terraform or infrastructure-as-code example.
-- [ ] Add multi-project memory dashboard.
+- [ ] Add cloud deployment template if hosted usage becomes a real target.
+- [ ] Add Terraform or infrastructure-as-code example if cloud deployment becomes a real target.
+- [ ] Add multi-project memory dashboard if multi-project management becomes a real requirement.
 - [ ] Add dashboard for inspecting memory records, retrieval chunks, summaries, and retrieval metadata.
 - [ ] Add observability examples for logs, traces, and retrieval quality metrics.
 - [ ] Add release packaging or tagged demo version.
