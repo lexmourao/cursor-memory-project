@@ -137,10 +137,22 @@
 - [x] Update `docs/BACKEND_DESIGN.md`.
 - [x] Update `status/roadmap.md`.
 
+### Slice 2G — Retrieval Status Endpoint
+
+- [x] Add `RetrievalStatusResponse`.
+- [x] Add retrieval service `status()`.
+- [x] Add index, metadata, and JSON export existence checks.
+- [x] Add vector, metadata, and JSON record counts.
+- [x] Add conservative readiness calculation.
+- [x] Add `GET /retrieval/status`.
+- [x] Add retrieval status API tests for missing retrieval state.
+- [x] Add retrieval status API tests for ready state after rebuild and JSON export.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `status/roadmap.md`.
+
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
-- [ ] Add explicit retrieval index status endpoint or readiness check.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
@@ -163,7 +175,7 @@
 ## Retrieval & Memory Improvements
 
 - [ ] Add retrieval evaluation tests.
-- [ ] Add explicit retrieval index status endpoint or readiness check.
+- [x] Add explicit retrieval index status endpoint or readiness check.
 - [x] Add JSON metadata export for inspectability.
 - [x] Validate JSON metadata export against current retrieval metadata shape.
 - [x] Document generated metadata files and version-control expectations.
@@ -182,7 +194,7 @@
 - [ ] Evaluate `age` as an alternative to current GPG-encrypted backup flow.
 - [ ] Add configured integration CI examples that use GitHub Actions secrets.
 - [ ] Add structured logging for backend service events.
-- [ ] Add readiness endpoint.
+- [ ] Add readiness endpoint if broader service readiness is needed beyond retrieval status.
 - [ ] Add stronger integration tests.
 
 ## Pending Non-Blocking Cleanup
