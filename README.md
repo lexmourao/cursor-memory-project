@@ -1,5 +1,7 @@
 # Cursor Memory Project 📚🤖
 
+Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, documentation, and QA structure.
+
 Welcome to the **Cursor Memory Project**.
 
 The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant (and all human collaborators) with:
