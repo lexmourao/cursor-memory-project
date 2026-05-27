@@ -116,11 +116,26 @@
 - [x] Update `docs/BACKEND_DESIGN.md`.
 - [x] Update `status/roadmap.md`.
 
+### Slice 2F — JSON Metadata Export
+
+- [x] Add `META_JSON_FILE` to `scripts/retrieve_context.py`.
+- [x] Add `_metadata_json_payload()`.
+- [x] Add `export_metadata_json()`.
+- [x] Add `export-meta-json` CLI command.
+- [x] Preserve pickle as the internal FAISS runtime metadata format.
+- [x] Add JSON metadata export test coverage.
+- [x] Validate JSON `schema_version`.
+- [x] Validate JSON source pickle path.
+- [x] Validate JSON FAISS index path.
+- [x] Validate JSON record count.
+- [x] Validate JSON exported records.
+- [x] Validate exported source filename, chunk index, and text content.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `status/roadmap.md`.
+
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
-- [ ] Add JSON metadata export option while preserving pickle as the internal FAISS runtime format.
-- [ ] Add tests for exported JSON metadata shape.
 - [ ] Document generated metadata files and version-control expectations.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
@@ -145,8 +160,8 @@
 
 - [ ] Add retrieval evaluation tests.
 - [ ] Add explicit retrieval index status endpoint or readiness check.
-- [ ] Add JSON metadata export for inspectability.
-- [ ] Validate JSON metadata export against `ChunkMetadata` / `RetrievedChunk`.
+- [x] Add JSON metadata export for inspectability.
+- [x] Validate JSON metadata export against current retrieval metadata shape.
 - [ ] Evaluate local embedding fallback instead of zero-vector fallback.
 - [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
 - [ ] Consider SQLite metadata storage only after dashboard, queryability, or multi-project requirements become real.
