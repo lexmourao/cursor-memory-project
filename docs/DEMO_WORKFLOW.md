@@ -1,6 +1,6 @@
 # Demo Workflow – Cursor Memory Project
 
-> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, summarization, MCP-oriented context delivery, local-first backend structure, optional local API token protection, and CI/QA practices.
+> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, summarization, MCP-oriented context delivery, local-first backend structure, optional local API token protection, configurable CORS, and CI/QA practices.
 
 ---
 
@@ -19,6 +19,7 @@ It shows:
 - JSON metadata export for retrieval inspection
 - summarization API workflows for active context updates
 - optional local API token protection for sensitive local routes
+- configurable CORS for trusted local dashboards or frontends
 - MCP server structure for exposing memory to Cursor
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - fallback behavior when external API keys are unavailable
@@ -26,7 +27,7 @@ It shows:
 - GitHub code scanning / CodeQL security analysis through repository security configuration
 - documentation-first engineering practices
 - separation between public smoke tests and environment-specific integration workflows
-- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, retrieval metadata, CLI compatibility, and local token security
+- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, retrieval metadata, CLI compatibility, local token security, and CORS behavior
 
 This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable setup method before a real project begins.
 
@@ -37,7 +38,7 @@ This demo is not intended to prove a complete production SaaS product. It is int
 A reviewer can inspect the repository in this order:
 
 1. `README.md`  
-   Public overview, system purpose, memory-bank template mode, scope, CI strategy, implemented backend slices, local token security, and production evolution path.
+   Public overview, system purpose, memory-bank template mode, scope, CI strategy, implemented backend slices, local token security, configurable CORS, and production evolution path.
 
 2. `memory-bank/README.md`  
    Explains why memory-bank files start mostly empty and how they should be populated after real project kickoff.
@@ -46,7 +47,7 @@ A reviewer can inspect the repository in this order:
    System architecture, data flow, runtime modes, failure modes, tradeoffs, and production roadmap.
 
 4. `docs/BACKEND_DESIGN.md`  
-   Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, retrieval status, summarization API, optional local API token protection, tests, and next backend evolution steps.
+   Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, retrieval status, summarization API, optional local API token protection, configurable CORS, tests, and next backend evolution steps.
 
 5. `docs/GENERATED_FILES.md`  
    Explains generated retrieval files, JSON metadata exports, backups, logs, secrets, caches, and version-control expectations.
@@ -64,10 +65,10 @@ A reviewer can inspect the repository in this order:
    Operational rules for how Cursor should use memory, logs, project rules, and context.
 
 10. `app/main.py`  
-    FastAPI backend entry point with health, memory, metrics, retrieval, retrieval status, summarization routes, and metrics token dependency.
+    FastAPI backend entry point with app factory configuration, health, memory, metrics, retrieval, retrieval status, summarization routes, metrics token dependency, and optional CORS middleware.
 
 11. `app/core/config.py`  
-    Local-first runtime settings, including optional token settings.
+    Local-first runtime settings, including optional token settings and configurable CORS settings.
 
 12. `app/core/security.py`  
     Reusable optional local API token validation helper.
@@ -96,8 +97,8 @@ A reviewer can inspect the repository in this order:
 20. `.github/workflows/ci.yml`  
     Public CI workflow.
 
-21. `tests/test_api_health.py`, `tests/test_api_memory.py`, `tests/test_api_retrieval.py`, `tests/test_api_summarization.py`, `tests/test_api_security.py`, and `tests/test_cli_summarize_chat.py`  
-    FastAPI TestClient and CLI tests for the implemented backend slices, retrieval metadata fields, retrieval status, summarization behavior, token security, metrics protection, and CLI compatibility.
+21. `tests/test_api_health.py`, `tests/test_api_memory.py`, `tests/test_api_retrieval.py`, `tests/test_api_summarization.py`, `tests/test_api_security.py`, `tests/test_api_cors.py`, and `tests/test_cli_summarize_chat.py`  
+    FastAPI TestClient and CLI tests for the implemented backend slices, retrieval metadata fields, retrieval status, summarization behavior, token security, metrics protection, CORS behavior, and CLI compatibility.
 
 22. `status/roadmap.md`  
     Roadmap for evolving the project toward a stronger local-first backend/service layer.
@@ -130,6 +131,15 @@ LOCAL_API_TOKEN=
 ```
 
 With the default settings, protected routes remain open for local development.
+
+Default CORS behavior:
+
+```text
+ENABLE_CORS=false
+CORS_ALLOW_ORIGINS=
+```
+
+With the default settings, cross-origin browser access is not granted.
 
 ---
 
@@ -214,12 +224,14 @@ GET /health
 It demonstrates:
 
 - FastAPI application structure
+- FastAPI app factory pattern through `create_app(settings)`
 - typed Pydantic response models
 - typed retrieval request/response models
 - typed retrieval status model
 - typed summarization request/response models
 - centralized local-first configuration
 - optional local API token configuration
+- configurable CORS settings
 - reusable security helper
 - service-layer separation
 - explicit route modules
@@ -232,6 +244,7 @@ It demonstrates:
 - API tests
 - CLI compatibility tests
 - local token security tests
+- CORS tests
 
 ---
 
@@ -260,6 +273,7 @@ Expected result with default local-first settings:
 - `/memory/README` returns the memory-bank README record
 - `/metrics` exposes Prometheus-compatible metrics
 - `/retrieval/status` reports retrieval index and metadata readiness
+- CORS headers are absent by default
 
 To test the retrieval endpoint, use an API client or curl:
 
@@ -414,7 +428,90 @@ Fail-closed behavior:
 
 ---
 
-### Step 5 — Generate or update active context through the CLI
+### Step 5 — Test configurable CORS for a trusted local frontend
+
+CORS is disabled by default.
+
+To enable CORS for a trusted local dashboard or frontend, set the following in `.env`:
+
+```env
+ENABLE_CORS=true
+CORS_ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+Restart the backend after changing `.env`.
+
+When enabled, only explicitly configured origins receive CORS headers.
+
+Allowed methods are intentionally narrow:
+
+```text
+GET
+POST
+OPTIONS
+```
+
+Allowed headers are intentionally narrow:
+
+```text
+Authorization
+Content-Type
+```
+
+Example allowed-origin request:
+
+```bash
+curl -i http://127.0.0.1:8000/health \
+  -H "Origin: http://localhost:3000"
+```
+
+Expected result:
+
+```text
+access-control-allow-origin: http://localhost:3000
+```
+
+Example disallowed-origin request:
+
+```bash
+curl -i http://127.0.0.1:8000/health \
+  -H "Origin: http://evil.example"
+```
+
+Expected result:
+
+```text
+No access-control-allow-origin header
+```
+
+Example preflight request for a protected route:
+
+```bash
+curl -i -X OPTIONS http://127.0.0.1:8000/retrieval/query \
+  -H "Origin: http://localhost:3000" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Authorization, Content-Type"
+```
+
+Expected result:
+
+```text
+200 OK
+access-control-allow-origin: http://localhost:3000
+access-control-allow-methods: GET, POST, OPTIONS
+access-control-allow-headers: Authorization, Content-Type
+```
+
+CORS notes:
+
+- CORS does not replace authentication.
+- CORS controls browser cross-origin access only.
+- Optional local API token protection should still be enabled when exposing protected routes outside trusted localhost usage.
+- Wildcard origins are intentionally avoided in the documented local-first setup.
+
+---
+
+### Step 6 — Generate or update active context through the CLI
 
 Automated mode:
 
@@ -444,7 +541,7 @@ POST /summarization/summarize
 
 ---
 
-### Step 6 — Build the retrieval index
+### Step 7 — Build the retrieval index
 
 Run:
 
@@ -462,7 +559,7 @@ Expected result:
 
 ---
 
-### Step 7 — Export inspectable retrieval metadata
+### Step 8 — Export inspectable retrieval metadata
 
 Run:
 
@@ -497,7 +594,7 @@ docs/adr/0002-retrieval-metadata-storage.md
 
 ---
 
-### Step 8 — Query memory through the CLI retrieval workflow
+### Step 9 — Query memory through the CLI retrieval workflow
 
 Run:
 
@@ -527,7 +624,7 @@ text
 
 ---
 
-### Step 9 — Check retrieval readiness
+### Step 10 — Check retrieval readiness
 
 Call:
 
@@ -557,9 +654,15 @@ When token protection is enabled, include:
 Authorization: Bearer <LOCAL_API_TOKEN>
 ```
 
+When CORS is enabled for a trusted local frontend, the origin must be included in:
+
+```text
+CORS_ALLOW_ORIGINS
+```
+
 ---
 
-### Step 10 — Start the legacy/local memory server
+### Step 11 — Start the legacy/local memory server
 
 Run:
 
@@ -582,7 +685,7 @@ This script remains useful while the backend package evolves. Over time, it may 
 
 ---
 
-### Step 11 — Inspect operational status
+### Step 12 — Inspect operational status
 
 Review:
 
@@ -618,6 +721,7 @@ tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
 tests/test_api_security.py
+tests/test_api_cors.py
 tests/test_cli_summarize_chat.py
 ```
 
@@ -650,6 +754,10 @@ These demonstrate:
 - protected summarization route behavior
 - protected metrics route behavior
 - public health route behavior
+- CORS disabled-by-default behavior
+- CORS allowed-origin behavior
+- CORS disallowed-origin behavior
+- CORS preflight behavior
 - empty query validation
 - `top_k` validation
 - empty summarization text validation
@@ -708,7 +816,7 @@ app/services/retrieval_service.py
 app/services/summarization_service.py
 ```
 
-These files show the implemented backend slices: health, memory access, retrieval, retrieval status, summarization, typed models, service separation, metrics, metadata-aware retrieval responses, and optional local token protection.
+These files show the implemented backend slices: health, memory access, retrieval, retrieval status, summarization, typed models, service separation, metrics, metadata-aware retrieval responses, optional local token protection, and configurable CORS.
 
 ### Backend API and CLI tests
 
@@ -720,10 +828,11 @@ tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
 tests/test_api_security.py
+tests/test_api_cors.py
 tests/test_cli_summarize_chat.py
 ```
 
-These files demonstrate FastAPI TestClient coverage for the implemented backend routes, retrieval metadata fields, retrieval status behavior, summarization behavior, optional token protection, metrics protection, public health behavior, and CLI compatibility.
+These files demonstrate FastAPI TestClient coverage for the implemented backend routes, retrieval metadata fields, retrieval status behavior, summarization behavior, optional token protection, metrics protection, public health behavior, configurable CORS behavior, and CLI compatibility.
 
 ### Retrieval workflow
 
@@ -831,6 +940,42 @@ and keeps this route public:
 GET /health
 ```
 
+### Configurable CORS workflow
+
+Inspect:
+
+```text
+app/core/config.py
+app/main.py
+tests/test_api_cors.py
+env.template
+```
+
+These files demonstrate configurable CORS behavior.
+
+The implementation keeps CORS disabled by default:
+
+```text
+ENABLE_CORS=false
+CORS_ALLOW_ORIGINS=
+```
+
+When enabled, only explicitly configured origins receive CORS headers:
+
+```text
+ENABLE_CORS=true
+CORS_ALLOW_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+The test suite validates:
+
+```text
+default disabled behavior
+allowed origin behavior
+disallowed origin behavior
+preflight OPTIONS behavior
+```
+
 ### MCP/context delivery
 
 Inspect:
@@ -886,6 +1031,7 @@ It demonstrates:
 - local automation
 - local-first security thinking
 - optional API token protection
+- configurable CORS with explicit origins
 - CI and QA discipline
 - documentation maturity
 - production-evolution awareness
@@ -912,8 +1058,9 @@ It should not be interpreted as a complete production SaaS application. Instead,
 - retrieval status/readiness endpoint
 - JSON metadata export
 - optional local API token protection
+- configurable CORS
 - MCP-oriented local memory server
-- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, and security behavior
+- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, security behavior, and CORS behavior
 - public CI
 - GitHub code scanning / CodeQL through repository security configuration
 - Docker/Nginx starter configuration
@@ -958,6 +1105,7 @@ tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
 tests/test_api_security.py
+tests/test_api_cors.py
 tests/test_cli_summarize_chat.py
 ```
 
@@ -1003,19 +1151,29 @@ fail closed if enabled without LOCAL_API_TOKEN
 /health remains public
 ```
 
+Implemented configurable CORS behavior:
+
+```text
+ENABLE_CORS=false by default
+CORS_ALLOW_ORIGINS must be explicitly configured
+Only configured origins receive CORS headers
+GET, POST, and OPTIONS are allowed
+Authorization and Content-Type headers are allowed
+CORS does not replace authentication
+```
+
 ### Current Backend Slice
 
-The optional local API token protection slice has been implemented:
+The configurable CORS slice has been implemented:
 
 ```text
 app/core/config.py
-app/core/security.py
-app/api/routes_memory.py
-app/api/routes_retrieval.py
-app/api/routes_summarization.py
 app/main.py
-tests/test_api_security.py
+tests/test_api_cors.py
 env.template
+README.md
+docs/BACKEND_DESIGN.md
+docs/DEMO_WORKFLOW.md
 ```
 
 The existing CLI workflow remains available and tested:
@@ -1029,7 +1187,6 @@ tests/test_cli_summarize_chat.py
 
 A stronger backend-oriented version of this workflow could add:
 
-- configurable CORS settings
 - structured logging
 - request size limits
 - authenticated API endpoints beyond local token mode
@@ -1065,9 +1222,9 @@ This should be done later, after the backend documentation and implemented backe
 
 ## 10. Summary
 
-The demo shows how to structure an AI-assisted development environment that can preserve memory, retrieve context, summarize active context, support human review, maintain documentation, expose a local backend API, protect sensitive local routes when configured, and keep public quality checks green.
+The demo shows how to structure an AI-assisted development environment that can preserve memory, retrieve context, summarize active context, support human review, maintain documentation, expose a local backend API, protect sensitive local routes when configured, configure trusted local browser access explicitly, and keep public quality checks green.
 
-The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, summarization, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, local-first security boundaries, documentation, production-aware engineering decisions, and metadata-aware traceability.
+The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, summarization, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, local-first security boundaries, configurable CORS, documentation, production-aware engineering decisions, and metadata-aware traceability.
 
 The health/memory backend slice is implemented, tested, documented, and green.
 
@@ -1083,4 +1240,6 @@ The summarization CLI compatibility slice is implemented, tested, documented, an
 
 The optional local API token protection slice is implemented, tested, documented, and green.
 
-The next meaningful engineering steps are updating the roadmap for optional token security, then adding configurable CORS settings and structured logging as final senior-backend hardening items.
+The configurable CORS slice is implemented, tested, documented, and green.
+
+The next meaningful engineering steps are updating the roadmap for configurable CORS, then adding structured logging as the final senior-backend hardening item.
