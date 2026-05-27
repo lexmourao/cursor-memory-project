@@ -22,6 +22,16 @@ def test_retrieval_query_endpoint_returns_response_shape() -> None:
     assert "results" in payload
     assert isinstance(payload["results"], list)
 
+    for result in payload["results"]:
+        assert "score" in result
+        assert "source" in result
+        assert "chunk_idx" in result
+        assert "text" in result
+        assert isinstance(result["score"], float)
+        assert isinstance(result["source"], str)
+        assert isinstance(result["chunk_idx"], int)
+        assert isinstance(result["text"], str)
+
 
 def test_retrieval_query_endpoint_rejects_empty_query() -> None:
     """Retrieval endpoint should reject empty query text."""
