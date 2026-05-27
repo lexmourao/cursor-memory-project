@@ -3,7 +3,7 @@ import os
 import pickle
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, TypedDict
 
 import numpy as np
 
@@ -24,6 +24,23 @@ EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1536  # per OpenAI docs for model above
 
 
+class RetrievalMetadata(TypedDict):
+    """Metadata stored for each embedded memory chunk."""
+
+    file: str
+    chunk_idx: int
+    text: str
+
+
+class RetrievalMatch(TypedDict):
+    """Metadata-aware retrieval result."""
+
+    score: float
+    file: str
+    chunk_idx: int
+    text: str
+
+
 def get_openai_embedding(text: str) -> np.ndarray:
     """Return embedding vector (np.float32). Falls back to zeros if unavailable."""
     if openai is None or os.getenv("OPENAI_API_KEY") is None:
@@ -34,14 +51,14 @@ def get_openai_embedding(text: str) -> np.ndarray:
     return vec
 
 
-def _load_meta() -> List[dict]:
+def _load_meta() -> List[RetrievalMetadata]:
     if META_FILE.exists():
         with META_FILE.open("rb") as fh:
             return pickle.load(fh)
     return []
 
 
-def _save_meta(meta: List[dict]) -> None:
+def _save_meta(meta: List[RetrievalMetadata]) -> None:
     with META_FILE.open("wb") as fh:
         pickle.dump(meta, fh)
 
@@ -66,7 +83,7 @@ def _save_index(index: faiss.Index) -> None:
 def rebuild_index() -> None:
     """Embed all markdown files in memory-bank and rebuild FAISS index."""
     index = faiss.IndexFlatIP(EMBED_DIM)
-    meta: List[dict] = []
+    meta: List[RetrievalMetadata] = []
 
     md_files = sorted(MEMORY_BANK_DIR.glob("*.md"))
     for fp in md_files:
@@ -95,8 +112,12 @@ def add_chunk(text: str, source: str = "activeContext") -> None:
     _save_meta(meta)
 
 
-def query(text: str, top_k: int = 5) -> List[Tuple[float, str]]:
-    """Return list of (score, chunk_text) for top_k matches."""
+def query_with_metadata(text: str, top_k: int = 5) -> List[RetrievalMatch]:
+    """Return metadata-aware retrieval matches for top_k results.
+
+    This function keeps file name and chunk index available for backend APIs,
+    debugging, retrieval inspection, and future dashboards.
+    """
     index = _init_index()
     meta = _load_meta()
 
@@ -107,13 +128,36 @@ def query(text: str, top_k: int = 5) -> List[Tuple[float, str]]:
     qvec = get_openai_embedding(text).reshape(1, -1)
     scores, ids = index.search(qvec, top_k)
 
-    results: List[Tuple[float, str]] = []
+    results: List[RetrievalMatch] = []
     for score, idx in zip(scores[0], ids[0]):
-        if idx == -1:
+        meta_index = int(idx)
+
+        if meta_index == -1:
             continue
-        results.append((float(score), meta[idx]["text"]))
+
+        if meta_index >= len(meta):
+            continue
+
+        item = meta[meta_index]
+        results.append(
+            {
+                "score": float(score),
+                "file": item["file"],
+                "chunk_idx": item["chunk_idx"],
+                "text": item["text"],
+            }
+        )
 
     return results
+
+
+def query(text: str, top_k: int = 5) -> List[Tuple[float, str]]:
+    """Return list of (score, chunk_text) for top_k matches.
+
+    This function preserves the original public API and CLI behavior.
+    Use query_with_metadata() when source file and chunk index are needed.
+    """
+    return [(match["score"], match["text"]) for match in query_with_metadata(text, top_k=top_k)]
 
 
 # ---------------------------------------------------------------------------
