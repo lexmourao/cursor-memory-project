@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import pickle
 import sys
@@ -20,6 +21,7 @@ except ImportError:
 MEMORY_BANK_DIR = Path("memory-bank")
 INDEX_FILE = MEMORY_BANK_DIR / "embeddings.faiss"
 META_FILE = MEMORY_BANK_DIR / "embeddings_meta.pkl"
+META_JSON_FILE = MEMORY_BANK_DIR / "embeddings_meta.json"
 EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1536  # per OpenAI docs for model above
 
@@ -75,6 +77,17 @@ def _save_index(index: faiss.Index) -> None:
     faiss.write_index(index, str(INDEX_FILE))
 
 
+def _metadata_json_payload(meta: List[RetrievalMetadata]) -> dict:
+    """Return a JSON-serializable metadata export payload."""
+    return {
+        "schema_version": 1,
+        "source": str(META_FILE),
+        "index_file": str(INDEX_FILE),
+        "record_count": len(meta),
+        "records": meta,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -110,6 +123,24 @@ def add_chunk(text: str, source: str = "activeContext") -> None:
 
     _save_index(index)
     _save_meta(meta)
+
+
+def export_metadata_json(output_file: Path | None = None) -> Path:
+    """Export retrieval metadata to JSON for inspection and review.
+
+    Pickle remains the internal runtime metadata format for FAISS compatibility.
+    The JSON file is an inspectable export, not the source of truth.
+    """
+    meta = _load_meta()
+    target = output_file or META_JSON_FILE
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = _metadata_json_payload(meta)
+
+    with target.open("w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False, indent=2)
+
+    return target
 
 
 def query_with_metadata(text: str, top_k: int = 5) -> List[RetrievalMatch]:
@@ -174,6 +205,14 @@ def _cli() -> None:
     cmd_add = sub.add_parser("add", help="Add a new chunk to the index (stdin)")
     cmd_add.add_argument("--source", default="activeContext", help="Source label for chunk")
 
+    cmd_export = sub.add_parser("export-meta-json", help="Export retrieval metadata to JSON")
+    cmd_export.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Optional output path for JSON metadata export",
+    )
+
     cmd_query = sub.add_parser("query", help="Query context")
     cmd_query.add_argument("--text", help="Query text (if omitted, read from stdin)")
     cmd_query.add_argument("--top-k", type=int, default=5)
@@ -189,6 +228,9 @@ def _cli() -> None:
             return
         add_chunk(chunk_text, source=args.source)
         print("[retrieve_context] Chunk added to index.")
+    elif args.cmd == "export-meta-json":
+        output_file = export_metadata_json(output_file=args.output)
+        print(f"[retrieve_context] Metadata exported to {output_file}.")
     elif args.cmd == "query":
         qtext = args.text or sys.stdin.read().strip()
         if not qtext:
