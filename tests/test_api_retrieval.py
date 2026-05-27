@@ -37,6 +37,45 @@ def test_retrieval_query_endpoint_returns_response_shape() -> None:
         assert isinstance(result["text"], str)
 
 
+def test_retrieval_query_endpoint_returns_indexed_memory_after_rebuild(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Retrieval endpoint should return indexed memory after rebuilding an index."""
+    memory_bank = tmp_path / "memory-bank"
+    memory_bank.mkdir()
+
+    memory_file = memory_bank / "projectbrief.md"
+    memory_file.write_text(
+        "Project vision: build a local-first Cursor memory backend.\n\n"
+        "Architecture note: FastAPI exposes memory and retrieval endpoints.",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(retrieve_context, "MEMORY_BANK_DIR", memory_bank)
+    monkeypatch.setattr(retrieve_context, "INDEX_FILE", tmp_path / "test.faiss")
+    monkeypatch.setattr(retrieve_context, "META_FILE", tmp_path / "test_meta.pkl")
+
+    retrieve_context.rebuild_index()
+
+    response = client.post(
+        "/retrieval/query",
+        json={"query": "local-first Cursor memory backend", "top_k": 1},
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["query"] == "local-first Cursor memory backend"
+    assert len(payload["results"]) == 1
+
+    result = payload["results"][0]
+    assert result["source"] == "projectbrief.md"
+    assert result["chunk_idx"] == 0
+    assert "local-first Cursor memory backend" in result["text"]
+    assert isinstance(result["score"], float)
+
+
 def test_retrieval_query_endpoint_handles_missing_index(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
