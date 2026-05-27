@@ -18,7 +18,7 @@ This repository demonstrates my approach to AI-assisted systems development:
 - Persistent project memory and rolling context for long-running AI projects
 - Retrieval and context-loading patterns for LLM-assisted work
 - MCP server structure for exposing project memory to an AI coding environment
-- Tested FastAPI backend slice for memory access, health checks, and metrics
+- Tested FastAPI backend slices for memory access, retrieval, health checks, and metrics
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - CI practices using linting, type checking, dependency/security checks, and smoke tests
 - GitHub code scanning / CodeQL through repository security configuration
@@ -46,13 +46,13 @@ The system is organized around six core ideas:
    A structured `memory-bank` stores active context, summaries, and project knowledge that can be reused across sessions.
 
 2. **Retrieval and context loading**  
-   Scripts support embedding and retrieval workflows so relevant project context can be rebuilt, searched, and exposed to the assistant.
+   Scripts and API endpoints support retrieval workflows so relevant project context can be rebuilt, searched, and exposed to the assistant.
 
 3. **MCP server structure**  
    A local MCP-oriented server pattern exposes project memory to Cursor or other AI-assisted development environments.
 
-4. **FastAPI backend slice**  
-   The `app/` package now exposes tested API endpoints for health, memory access, single memory-record retrieval, and Prometheus-compatible metrics.
+4. **FastAPI backend slices**  
+   The `app/` package exposes tested API endpoints for health, memory access, single memory-record retrieval, retrieval queries, and Prometheus-compatible metrics.
 
 5. **Documentation-first workflow**  
    The repo includes docs, diary, status, logs, setup instructions, and project rules to make work auditable and easier to continue.
@@ -62,9 +62,9 @@ The system is organized around six core ideas:
 
 ---
 
-## Implemented Backend Slice
+## Implemented Backend Slices
 
-The first FastAPI backend slice is implemented, tested, and green.
+The FastAPI backend slices are implemented, tested, and green.
 
 Implemented endpoints:
 
@@ -73,6 +73,7 @@ GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+POST /retrieval/query
 ```
 
 Implemented backend files:
@@ -85,6 +86,7 @@ app/
     __init__.py
     routes_health.py
     routes_memory.py
+    routes_retrieval.py
   core/
     __init__.py
     config.py
@@ -92,9 +94,11 @@ app/
     __init__.py
     health.py
     memory.py
+    retrieval.py
   services/
     __init__.py
     memory_service.py
+    retrieval_service.py
 ```
 
 Implemented API tests:
@@ -102,24 +106,28 @@ Implemented API tests:
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 ```
 
-This first backend slice demonstrates:
+These backend slices demonstrate:
 
 - FastAPI application structure
 - typed Pydantic response models
+- typed retrieval request/response models
 - local-first configuration
 - service-layer separation
 - route modules
 - memory-bank access through an API
+- retrieval query access through an API
 - missing-record 404 behavior
+- request validation for retrieval queries
 - Prometheus-compatible metrics
 - tested backend behavior with FastAPI TestClient
 
-The next backend slice is planned for retrieval:
+The next backend slice may extract summarization into the backend service layer while preserving the existing CLI workflow:
 
 ```text
-POST /retrieval/query
+scripts/summarize_chat.py
 ```
 
 ---
@@ -170,6 +178,14 @@ http://127.0.0.1:8000/health
 http://127.0.0.1:8000/memory
 http://127.0.0.1:8000/memory/README
 http://127.0.0.1:8000/metrics
+```
+
+Test the retrieval API:
+
+```bash
+curl -X POST http://127.0.0.1:8000/retrieval/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the project architecture?", "top_k": 5}'
 ```
 
 4. Start the legacy/local MCP-style memory server if needed:
@@ -230,6 +246,7 @@ Backend API tests include:
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 ```
 
 Some backup and end-to-end tests require environment-specific configuration such as `GPG_KEY_ID` for encrypted backups. These are intentionally separated from the public smoke-test workflow and should be run in a configured integration environment.
@@ -266,7 +283,7 @@ or your preferred shell mechanism.
 
 | Path | Purpose |
 |---|---|
-| `app/` | FastAPI backend package for health, memory access, metrics, and future retrieval APIs |
+| `app/` | FastAPI backend package for health, memory access, retrieval, metrics, and future APIs |
 | `cursor_setup_instructions/` | Canonical setup guide and Cursor workflow instructions |
 | `docs/` | Architecture, backend design, security, deployment, and technical documentation |
 | `memory-bank/` | Starter memory template for persistent context, active memory, and project knowledge |
@@ -299,10 +316,13 @@ docs/DEMO_WORKFLOW.md
 docs/TECHNICAL_REVIEW.md
 app/main.py
 app/services/memory_service.py
+app/services/retrieval_service.py
 app/api/routes_health.py
 app/api/routes_memory.py
+app/api/routes_retrieval.py
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 scripts/retrieve_context.py
 scripts/summarize_chat.py
 .github/workflows/ci.yml
@@ -314,7 +334,7 @@ Current scope:
 - Local-first memory and retrieval workflow
 - Cursor-oriented AI-assisted development setup
 - MCP server structure for exposing memory context
-- FastAPI backend slice for memory access, health, and metrics
+- FastAPI backend slices for memory access, retrieval, health, and metrics
 - Python automation scripts
 - Public CI smoke tests
 - Documentation and audit-oriented folder structure
@@ -329,7 +349,7 @@ Not yet included in this public version:
 - External managed vector database
 - Production-grade user permissions
 - Hosted UI or SaaS frontend
-- Retrieval API endpoint
+- Summarization API endpoint
 
 ---
 
@@ -337,7 +357,7 @@ Not yet included in this public version:
 
 A production version of this architecture could evolve toward:
 
-- retrieval API endpoint: `POST /retrieval/query`
+- summarization API endpoint
 - managed vector database integration such as Qdrant, Pinecone, or PgVector
 - authenticated API layer for memory access
 - user/project isolation
@@ -367,6 +387,8 @@ The repo includes security and quality practices such as:
 
 The memory API exposes only allowed memory-bank markdown files and does not expose generated FAISS or pickle files as memory records.
 
+The retrieval API validates query text and `top_k` bounds before calling the retrieval service.
+
 ---
 
 ## Pending Non-Blocking Cleanup
@@ -395,6 +417,7 @@ The same principles can support broader LLM and agent systems:
 - persistent memory
 - retrieval-augmented context
 - local memory APIs
+- typed retrieval API
 - tool-access patterns
 - human-in-the-loop fallbacks
 - system documentation
@@ -407,7 +430,7 @@ The same principles can support broader LLM and agent systems:
 
 This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, documentation, backend structure, and QA practices.
 
-The first FastAPI backend slice is implemented, tested, documented, and green. The next meaningful engineering step is the retrieval API slice.
+The health/memory backend slice is implemented, tested, documented, and green. The retrieval API slice is implemented, tested, documented, and green. The next meaningful engineering step is the summarization service slice.
 
 ---
 
