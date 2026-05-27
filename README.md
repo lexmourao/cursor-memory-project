@@ -16,6 +16,19 @@ The objective of this repository is to provide a turn-key template that empowers
 
 The canonical setup guide lives in `cursor_setup_instructions/README_CURSOR_SETUP.md`.  Most of the content in this repository is derived from that document.
 
+## What This Demonstrates
+
+This repository demonstrates my approach to AI-assisted systems development:
+
+- Cursor-based AI-assisted development workflows
+- Persistent project memory and rolling context for long-running AI projects
+- Retrieval and context-loading patterns for LLM-assisted work
+- MCP server structure for exposing project memory to an AI coding environment
+- Python automation for summarization, retrieval, logging, backups, and status updates
+- CI practices using linting, type checking, dependency/security checks, and smoke tests
+- Documentation-first project structure for auditable and reproducible AI workflows
+- Human-in-the-loop fallback modes when API keys or external services are unavailable
+
 ---
 
 ## Quickstart (Full Memory System)
