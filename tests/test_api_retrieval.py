@@ -57,6 +57,32 @@ def test_retrieval_query_endpoint_handles_missing_index(
     assert payload["results"] == []
 
 
+def test_retrieval_query_endpoint_handles_empty_index(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Retrieval endpoint should return an empty result list if the index is empty."""
+    index_file = tmp_path / "empty.faiss"
+    meta_file = tmp_path / "empty_meta.pkl"
+
+    empty_index = retrieve_context.faiss.IndexFlatIP(retrieve_context.EMBED_DIM)
+    retrieve_context.faiss.write_index(empty_index, str(index_file))
+
+    monkeypatch.setattr(retrieve_context, "INDEX_FILE", index_file)
+    monkeypatch.setattr(retrieve_context, "META_FILE", meta_file)
+
+    response = client.post(
+        "/retrieval/query",
+        json={"query": "What is the project architecture?", "top_k": 5},
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["query"] == "What is the project architecture?"
+    assert payload["results"] == []
+
+
 def test_retrieval_query_endpoint_rejects_empty_query() -> None:
     """Retrieval endpoint should reject empty query text."""
     response = client.post(
