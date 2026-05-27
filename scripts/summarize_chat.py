@@ -1,105 +1,57 @@
 """summarize_chat.py
 
-Generates an abstractive summary of the most recent conversation turns and writes the
-result to `memory-bank/activeContext.md`.
+CLI entry point for summarizing recent conversation turns and writing the result to
+`memory-bank/activeContext.md`.
 
-Design notes (see docs/ARCHITECTURE.md):
-1. The script is invoked automatically (via cron, git hook, or manual CLI).
+Design notes:
+1. The script is invoked automatically or manually through the CLI.
 2. Input can be either:
    • A markdown/plain-text chat log file, OR
-   • Stdin (e.g. piping cursor chat history)
-3. Summary model defaults to OpenAI GPT-4o with `text-davinci-004` summarization system
-   prompt. Can be swapped out for a local model via `--model`.
-4. The new summary **replaces** the previous `activeContext.md` contents.
-5. After writing, the file is embedded and vector DB updated via `add_chunk()`.
+   • Stdin, such as piping Cursor chat history.
+3. The CLI now delegates summarization, active context writing, and optional embedding
+   to `SummarizationService` so the CLI and FastAPI endpoint share the same core logic.
+4. The generated summary replaces the previous `activeContext.md` contents.
+5. The existing CLI workflow remains preserved while backend logic is centralized.
 
 Usage examples:
 
     python scripts/summarize_chat.py --chat-log logs/session_2025-07-14.txt
     cat logs/current_chat.txt | python scripts/summarize_chat.py --stdin
+    cat logs/current_chat.txt | python scripts/summarize_chat.py --stdin --no-embed
 """
 
 import argparse
-import os
-import sys
-from datetime import datetime
 from pathlib import Path
-from typing import List
+import sys
 
-from scripts.retrieve_context import add_chunk
-
-
-MEMORY_BANK_PATH = Path("memory-bank/activeContext.md")
-
-try:
-    import openai  # type: ignore
-except ImportError:
-    openai = None  # type: ignore[assignment]
+from app.services.summarization_service import SummarizationService
 
 
-# ---------------------------- Helper functions ----------------------------- #
-
-
-def read_chat_lines_from_file(path: Path, max_lines: int | None = None) -> List[str]:
+def read_chat_lines_from_file(path: Path, max_lines: int | None = None) -> list[str]:
     """Load the chat log file and return the most recent `max_lines` lines."""
     lines = path.read_text(encoding="utf-8").splitlines()
     return lines[-max_lines:] if max_lines else lines
 
 
-def read_chat_lines_from_stdin() -> List[str]:
+def read_chat_lines_from_stdin() -> list[str]:
     """Read full stdin buffer as list of lines."""
     return sys.stdin.read().splitlines()
 
 
-def call_openai_summarize(chat_lines: List[str], model: str = "gpt-3.5-turbo") -> str:
-    """Summarize the chat via OpenAI ChatCompletion.
-
-    Falls back to a naive summary if the `openai` package is unavailable,
-    the API key is missing, or the API request fails.
-    """
-    if openai is None or os.getenv("OPENAI_API_KEY") is None:
-        print("[summarize_chat] OpenAI not configured; using fallback summarizer.")
-        return "\n".join(chat_lines[-10:])
-
-    prompt_system = (
-        "You are an expert summarization engine. Produce a concise (<= 200 words) "
-        "markdown summary capturing key decisions, open questions, and next steps. "
-        "Emphasize technical details needed for future context."
-    )
-    prompt_user = "\n".join(chat_lines)
-
-    try:
-        response = openai.ChatCompletion.create(  # type: ignore[attr-defined]
-            model=model,
-            messages=[
-                {"role": "system", "content": prompt_system},
-                {"role": "user", "content": prompt_user},
-            ],
-            temperature=0.3,
-            max_tokens=400,
-        )
-        return response.choices[0].message["content"].strip()
-    except Exception as e:
-        print(f"[summarize_chat] OpenAI request failed: {e}. Falling back to naive summary.")
-        return "\n".join(chat_lines[-10:])
-
-
-def embed_active_context(summary_text: str) -> None:
-    """Embed the summary and update vector DB (FAISS)."""
-    add_chunk(summary_text, source="activeContext")
-
-
-# ----------------------------- Main routine -------------------------------- #
-
-
 def main() -> None:
+    """Summarize recent chat and update activeContext.md."""
     parser = argparse.ArgumentParser(description="Summarize recent chat and update activeContext.md")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--chat-log", type=Path, help="Path to chat log file")
     group.add_argument("--stdin", action="store_true", help="Read chat log from stdin")
     parser.add_argument("--max-lines", type=int, default=2000, help="Limit to last N lines of chat")
     parser.add_argument("--model", default="gpt-4o", help="OpenAI model name or local model identifier")
-    parser.add_argument("--manual", action="store_true", help="Provide summary via stdin instead of model")
+    parser.add_argument("--manual", action="store_true", help="Treat provided input as the summary")
+    parser.add_argument(
+        "--no-embed",
+        action="store_true",
+        help="Write activeContext.md without embedding the summary into retrieval",
+    )
     args = parser.parse_args()
 
     if args.stdin:
@@ -111,21 +63,27 @@ def main() -> None:
         print("[summarize_chat] No chat lines provided – nothing to summarize.")
         return
 
-    if args.manual:
-        print("[summarize_chat] Enter summary text, end with EOF (Ctrl-D):")
-        summary_md = sys.stdin.read().strip()
-        if not summary_md:
-            print("No manual summary provided. Aborting.")
-            return
-    else:
-        summary_md = call_openai_summarize(chat_lines, model=args.model)
+    input_text = "\n".join(chat_lines).strip()
+    service = SummarizationService()
+    result = service.summarize(
+        text=input_text,
+        model=args.model,
+        manual=args.manual,
+        embed=not args.no_embed,
+    )
 
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    header = "# Active Context (Auto-Generated)\n\n> **Generated:** " + timestamp + "\n\n---\n\n"
-    MEMORY_BANK_PATH.write_text(header + summary_md, encoding="utf-8")
-    print(f"[summarize_chat] Wrote summary to {MEMORY_BANK_PATH} (length: {len(summary_md.split())} words)")
+    print(
+        "[summarize_chat] Wrote summary to memory-bank/activeContext.md "
+        f"(length: {result.word_count} words)"
+    )
 
-    embed_active_context(summary_md)
+    if result.used_fallback:
+        print("[summarize_chat] OpenAI unavailable or failed; fallback summarizer was used.")
+
+    if result.embedded:
+        print("[summarize_chat] Embedded summary into retrieval index.")
+    elif args.no_embed:
+        print("[summarize_chat] Skipped embedding because --no-embed was provided.")
 
 
 if __name__ == "__main__":
