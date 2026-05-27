@@ -11,8 +11,7 @@ Design notes (see docs/ARCHITECTURE.md):
 3. Summary model defaults to OpenAI GPT-4o with `text-davinci-004` summarization system
    prompt. Can be swapped out for a local model via `--model`.
 4. The new summary **replaces** the previous `activeContext.md` contents.
-5. After writing, the file is embedded (optional) and vector DB updated (to be handled
-   by `embed_active_context()` stub).
+5. After writing, the file is embedded and vector DB updated via `add_chunk()`.
 
 Usage examples:
 
@@ -26,7 +25,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List
-from retrieve_context import add_chunk
+
+from scripts.retrieve_context import add_chunk
 
 
 MEMORY_BANK_PATH = Path("memory-bank/activeContext.md")
@@ -34,10 +34,11 @@ MEMORY_BANK_PATH = Path("memory-bank/activeContext.md")
 try:
     import openai  # type: ignore
 except ImportError:
-    openai = None  # type: ignore[assignment]  # Will trigger fallback summarizer later
+    openai = None  # type: ignore[assignment]
 
 
 # ---------------------------- Helper functions ----------------------------- #
+
 
 def read_chat_lines_from_file(path: Path, max_lines: int | None = None) -> List[str]:
     """Load the chat log file and return the most recent `max_lines` lines."""
@@ -51,8 +52,10 @@ def read_chat_lines_from_stdin() -> List[str]:
 
 
 def call_openai_summarize(chat_lines: List[str], model: str = "gpt-3.5-turbo") -> str:
-    """Summarize the chat via OpenAI ChatCompletion. Falls back to naive summary if
-    the `openai` package is unavailable or the API key is missing.
+    """Summarize the chat via OpenAI ChatCompletion.
+
+    Falls back to a naive summary if the `openai` package is unavailable,
+    the API key is missing, or the API request fails.
     """
     if openai is None or os.getenv("OPENAI_API_KEY") is None:
         print("[summarize_chat] OpenAI not configured; using fallback summarizer.")
@@ -82,12 +85,12 @@ def call_openai_summarize(chat_lines: List[str], model: str = "gpt-3.5-turbo") -
 
 
 def embed_active_context(summary_text: str) -> None:
-    """Embed the summary and update vector DB (FAISS). Placeholder for now."""
-    # TODO: Add embedding code and FAISS index update.
-    pass
+    """Embed the summary and update vector DB (FAISS)."""
+    add_chunk(summary_text, source="activeContext")
 
 
 # ----------------------------- Main routine -------------------------------- #
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize recent chat and update activeContext.md")
@@ -99,7 +102,6 @@ def main() -> None:
     parser.add_argument("--manual", action="store_true", help="Provide summary via stdin instead of model")
     args = parser.parse_args()
 
-    # Load chat lines
     if args.stdin:
         chat_lines = read_chat_lines_from_stdin()
     else:
@@ -118,15 +120,13 @@ def main() -> None:
     else:
         summary_md = call_openai_summarize(chat_lines, model=args.model)
 
-    # Write to activeContext.md
     timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     header = "# Active Context (Auto-Generated)\n\n> **Generated:** " + timestamp + "\n\n---\n\n"
     MEMORY_BANK_PATH.write_text(header + summary_md, encoding="utf-8")
     print(f"[summarize_chat] Wrote summary to {MEMORY_BANK_PATH} (length: {len(summary_md.split())} words)")
 
-    # Embed & update vector DB (stub)
-    add_chunk(summary_md, source="activeContext")
+    embed_active_context(summary_md)
 
 
 if __name__ == "__main__":
-    main() 
+    main()
