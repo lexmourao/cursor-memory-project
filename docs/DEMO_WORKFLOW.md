@@ -14,6 +14,7 @@ It shows:
 - memory-bank template mode for new projects
 - rolling active context summarization
 - retrieval-based context loading
+- metadata-aware retrieval results with source filename and chunk index
 - MCP server structure for exposing memory to Cursor
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - fallback behavior when external API keys are unavailable
@@ -21,7 +22,7 @@ It shows:
 - GitHub code scanning / CodeQL security analysis through repository security configuration
 - documentation-first engineering practices
 - separation between public smoke tests and environment-specific integration workflows
-- tested FastAPI backend slices for health, memory access, metrics, and retrieval
+- tested FastAPI backend slices for health, memory access, metrics, retrieval, and retrieval metadata
 
 This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable setup method before a real project begins.
 
@@ -41,7 +42,7 @@ A reviewer can inspect the repository in this order:
    System architecture, data flow, runtime modes, failure modes, tradeoffs, and production roadmap.
 
 4. `docs/BACKEND_DESIGN.md`  
-   Backend architecture, implemented FastAPI slices, service/model structure, API surface, tests, and next summarization slice.
+   Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, tests, and next summarization slice.
 
 5. `docs/adr/0001-public-ci-vs-integration-tests.md`  
    Architecture Decision Record explaining public CI vs secret-dependent integration tests.
@@ -56,13 +57,13 @@ A reviewer can inspect the repository in this order:
    Reusable service layer for loading allowed memory-bank files.
 
 9. `app/services/retrieval_service.py`  
-   Reusable retrieval service that exposes existing retrieval logic through typed backend responses.
+   Reusable retrieval service that exposes metadata-aware retrieval results through typed backend responses.
 
 10. `app/api/routes_retrieval.py`  
    FastAPI route for `POST /retrieval/query`.
 
 11. `scripts/retrieve_context.py`  
-   CLI retrieval workflow for building and querying the memory index.
+   CLI retrieval workflow for building and querying the memory index, including metadata-aware retrieval through `query_with_metadata()`.
 
 12. `scripts/summarize_chat.py`  
    Summarization workflow for converting recent session logs into active project context.
@@ -71,7 +72,7 @@ A reviewer can inspect the repository in this order:
    Public CI workflow.
 
 14. `tests/test_api_health.py`, `tests/test_api_memory.py`, and `tests/test_api_retrieval.py`  
-   FastAPI TestClient tests for the implemented backend slices.
+   FastAPI TestClient tests for the implemented backend slices and retrieval metadata fields.
 
 15. `status/roadmap.md`  
    Roadmap for evolving the project toward a stronger local-first backend/service layer.
@@ -162,6 +163,7 @@ It demonstrates:
 - explicit route modules
 - metrics endpoint
 - retrieval API
+- metadata-aware retrieval results
 - API tests
 
 ---
@@ -201,6 +203,9 @@ curl -X POST http://127.0.0.1:8000/retrieval/query \
 Expected result:
 
 - `/retrieval/query` returns the submitted query and a list of retrieval results
+- each retrieval result may include `score`, `source`, `chunk_idx`, and `text`
+- `source` identifies the memory-bank source filename
+- `chunk_idx` identifies the retrieved chunk position in that source file
 - empty query text is rejected
 - `top_k` below 1 is rejected
 - `top_k` above 20 is rejected
@@ -244,6 +249,7 @@ Expected result:
 - memory-bank content is processed
 - embeddings are generated or fallback vectors are used
 - retrieval index files are created or updated
+- retrieval metadata stores source file, chunk index, and text
 - generated retrieval files remain excluded from version control
 
 ---
@@ -265,6 +271,15 @@ The same retrieval capability is now also exposed through the backend endpoint:
 
 ```text
 POST /retrieval/query
+```
+
+For backend/API usage, retrieval metadata is available through:
+
+```text
+source
+chunk_idx
+score
+text
 ```
 
 ---
@@ -336,6 +351,7 @@ These demonstrate:
 - single-record retrieval behavior
 - missing-record 404 behavior
 - retrieval endpoint response shape
+- retrieval metadata field validation
 - empty query validation
 - `top_k` validation
 
@@ -389,7 +405,7 @@ app/services/memory_service.py
 app/services/retrieval_service.py
 ```
 
-These files show the implemented backend slices: health, memory access, retrieval, typed models, service separation, and metrics.
+These files show the implemented backend slices: health, memory access, retrieval, typed models, service separation, metrics, and metadata-aware retrieval responses.
 
 ### Backend API tests
 
@@ -401,7 +417,7 @@ tests/test_api_memory.py
 tests/test_api_retrieval.py
 ```
 
-These files demonstrate FastAPI TestClient coverage for the implemented backend routes.
+These files demonstrate FastAPI TestClient coverage for the implemented backend routes and retrieval metadata fields.
 
 ### Retrieval workflow
 
@@ -414,6 +430,21 @@ app/api/routes_retrieval.py
 ```
 
 These files demonstrate how the existing FAISS-based retrieval logic is preserved while being exposed through the FastAPI backend.
+
+The retrieval flow now supports metadata-aware results through:
+
+```text
+query_with_metadata()
+```
+
+This supports API-level traceability through:
+
+```text
+source
+chunk_idx
+score
+text
+```
 
 ### Summarization workflow
 
@@ -481,6 +512,7 @@ It demonstrates:
 - system design thinking
 - context engineering
 - retrieval workflow design
+- metadata-aware retrieval traceability
 - local automation
 - CI and QA discipline
 - documentation maturity
@@ -503,6 +535,7 @@ It should not be interpreted as a complete production SaaS application. Instead,
 - markdown-based project memory
 - summarization workflow
 - CLI retrieval workflow
+- metadata-aware retrieval workflow
 - MCP-oriented local memory server
 - tested FastAPI backend slices for health, memory access, metrics, and retrieval
 - public CI
@@ -528,6 +561,15 @@ Implemented tests:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+```
+
+Implemented retrieval response fields:
+
+```text
+score
+source
+chunk_idx
+text
 ```
 
 ### Next Backend Slice
@@ -587,10 +629,12 @@ This should be done later, after the backend documentation and first backend sli
 
 The demo shows how to structure an AI-assisted development environment that can preserve memory, retrieve context, support human review, maintain documentation, expose a local backend API, and keep public quality checks green.
 
-The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, documentation, and production-aware engineering decisions.
+The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, documentation, production-aware engineering decisions, and metadata-aware traceability.
 
 The health/memory backend slice is implemented, tested, documented, and green.
 
 The retrieval API slice is implemented, tested, documented, and green.
+
+The retrieval metadata improvement is implemented, tested, documented, and green.
 
 The next meaningful engineering step is the summarization service slice.
