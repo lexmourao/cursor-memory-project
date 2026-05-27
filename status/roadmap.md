@@ -58,13 +58,26 @@
 - [x] Update `docs/DEMO_WORKFLOW.md`.
 - [x] Update `README.md`.
 
+### Slice 2B — Metadata-Aware Retrieval
+
+- [x] Add `query_with_metadata()` to `scripts/retrieve_context.py`.
+- [x] Preserve existing `query()` function behavior.
+- [x] Preserve CLI retrieval behavior.
+- [x] Add source filename to retrieval API results.
+- [x] Add chunk index to retrieval API results.
+- [x] Add `chunk_idx` to `app/models/retrieval.py`.
+- [x] Update `app/services/retrieval_service.py` to return source metadata.
+- [x] Update `tests/test_api_retrieval.py` to validate metadata fields.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `docs/DEMO_WORKFLOW.md`.
+- [x] Update `README.md`.
+
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
 - [ ] Add deeper retrieval behavior tests after index rebuild.
 - [ ] Test missing retrieval index behavior explicitly.
 - [ ] Test empty retrieval index behavior explicitly.
-- [ ] Improve retrieval result source metadata beyond the current `"memory-bank"` placeholder.
 - [ ] Add chunk metadata schema.
 - [ ] Decide whether retrieval metadata should remain pickle-based or move to JSON/SQLite.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
@@ -84,17 +97,18 @@
 - [ ] Update README after summarization API is green.
 - [ ] Update demo workflow after summarization API is green.
 - [ ] Update backend design after summarization API is green.
+- [ ] Update roadmap after summarization API is green.
 
 ## Retrieval & Memory Improvements
 
 - [ ] Add retrieval evaluation tests.
 - [ ] Add explicit retrieval index status endpoint or readiness check.
-- [ ] Add chunk metadata schema.
-- [ ] Add source filename to retrieval API results.
-- [ ] Add chunk index to retrieval API results.
+- [ ] Add formal chunk metadata schema.
+- [ ] Add retrieval result source metadata value tests after index rebuild.
 - [ ] Evaluate local embedding fallback instead of zero-vector fallback.
 - [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
 - [ ] Consider JSON or SQLite metadata instead of pickle for safer inspectability.
+- [ ] Add dashboard-ready retrieval metadata notes for future UI work.
 
 ## Security & Reliability
 
@@ -122,7 +136,7 @@
 - [ ] Add cloud deployment template.
 - [ ] Add Terraform or infrastructure-as-code example.
 - [ ] Add multi-project memory dashboard.
-- [ ] Add dashboard for inspecting memory records, retrieval chunks, and summaries.
+- [ ] Add dashboard for inspecting memory records, retrieval chunks, summaries, and retrieval metadata.
 - [ ] Add observability examples for logs, traces, and retrieval quality metrics.
 - [ ] Add release packaging or tagged demo version.
 - [ ] Add optional managed vector database integration such as Qdrant, Pinecone, or PgVector.
