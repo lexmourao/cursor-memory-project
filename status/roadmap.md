@@ -12,6 +12,7 @@
 - Preserve existing CLI workflows while exposing selected capabilities through the FastAPI backend.
 - Record important architecture decisions through ADRs before making risky storage, security, or infrastructure changes.
 - Keep generated runtime artifacts out of version control unless intentionally curated as safe examples.
+- Keep security and exposure controls explicit, local-first, and tested.
 
 ## Completed Foundation
 
@@ -231,14 +232,37 @@
 - [x] Update `README.md`.
 - [x] Update `docs/BACKEND_DESIGN.md`.
 - [x] Update `docs/DEMO_WORKFLOW.md`.
+- [x] Update `status/roadmap.md`.
+
+### Slice 4C — Configurable CORS
+
+- [x] Add `ENABLE_CORS` setting to `app/core/config.py`.
+- [x] Add `CORS_ALLOW_ORIGINS` setting to `app/core/config.py`.
+- [x] Add comma-separated origin parsing for `CORS_ALLOW_ORIGINS`.
+- [x] Keep CORS disabled by default.
+- [x] Wire `CORSMiddleware` into `app/main.py`.
+- [x] Refactor `create_app(settings)` to support testable settings injection.
+- [x] Limit CORS methods to `GET`, `POST`, and `OPTIONS`.
+- [x] Limit CORS headers to `Authorization` and `Content-Type`.
+- [x] Keep `allow_credentials=False`.
+- [x] Add `tests/test_api_cors.py`.
+- [x] Test CORS headers are absent by default.
+- [x] Test allowed origin receives CORS headers.
+- [x] Test disallowed origin does not receive CORS headers.
+- [x] Test configured preflight `OPTIONS` behavior.
+- [x] Update `env.template`.
+- [x] Update `README.md`.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `docs/DEMO_WORKFLOW.md`.
+- [x] Update `status/roadmap.md`.
 
 ## Next
 
-- [ ] Add configurable CORS settings for local vs Docker/Nginx modes.
 - [ ] Add structured logging for backend service events.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
+- [ ] Add retrieval evaluation tests.
 
 ## Retrieval & Memory Improvements
 
@@ -279,7 +303,13 @@
 - [x] Document optional local API token usage in README.
 - [x] Document optional local API token usage in backend design.
 - [x] Document optional local API token usage in demo workflow.
-- [ ] Add configurable CORS settings for local vs Docker/Nginx modes.
+- [x] Add configurable CORS settings for local vs Docker/Nginx modes.
+- [x] Keep CORS disabled by default.
+- [x] Require explicit allowed origins when CORS is enabled.
+- [x] Add CORS tests for default, allowed-origin, disallowed-origin, and preflight behavior.
+- [x] Document configurable CORS usage in README.
+- [x] Document configurable CORS usage in backend design.
+- [x] Document configurable CORS usage in demo workflow.
 - [ ] Improve encrypted backup restore workflow.
 - [ ] Evaluate `age` as an alternative to current GPG-encrypted backup flow.
 - [ ] Add configured integration CI examples that use GitHub Actions secrets.
