@@ -10,6 +10,7 @@ from app.api.routes_memory import router as memory_router
 from app.api.routes_retrieval import router as retrieval_router
 from app.api.routes_summarization import router as summarization_router
 from app.core.config import Settings, get_settings
+from app.core.logging import configure_logging, get_logger
 from app.core.security import require_local_api_token
 
 
@@ -23,6 +24,8 @@ REQUEST_COUNT = Counter(
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Create and configure the FastAPI app."""
     active_settings = settings or get_settings()
+    configure_logging(active_settings)
+    logger = get_logger(__name__)
 
     configured_app = FastAPI(
         title="Cursor Memory Project Backend",
@@ -35,6 +38,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url="/redoc",
     )
 
+    logger.info(
+        "Starting backend service=%s runtime_mode=%s token_protection=%s cors_enabled=%s",
+        active_settings.service_name,
+        active_settings.runtime_mode,
+        active_settings.enable_local_api_token,
+        active_settings.enable_cors,
+    )
+
     if active_settings.enable_cors and active_settings.cors_allow_origins:
         configured_app.add_middleware(
             CORSMiddleware,
@@ -43,6 +54,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             allow_methods=["GET", "POST", "OPTIONS"],
             allow_headers=["Authorization", "Content-Type"],
         )
+        logger.info(
+            "CORS enabled for %s configured origin(s)",
+            len(active_settings.cors_allow_origins),
+        )
+    else:
+        logger.info("CORS disabled")
 
     @configured_app.middleware("http")
     async def count_requests(request, call_next):
