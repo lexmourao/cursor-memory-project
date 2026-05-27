@@ -25,9 +25,11 @@ env/
 !.env.example
 !env.template
 
-# Generated retrieval/vector files
+# Generated retrieval/vector metadata files
 memory-bank/*.faiss
 memory-bank/*.pkl
+memory-bank/*_meta.json
+memory-bank/embeddings_meta.json
 
 # Backups and local artifacts
 backups/
