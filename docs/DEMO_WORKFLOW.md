@@ -21,7 +21,7 @@ It shows:
 - GitHub code scanning / CodeQL security analysis through repository security configuration
 - documentation-first engineering practices
 - separation between public smoke tests and environment-specific integration workflows
-- a tested FastAPI backend slice for health, memory access, and metrics
+- tested FastAPI backend slices for health, memory access, metrics, and retrieval
 
 This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable setup method before a real project begins.
 
@@ -32,7 +32,7 @@ This demo is not intended to prove a complete production SaaS product. It is int
 A reviewer can inspect the repository in this order:
 
 1. `README.md`  
-   Public overview, system purpose, memory-bank template mode, scope, CI strategy, and production evolution path.
+   Public overview, system purpose, memory-bank template mode, scope, CI strategy, implemented backend slices, and production evolution path.
 
 2. `memory-bank/README.md`  
    Explains why memory-bank files start mostly empty and how they should be populated after real project kickoff.
@@ -41,7 +41,7 @@ A reviewer can inspect the repository in this order:
    System architecture, data flow, runtime modes, failure modes, tradeoffs, and production roadmap.
 
 4. `docs/BACKEND_DESIGN.md`  
-   Backend architecture, implemented first FastAPI slice, service/model structure, API surface, tests, and next retrieval slice.
+   Backend architecture, implemented FastAPI slices, service/model structure, API surface, tests, and next summarization slice.
 
 5. `docs/adr/0001-public-ci-vs-integration-tests.md`  
    Architecture Decision Record explaining public CI vs secret-dependent integration tests.
@@ -50,24 +50,30 @@ A reviewer can inspect the repository in this order:
    Operational rules for how Cursor should use memory, logs, project rules, and context.
 
 7. `app/main.py`  
-   FastAPI backend entry point with health, memory, and metrics routes.
+   FastAPI backend entry point with health, memory, metrics, and retrieval routes.
 
 8. `app/services/memory_service.py`  
    Reusable service layer for loading allowed memory-bank files.
 
-9. `scripts/retrieve_context.py`  
-   Retrieval workflow for building and querying the memory index.
+9. `app/services/retrieval_service.py`  
+   Reusable retrieval service that exposes existing retrieval logic through typed backend responses.
 
-10. `scripts/summarize_chat.py`  
+10. `app/api/routes_retrieval.py`  
+   FastAPI route for `POST /retrieval/query`.
+
+11. `scripts/retrieve_context.py`  
+   CLI retrieval workflow for building and querying the memory index.
+
+12. `scripts/summarize_chat.py`  
    Summarization workflow for converting recent session logs into active project context.
 
-11. `.github/workflows/ci.yml`  
+13. `.github/workflows/ci.yml`  
    Public CI workflow.
 
-12. `tests/test_api_health.py` and `tests/test_api_memory.py`  
-   FastAPI TestClient tests for the implemented backend slice.
+14. `tests/test_api_health.py`, `tests/test_api_memory.py`, and `tests/test_api_retrieval.py`  
+   FastAPI TestClient tests for the implemented backend slices.
 
-13. `status/roadmap.md`  
+15. `status/roadmap.md`  
    Roadmap for evolving the project toward a stronger local-first backend/service layer.
 
 ---
@@ -124,32 +130,38 @@ app/
   api/
     routes_health.py
     routes_memory.py
+    routes_retrieval.py
   core/
     config.py
   models/
     health.py
     memory.py
+    retrieval.py
   services/
     memory_service.py
+    retrieval_service.py
 ```
 
-This first backend slice implements:
+The implemented backend currently supports:
 
 ```text
 GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+POST /retrieval/query
 ```
 
 It demonstrates:
 
 - FastAPI application structure
 - typed Pydantic response models
+- typed retrieval request/response models
 - centralized local-first configuration
 - service-layer separation
 - explicit route modules
 - metrics endpoint
+- retrieval API
 - API tests
 
 ---
@@ -177,6 +189,21 @@ Expected result:
 - `/memory` returns allowed memory-bank markdown records
 - `/memory/README` returns the memory-bank README record
 - `/metrics` exposes Prometheus-compatible metrics
+
+To test the retrieval endpoint, use an API client or curl:
+
+```bash
+curl -X POST http://127.0.0.1:8000/retrieval/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the project architecture?", "top_k": 5}'
+```
+
+Expected result:
+
+- `/retrieval/query` returns the submitted query and a list of retrieval results
+- empty query text is rejected
+- `top_k` below 1 is rejected
+- `top_k` above 20 is rejected
 
 ---
 
@@ -234,7 +261,7 @@ Expected result:
 - the retrieval engine returns relevant memory chunks
 - the assistant can use retrieved context to continue work with less information loss
 
-The retrieval API endpoint is planned for the second backend slice:
+The same retrieval capability is now also exposed through the backend endpoint:
 
 ```text
 POST /retrieval/query
@@ -298,6 +325,7 @@ Additional backend API tests exist in:
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 ```
 
 These demonstrate:
@@ -307,6 +335,9 @@ These demonstrate:
 - memory list behavior
 - single-record retrieval behavior
 - missing-record 404 behavior
+- retrieval endpoint response shape
+- empty query validation
+- `top_k` validation
 
 The public CI demonstrates:
 
@@ -349,13 +380,16 @@ Inspect:
 app/main.py
 app/api/routes_health.py
 app/api/routes_memory.py
+app/api/routes_retrieval.py
 app/core/config.py
 app/models/health.py
 app/models/memory.py
+app/models/retrieval.py
 app/services/memory_service.py
+app/services/retrieval_service.py
 ```
 
-These files show the first implemented backend slice: health, memory access, typed models, service separation, and metrics.
+These files show the implemented backend slices: health, memory access, retrieval, typed models, service separation, and metrics.
 
 ### Backend API tests
 
@@ -364,6 +398,7 @@ Inspect:
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 ```
 
 These files demonstrate FastAPI TestClient coverage for the implemented backend routes.
@@ -374,18 +409,11 @@ Inspect:
 
 ```text
 scripts/retrieve_context.py
-```
-
-This file demonstrates FAISS-based retrieval logic, embedding fallback behavior, memory index rebuilds, chunk metadata, and query operations.
-
-The retrieval API route is planned next under:
-
-```text
-app/api/routes_retrieval.py
-app/models/retrieval.py
 app/services/retrieval_service.py
-tests/test_api_retrieval.py
+app/api/routes_retrieval.py
 ```
+
+These files demonstrate how the existing FAISS-based retrieval logic is preserved while being exposed through the FastAPI backend.
 
 ### Summarization workflow
 
@@ -396,6 +424,15 @@ scripts/summarize_chat.py
 ```
 
 This file demonstrates how session logs can be transformed into rolling active context.
+
+The next backend slice may extract this into:
+
+```text
+app/models/summarization.py
+app/services/summarization_service.py
+app/api/routes_summarization.py
+tests/test_api_summarization.py
+```
 
 ### MCP/context delivery
 
@@ -451,6 +488,7 @@ It demonstrates:
 - clear separation between public smoke tests and configured integration tests
 - practical Python automation for LLM-assisted development workflows
 - tested FastAPI backend structure for local memory access
+- typed retrieval API
 - incremental backend delivery through green, auditable slices
 
 It should not be interpreted as a complete production SaaS application. Instead, it shows the workflow and infrastructure patterns that can support larger LLM and agent-based systems.
@@ -466,13 +504,13 @@ It should not be interpreted as a complete production SaaS application. Instead,
 - summarization workflow
 - CLI retrieval workflow
 - MCP-oriented local memory server
-- tested FastAPI backend slice for health, memory access, and metrics
+- tested FastAPI backend slices for health, memory access, metrics, and retrieval
 - public CI
 - GitHub code scanning / CodeQL through repository security configuration
 - Docker/Nginx starter configuration
 - documentation and status checklists
 
-### Implemented Backend Slice
+### Implemented Backend Slices
 
 Implemented:
 
@@ -481,6 +519,7 @@ GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+POST /retrieval/query
 ```
 
 Implemented tests:
@@ -488,31 +527,31 @@ Implemented tests:
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 ```
 
 ### Next Backend Slice
 
-The next backend slice should add:
+The next backend slice may extract summarization into the backend service layer:
 
 ```text
-POST /retrieval/query
+app/models/summarization.py
+app/services/summarization_service.py
+app/api/routes_summarization.py
+tests/test_api_summarization.py
 ```
 
-Planned files:
+The existing CLI workflow should remain available:
 
 ```text
-app/models/retrieval.py
-app/services/retrieval_service.py
-app/api/routes_retrieval.py
-tests/test_api_retrieval.py
+scripts/summarize_chat.py
 ```
 
 ### Future Backend Evolution
 
 A stronger backend-oriented version of this workflow could add:
 
-- request/response models for retrieval endpoints
-- service layer for retrieval and summarization
+- service layer for summarization
 - authenticated API endpoints
 - external managed vector database
 - user/project isolation
@@ -550,4 +589,8 @@ The demo shows how to structure an AI-assisted development environment that can 
 
 The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, documentation, and production-aware engineering decisions.
 
-The first backend slice is implemented, tested, documented, and green. The next meaningful engineering step is the retrieval API slice.
+The health/memory backend slice is implemented, tested, documented, and green.
+
+The retrieval API slice is implemented, tested, documented, and green.
+
+The next meaningful engineering step is the summarization service slice.
