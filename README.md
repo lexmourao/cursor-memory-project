@@ -1,5 +1,8 @@
 # Cursor Memory Project 📚🤖
 
+![CI](https://github.com/lexmourao/cursor-memory-project/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/lexmourao/cursor-memory-project/actions/workflows/codeql.yml/badge.svg)
+
 Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, documentation, automated logging, testing, and QA practices.
 
 Welcome to the **Cursor Memory Project**.
