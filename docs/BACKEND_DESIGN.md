@@ -8,7 +8,7 @@
 
 The Cursor Memory Project provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
 
-The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, readiness/status reporting, and operational boundaries.
+The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, readiness/status reporting, summarization workflows, and operational boundaries.
 
 The goal is not to turn this repository into a full production SaaS platform. The goal is to show how a local AI-assisted development memory system can evolve toward production-grade backend architecture while remaining useful as a developer tool.
 
@@ -16,7 +16,7 @@ The goal is not to turn this repository into a full production SaaS platform. Th
 
 ## 2. Current Backend Status
 
-The first and second backend slices have been implemented and tested.
+The first, second, and summarization backend slices have been implemented and tested.
 
 Implemented:
 
@@ -29,6 +29,7 @@ app/
     routes_health.py
     routes_memory.py
     routes_retrieval.py
+    routes_summarization.py
   core/
     __init__.py
     config.py
@@ -38,10 +39,12 @@ app/
     health.py
     memory.py
     retrieval.py
+    summarization.py
   services/
     __init__.py
     memory_service.py
     retrieval_service.py
+    summarization_service.py
 ```
 
 Implemented endpoints:
@@ -53,6 +56,7 @@ GET /memory/{record_id}
 GET /metrics
 GET /retrieval/status
 POST /retrieval/query
+POST /summarization/summarize
 ```
 
 Implemented tests:
@@ -61,6 +65,7 @@ Implemented tests:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 ```
 
 The backend now has:
@@ -71,16 +76,20 @@ The backend now has:
 - formal chunk metadata models
 - typed retrieval request and response models
 - typed retrieval status response model
+- typed summarization request and response models
 - centralized local-first configuration
 - reusable memory service
 - reusable retrieval service
-- route modules for health, memory, and retrieval
+- reusable summarization service
+- route modules for health, memory, retrieval, and summarization
 - Prometheus-compatible metrics endpoint
 - metadata-aware retrieval responses with source file and chunk index
 - retrieval status endpoint for index and metadata readiness
 - retrieval reliability coverage for missing and empty indexes
 - integration-style retrieval coverage after rebuilding a temporary index
 - JSON metadata export for inspectability while preserving pickle runtime compatibility
+- summarization endpoint with manual mode and fallback mode
+- isolated active context writing tests
 - API tests using FastAPI TestClient
 - green public CI for implemented backend slices
 
@@ -93,6 +102,7 @@ The backend layer should provide:
 - a clean API for memory access
 - retrieval query endpoints
 - retrieval status/readiness endpoint
+- summarization endpoint
 - health and readiness endpoints
 - metrics endpoint
 - typed request and response models
@@ -112,19 +122,24 @@ The implemented backend slices currently cover:
 - typed response models
 - typed retrieval request/response models
 - typed retrieval status model
+- typed summarization request/response models
 - formal chunk metadata schema
 - retrieval metadata JSON export
 - configuration
 - service separation
 - retrieval API route
 - retrieval status route
+- summarization API route
 - retrieval metadata traceability
 - missing-index reliability behavior
 - empty-index reliability behavior
 - retrieval behavior after index rebuild
+- summarization manual mode
+- summarization fallback mode
+- active context writing
 - API tests
 
-Future backend work should focus on summarization service extraction, structured logging, local security hardening, and retrieval evaluation beyond smoke/integration coverage.
+Future backend work should focus on preserving CLI compatibility, structured logging, local security hardening, and retrieval/summarization evaluation beyond smoke/integration coverage.
 
 ---
 
@@ -159,6 +174,7 @@ app/
     routes_health.py
     routes_memory.py
     routes_retrieval.py
+    routes_summarization.py
   core/
     __init__.py
     config.py
@@ -168,10 +184,12 @@ app/
     health.py
     memory.py
     retrieval.py
+    summarization.py
   services/
     __init__.py
     memory_service.py
     retrieval_service.py
+    summarization_service.py
 ```
 
 ### Planned Future Structure
@@ -442,6 +460,69 @@ Reliability behavior:
 
 ---
 
+### Summarization
+
+```text
+POST /summarization/summarize
+```
+
+Status:
+
+```text
+Implemented
+```
+
+Purpose:
+
+- accept text to summarize
+- support manual summary mode
+- support OpenAI-backed summarization when configured
+- fall back safely when OpenAI is unavailable
+- write the summary to `memory-bank/activeContext.md`
+- optionally embed the summary through the existing retrieval workflow
+- return typed metadata about the summarization result
+
+Example request:
+
+```json
+{
+  "text": "Manual summary for the current backend slice.",
+  "model": "gpt-4o",
+  "manual": true,
+  "embed": false
+}
+```
+
+Example response:
+
+```json
+{
+  "summary": "Manual summary for the current backend slice.",
+  "word_count": 7,
+  "model": "gpt-4o",
+  "used_fallback": false,
+  "wrote_active_context": true,
+  "embedded": false
+}
+```
+
+Validation behavior:
+
+- empty `text` returns validation error
+- `model` must be a non-empty string
+- `manual` defaults to `false`
+- `embed` defaults to `true`
+
+Operational behavior:
+
+- manual mode treats the submitted text as the summary
+- non-manual mode attempts model-based summarization
+- if OpenAI is unavailable or not configured, fallback summarization is used
+- active context writing is enabled by the service
+- embedding can be disabled for safe tests or workflows
+
+---
+
 ## 7. Typed Models
 
 The backend uses typed models for API contracts and reusable metadata structures.
@@ -500,6 +581,22 @@ class RetrievalStatusResponse(BaseModel):
     metadata_record_count: int
     json_record_count: int
     ready: bool
+
+
+class SummarizationRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    model: str = Field(default="gpt-4o", min_length=1)
+    manual: bool = False
+    embed: bool = True
+
+
+class SummarizationResponse(BaseModel):
+    summary: str
+    word_count: int
+    model: str
+    used_fallback: bool
+    wrote_active_context: bool
+    embedded: bool
 ```
 
 Typed contracts make the API easier to test, document, and evolve.
@@ -511,6 +608,8 @@ The shared chunk schema now makes retrieval metadata reusable across:
 - future retrieval dashboards
 - future inspection endpoints
 - future retrieval evaluation tests
+
+The summarization schema makes active context updates and fallback behavior explicit for API consumers and tests.
 
 ---
 
@@ -748,6 +847,32 @@ Add JSON export for inspectability.
 Consider SQLite later for queryability and dashboards.
 ```
 
+### Summarization Service
+
+Status:
+
+```text
+Implemented
+```
+
+The backend now includes:
+
+```text
+app/services/summarization_service.py
+```
+
+Responsibilities:
+
+- summarize text through the backend API
+- support manual summary mode
+- support OpenAI-backed summarization when configured
+- use fallback summarization when OpenAI is unavailable or fails
+- write generated content to `memory-bank/activeContext.md`
+- optionally embed the summary through the existing retrieval workflow
+- return typed summarization response metadata
+
+Current implementation intentionally does not remove the existing `scripts/summarize_chat.py` CLI workflow. The backend service adds an API-facing summarization path while preserving the existing script-based workflow.
+
 ### Retrieval Reliability
 
 Status:
@@ -783,21 +908,27 @@ The retrieval API now has explicit test coverage for:
 
 The API returns empty results safely when retrieval storage is not ready and returns indexed results when the index is rebuilt with valid memory-bank content.
 
-### Summarization Service
+### Summarization Reliability
 
 Status:
 
 ```text
-Planned for later backend slice
+Implemented
 ```
 
-Responsibilities:
+The summarization API now has explicit test coverage for:
 
-- summarize chat logs when configured
-- support manual/fallback mode
-- update `activeContext.md`
-- optionally update the retrieval index
-- preserve compatibility with `scripts/summarize_chat.py`
+- manual summarization mode
+- fallback summarization mode when OpenAI is unavailable
+- active context writing through an isolated temporary path
+- disabled embedding behavior for safe tests
+- response fields
+- word count
+- model field
+- fallback reporting
+- empty text validation
+
+The tests avoid polluting the real `memory-bank/activeContext.md` by monkeypatching the active context path.
 
 ---
 
@@ -862,6 +993,8 @@ Current safety behavior:
 - retrieval status endpoint reports readiness without requiring JSON export for runtime readiness
 - retrieval rebuild test uses a temporary memory-bank and temporary FAISS files to avoid polluting real starter memory
 - JSON metadata export is inspectable and generated from runtime pickle metadata
+- summarization tests isolate active context writes from the real memory-bank
+- summarization can disable embedding for safer test and API workflows
 - public CI remains secret-free
 - dependency checks remain active
 - GitHub code scanning remains enabled through the repository security configuration
@@ -886,6 +1019,7 @@ Future hardening may include:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 ```
 
 Current backend tests cover:
@@ -929,7 +1063,14 @@ Current backend tests cover:
 - JSON metadata export source filename
 - JSON metadata export chunk index
 - JSON metadata export text content
-- empty query validation
+- `POST /summarization/summarize`
+- summarization manual mode
+- summarization fallback mode without OpenAI
+- summarization active context writing through isolated temporary path
+- summarization disabled embedding behavior
+- summarization response shape
+- summarization empty text validation
+- empty retrieval query validation
 - invalid low `top_k` validation
 - invalid high `top_k` validation
 
@@ -937,9 +1078,9 @@ Current backend tests cover:
 
 Future tests should cover:
 
-- fallback mode without OpenAI key
+- fallback mode without OpenAI key in additional service-level tests
 - additional retrieval evaluation metrics
-- summarization service behavior after backend extraction
+- CLI-to-service summarization compatibility if `scripts/summarize_chat.py` is refactored
 - configured API token behavior if enabled later
 
 ---
@@ -991,13 +1132,19 @@ Step 26: retrieval status response model added
 Step 27: retrieval status service logic added
 Step 28: retrieval status route added
 Step 29: retrieval status tests added
+Step 30: summarization models added
+Step 31: summarization service added
+Step 32: summarization route added
+Step 33: summarization router registered in app
+Step 34: summarization API tests added
 ```
 
 Next:
 
 ```text
-Step 30: update roadmap to reflect retrieval status endpoint
-Step 31: extract summarization service
+Step 35: update roadmap to reflect summarization API
+Step 36: update README and demo workflow after summarization API is green
+Step 37: decide whether to refactor scripts/summarize_chat.py to call SummarizationService
 ```
 
 ---
@@ -1012,6 +1159,7 @@ This backend design demonstrates:
 - service-oriented architecture
 - typed backend models
 - reusable metadata schema design
+- reusable summarization service design
 - testability
 - operational awareness
 - clear public CI vs configured integration separation
@@ -1023,6 +1171,7 @@ This backend design demonstrates:
 - explicit metadata storage decision-making through ADRs
 - inspectable metadata export without breaking runtime compatibility
 - operational retrieval readiness reporting
+- summarization API behavior with manual and fallback modes
 
 The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, and extensible.
 
@@ -1041,6 +1190,8 @@ The formal chunk metadata schema strengthens the system by making retrieval meta
 The JSON metadata export strengthens the system by giving reviewers and future dashboard workflows an inspectable metadata artifact while preserving pickle as the stable internal runtime format for FAISS compatibility.
 
 The retrieval status endpoint strengthens the system by giving developers and reviewers a clear operational view of whether retrieval storage is present, populated, aligned, and ready.
+
+The summarization API strengthens the system by exposing active context summarization through typed backend contracts while preserving fallback behavior and avoiding real memory-bank pollution in tests.
 
 ---
 
@@ -1144,22 +1295,36 @@ The retrieval status endpoint strengthens the system by giving developers and re
 - [x] Add retrieval status API tests
 - [x] Keep retrieval query behavior unchanged
 
-### Next Backend Slice: Summarization Service
+### Completed Summarization API Slice
 
-- [ ] Add `app/models/summarization.py`
-- [ ] Add `app/services/summarization_service.py`
-- [ ] Add `app/api/routes_summarization.py`
-- [ ] Register summarization router in `app/main.py`
-- [ ] Add `tests/test_api_summarization.py`
-- [ ] Preserve `scripts/summarize_chat.py` CLI workflow
-- [ ] Update docs after summarization API is green
+- [x] Add `app/models/summarization.py`
+- [x] Add `SummarizationRequest`
+- [x] Add `SummarizationResponse`
+- [x] Add `app/services/summarization_service.py`
+- [x] Add manual summarization mode
+- [x] Add fallback summarization mode
+- [x] Add active context writing
+- [x] Add optional embedding behavior
+- [x] Add `app/api/routes_summarization.py`
+- [x] Add `POST /summarization/summarize`
+- [x] Register summarization router in `app/main.py`
+- [x] Add `tests/test_api_summarization.py`
+- [x] Test manual mode
+- [x] Test fallback mode
+- [x] Test empty text validation
+- [x] Isolate active context writing in tests
+- [x] Keep existing `scripts/summarize_chat.py` workflow intact
 
-### Later Backend Slices
+### Next Backend Slices
 
+- [ ] Update roadmap after summarization API is green
+- [ ] Update README after summarization API is green
+- [ ] Update demo workflow after summarization API is green
+- [ ] Decide whether to refactor `scripts/summarize_chat.py` to call `SummarizationService`
 - [ ] Add structured logging module
 - [ ] Add optional local API token security
 - [ ] Add configurable CORS
-- [ ] Add readiness endpoint if broader service readiness is needed beyond retrieval status
+- [ ] Add broader readiness endpoint if needed beyond retrieval status
 - [ ] Add stronger integration tests
 - [ ] Add local backend run instructions
 - [ ] Consider converting `scripts/run_mcp_server.py` into a wrapper around `app.main`
@@ -1210,17 +1375,6 @@ The generated file expectations are documented and green.
 
 The retrieval status endpoint is implemented, tested, documented, and green.
 
-The next meaningful engineering step is to update the roadmap, then extract summarization into the backend service layer while preserving the existing CLI workflow.
-```
+The summarization API is implemented, tested, documented, and green.
 
-## COMMIT MESSAGE
-
-```text
-docs: document retrieval status endpoint
-```
-
-## EXTENDED DESCRIPTION
-
-```text
-Update backend design documentation to reflect GET /retrieval/status, the RetrievalStatusResponse model, retrieval service status logic, readiness calculation, status response fields, test coverage, and operational retrieval readiness reporting.
-```
+The next meaningful engineering step is to update the roadmap, README, and demo workflow for the summarization API, then decide whether to refactor `scripts/summarize_chat.py` to call the shared backend summarization service.
