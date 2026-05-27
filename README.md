@@ -6,7 +6,7 @@ Maintenance note: This repository is a public demonstration of Cursor-based AI-a
 
 Welcome to the **Cursor Memory Project**.
 
-The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, and auditable development practices.
+The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, summarization workflows, and auditable development practices.
 
 ---
 
@@ -18,8 +18,10 @@ This repository demonstrates my approach to AI-assisted systems development:
 - Persistent project memory and rolling context for long-running AI projects
 - Retrieval and context-loading patterns for LLM-assisted work
 - Metadata-aware retrieval with source filename and chunk index traceability
+- Retrieval status/readiness reporting for local index and metadata state
+- Summarization API workflows for active context updates
 - MCP server structure for exposing project memory to an AI coding environment
-- Tested FastAPI backend slices for memory access, retrieval, health checks, and metrics
+- Tested FastAPI backend slices for memory access, retrieval, summarization, health checks, and metrics
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - CI practices using linting, type checking, dependency/security checks, and smoke tests
 - GitHub code scanning / CodeQL through repository security configuration
@@ -31,7 +33,7 @@ This repository demonstrates my approach to AI-assisted systems development:
 
 ## Why This Matters for LLM & Agent Systems
 
-LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, workflow documentation, traceability, and repeatable development practices.
+LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, summarization, workflow documentation, traceability, and repeatable development practices.
 
 This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, backend APIs, and implementation tasks.
 
@@ -53,7 +55,7 @@ The system is organized around six core ideas:
    A local MCP-oriented server pattern exposes project memory to Cursor or other AI-assisted development environments.
 
 4. **FastAPI backend slices**  
-   The `app/` package exposes tested API endpoints for health, memory access, single memory-record retrieval, retrieval queries, metadata-aware retrieval results, and Prometheus-compatible metrics.
+   The `app/` package exposes tested API endpoints for health, memory access, single memory-record retrieval, retrieval queries, retrieval status, summarization, metadata-aware retrieval results, and Prometheus-compatible metrics.
 
 5. **Documentation-first workflow**  
    The repo includes docs, diary, status, logs, setup instructions, and project rules to make work auditable and easier to continue.
@@ -74,7 +76,9 @@ GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+GET /retrieval/status
 POST /retrieval/query
+POST /summarization/summarize
 ```
 
 Implemented backend files:
@@ -88,18 +92,22 @@ app/
     routes_health.py
     routes_memory.py
     routes_retrieval.py
+    routes_summarization.py
   core/
     __init__.py
     config.py
   models/
     __init__.py
+    chunk.py
     health.py
     memory.py
     retrieval.py
+    summarization.py
   services/
     __init__.py
     memory_service.py
     retrieval_service.py
+    summarization_service.py
 ```
 
 Implemented API tests:
@@ -108,6 +116,7 @@ Implemented API tests:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 ```
 
 These backend slices demonstrate:
@@ -115,14 +124,19 @@ These backend slices demonstrate:
 - FastAPI application structure
 - typed Pydantic response models
 - typed retrieval request/response models
+- typed retrieval status model
+- typed summarization request/response models
 - local-first configuration
 - service-layer separation
 - route modules
 - memory-bank access through an API
 - retrieval query access through an API
+- retrieval readiness/status access through an API
+- summarization access through an API
 - metadata-aware retrieval responses
 - missing-record 404 behavior
 - request validation for retrieval queries
+- request validation for summarization input
 - Prometheus-compatible metrics
 - tested backend behavior with FastAPI TestClient
 
@@ -137,10 +151,34 @@ text
 
 This makes retrieval results easier to inspect, debug, audit, and eventually display in a dashboard.
 
-The next backend slice may extract summarization into the backend service layer while preserving the existing CLI workflow:
+The retrieval status endpoint reports:
+
+```text
+index_exists
+metadata_exists
+json_export_exists
+index_vector_count
+metadata_record_count
+json_record_count
+ready
+```
+
+The summarization API returns:
+
+```text
+summary
+word_count
+model
+used_fallback
+wrote_active_context
+embedded
+```
+
+The existing CLI workflow remains preserved:
 
 ```text
 scripts/summarize_chat.py
+scripts/retrieve_context.py
 ```
 
 ---
@@ -176,7 +214,7 @@ cp env.template .env
 ```
 
 If `OPENAI_API_KEY` is present, automated summaries and embeddings can use OpenAI.  
-If it is absent, scripts fall back to manual or zero-cost modes.
+If it is absent, scripts and APIs fall back to manual, fallback, or zero-cost modes.
 
 3. Start the FastAPI backend:
 
@@ -191,6 +229,7 @@ http://127.0.0.1:8000/health
 http://127.0.0.1:8000/memory
 http://127.0.0.1:8000/memory/README
 http://127.0.0.1:8000/metrics
+http://127.0.0.1:8000/retrieval/status
 ```
 
 Test the retrieval API:
@@ -210,6 +249,30 @@ chunk_idx
 text
 ```
 
+Test the summarization API in manual mode:
+
+```bash
+curl -X POST http://127.0.0.1:8000/summarization/summarize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Manual summary for the current backend slice.",
+    "model": "gpt-4o",
+    "manual": true,
+    "embed": false
+  }'
+```
+
+Expected summarization response fields:
+
+```text
+summary
+word_count
+model
+used_fallback
+wrote_active_context
+embedded
+```
+
 4. Start the legacy/local MCP-style memory server if needed:
 
 ```bash
@@ -222,7 +285,7 @@ Cursor can fetch:
 http://localhost:7331/memory
 ```
 
-5. Generate or update the rolling summary:
+5. Generate or update the rolling summary through the CLI:
 
 ```bash
 python scripts/summarize_chat.py --chat-log path/to/chat.txt --max-lines 800
@@ -240,13 +303,48 @@ cat path/to/chat.txt | python scripts/summarize_chat.py --stdin --manual
 python scripts/retrieve_context.py rebuild
 ```
 
-7. Query memory through the CLI retrieval workflow:
+7. Export inspectable retrieval metadata JSON:
+
+```bash
+python scripts/retrieve_context.py export-meta-json
+```
+
+8. Query memory through the CLI retrieval workflow:
 
 ```bash
 python scripts/retrieve_context.py query --text "What is the current project architecture?" --top-k 5
 ```
 
 The CLI keeps the original simple output behavior, while the backend API exposes richer metadata for inspection and future UI/dashboard use.
+
+---
+
+## Generated Files and Version-Control Expectations
+
+Retrieval workflows can generate local runtime artifacts such as:
+
+```text
+memory-bank/embeddings.faiss
+memory-bank/embeddings_meta.pkl
+memory-bank/embeddings_meta.json
+```
+
+These files are ignored by `.gitignore` and should not be committed by default.
+
+See:
+
+```text
+docs/GENERATED_FILES.md
+docs/adr/0002-retrieval-metadata-storage.md
+```
+
+Current metadata storage decision:
+
+```text
+Keep pickle now.
+Add JSON export for inspectability.
+Consider SQLite later for queryability and dashboards.
+```
 
 ---
 
@@ -271,9 +369,12 @@ Backend API tests include:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 ```
 
-The retrieval tests validate response shape, query validation, `top_k` validation, and metadata fields when results are returned.
+The retrieval tests validate response shape, query validation, `top_k` validation, metadata fields, missing/empty index behavior, retrieval after index rebuild, JSON metadata export, and retrieval status readiness.
+
+The summarization tests validate manual mode, fallback mode, active context writing through an isolated temporary path, disabled embedding behavior, response fields, and empty text validation.
 
 Some backup and end-to-end tests require environment-specific configuration such as `GPG_KEY_ID` for encrypted backups. These are intentionally separated from the public smoke-test workflow and should be run in a configured integration environment.
 
@@ -309,9 +410,9 @@ or your preferred shell mechanism.
 
 | Path | Purpose |
 |---|---|
-| `app/` | FastAPI backend package for health, memory access, retrieval, metadata-aware retrieval results, metrics, and future APIs |
+| `app/` | FastAPI backend package for health, memory access, retrieval, retrieval status, summarization, metadata-aware retrieval results, and metrics |
 | `cursor_setup_instructions/` | Canonical setup guide and Cursor workflow instructions |
-| `docs/` | Architecture, backend design, security, deployment, and technical documentation |
+| `docs/` | Architecture, backend design, generated-file guidance, security, deployment, and technical documentation |
 | `memory-bank/` | Starter memory template for persistent context, active memory, and project knowledge |
 | `scripts/` | Automation, summarization, retrieval, backups, logging, and status scripts |
 | `tests/` | Unit, smoke, validation, and backend API tests |
@@ -329,7 +430,7 @@ or your preferred shell mechanism.
 
 ## Technical Review Notes
 
-This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, documentation discipline, local automation, backend evolution, and CI/QA practices.
+This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, summarization workflow, documentation discipline, local automation, backend evolution, and CI/QA practices.
 
 Recommended reviewer path:
 
@@ -339,17 +440,22 @@ memory-bank/README.md
 docs/ARCHITECTURE.md
 docs/BACKEND_DESIGN.md
 docs/DEMO_WORKFLOW.md
+docs/GENERATED_FILES.md
 docs/TECHNICAL_REVIEW.md
 app/main.py
 app/services/memory_service.py
 app/services/retrieval_service.py
+app/services/summarization_service.py
 app/api/routes_health.py
 app/api/routes_memory.py
 app/api/routes_retrieval.py
+app/api/routes_summarization.py
 app/models/retrieval.py
+app/models/summarization.py
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 scripts/retrieve_context.py
 scripts/summarize_chat.py
 .github/workflows/ci.yml
@@ -361,8 +467,9 @@ Current scope:
 - Local-first memory and retrieval workflow
 - Cursor-oriented AI-assisted development setup
 - MCP server structure for exposing memory context
-- FastAPI backend slices for memory access, retrieval, health, and metrics
+- FastAPI backend slices for memory access, retrieval, retrieval status, summarization, health, and metrics
 - Metadata-aware retrieval with source file and chunk index traceability
+- JSON metadata export for retrieval inspection
 - Python automation scripts
 - Public CI smoke tests
 - Documentation and audit-oriented folder structure
@@ -377,7 +484,6 @@ Not yet included in this public version:
 - External managed vector database
 - Production-grade user permissions
 - Hosted UI or SaaS frontend
-- Summarization API endpoint
 
 ---
 
@@ -385,8 +491,6 @@ Not yet included in this public version:
 
 A production version of this architecture could evolve toward:
 
-- summarization API endpoint
-- managed vector database integration such as Qdrant, Pinecone, or PgVector
 - authenticated API layer for memory access
 - user/project isolation
 - scheduled summarization jobs
@@ -394,8 +498,9 @@ A production version of this architecture could evolve toward:
 - structured observability and logging
 - agent workflow monitoring
 - deployment via cloud infrastructure
-- frontend dashboard for memory, logs, retrieval chunks, and retrieval metadata inspection
+- frontend dashboard for memory, logs, summaries, retrieval chunks, and retrieval metadata inspection
 - stronger integration tests with configured secrets and encrypted backup workflows
+- managed vector database integration such as Qdrant, Pinecone, or PgVector
 
 ---
 
@@ -419,6 +524,10 @@ The retrieval API validates query text and `top_k` bounds before calling the ret
 
 The retrieval API returns source filename and chunk index fields to improve traceability and auditability of returned context.
 
+The retrieval status API reports index, metadata, JSON export, and readiness state for operational inspection.
+
+The summarization API validates text input, supports fallback behavior, and can disable embedding for safer test or controlled workflows.
+
 ---
 
 ## Pending Non-Blocking Cleanup
@@ -434,7 +543,7 @@ actions/checkout@v4 → actions/checkout@v5
 actions/setup-python@v5 → actions/setup-python@v6
 ```
 
-This should be done later, after the backend documentation and first backend slices are stable.
+This should be done later, after the backend documentation and implemented backend slices are stable.
 
 ---
 
@@ -449,6 +558,8 @@ The same principles can support broader LLM and agent systems:
 - local memory APIs
 - typed retrieval API
 - metadata-aware context traceability
+- summarization API
+- retrieval status/readiness reporting
 - tool-access patterns
 - human-in-the-loop fallbacks
 - system documentation
@@ -459,11 +570,11 @@ The same principles can support broader LLM and agent systems:
 
 ## Status
 
-This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, documentation, backend structure, and QA practices.
+This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, summarization, documentation, backend structure, and QA practices.
 
-The health/memory backend slice is implemented, tested, documented, and green. The retrieval API slice is implemented, tested, documented, and green. The retrieval metadata improvement is implemented, tested, documented, and green.
+The health/memory backend slice is implemented, tested, documented, and green. The retrieval API slice is implemented, tested, documented, and green. The retrieval metadata improvement is implemented, tested, documented, and green. The retrieval status endpoint is implemented, tested, documented, and green. The summarization API slice is implemented, tested, documented, and green.
 
-The next meaningful engineering step is the summarization service slice.
+The next meaningful engineering step is updating the demo workflow, then deciding whether to refactor the existing CLI summarization script to call the shared backend summarization service.
 
 ---
 
