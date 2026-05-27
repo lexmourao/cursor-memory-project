@@ -8,10 +8,9 @@ Design notes:
 2. Input can be either:
    • A markdown/plain-text chat log file, OR
    • Stdin, such as piping Cursor chat history.
-3. The CLI now delegates summarization, active context writing, and optional embedding
-   to `SummarizationService` so the CLI and FastAPI endpoint share the same core logic.
-4. The generated summary replaces the previous `activeContext.md` contents.
-5. The existing CLI workflow remains preserved while backend logic is centralized.
+3. The CLI preserves backward-compatible helper functions used by existing tests.
+4. The CLI delegates active context writing and optional embedding to SummarizationService.
+5. The generated summary replaces the previous `activeContext.md` contents.
 
 Usage examples:
 
@@ -21,10 +20,16 @@ Usage examples:
 """
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
 from app.services.summarization_service import SummarizationService
+
+try:
+    import openai  # type: ignore
+except ImportError:
+    openai = None  # type: ignore[assignment]
 
 
 def read_chat_lines_from_file(path: Path, max_lines: int | None = None) -> list[str]:
@@ -36,6 +41,39 @@ def read_chat_lines_from_file(path: Path, max_lines: int | None = None) -> list[
 def read_chat_lines_from_stdin() -> list[str]:
     """Read full stdin buffer as list of lines."""
     return sys.stdin.read().splitlines()
+
+
+def call_openai_summarize(chat_lines: list[str], model: str = "gpt-4o") -> str:
+    """Summarize chat lines through OpenAI when configured, otherwise use fallback.
+
+    This function is intentionally preserved for existing tests and scripts that
+    monkeypatch or import it directly.
+    """
+    if openai is None or os.getenv("OPENAI_API_KEY") is None:
+        print("[summarize_chat] OpenAI not configured; using fallback summarizer.")
+        return "\n".join(chat_lines[-10:])
+
+    prompt_system = (
+        "You are an expert summarization engine. Produce a concise (<= 200 words) "
+        "markdown summary capturing key decisions, open questions, and next steps. "
+        "Emphasize technical details needed for future context."
+    )
+    prompt_user = "\n".join(chat_lines)
+
+    try:
+        response = openai.ChatCompletion.create(  # type: ignore[attr-defined]
+            model=model,
+            messages=[
+                {"role": "system", "content": prompt_system},
+                {"role": "user", "content": prompt_user},
+            ],
+            temperature=0.3,
+            max_tokens=400,
+        )
+        return response.choices[0].message["content"].strip()
+    except Exception as exc:
+        print(f"[summarize_chat] OpenAI request failed: {exc}. Falling back to naive summary.")
+        return "\n".join(chat_lines[-10:])
 
 
 def main() -> None:
@@ -63,12 +101,20 @@ def main() -> None:
         print("[summarize_chat] No chat lines provided – nothing to summarize.")
         return
 
-    input_text = "\n".join(chat_lines).strip()
+    if args.manual:
+        summary_md = "\n".join(chat_lines).strip()
+    else:
+        summary_md = call_openai_summarize(chat_lines, model=args.model)
+
+    if not summary_md:
+        print("[summarize_chat] Empty summary generated – nothing to write.")
+        return
+
     service = SummarizationService()
     result = service.summarize(
-        text=input_text,
+        text=summary_md,
         model=args.model,
-        manual=args.manual,
+        manual=True,
         embed=not args.no_embed,
     )
 
@@ -76,9 +122,6 @@ def main() -> None:
         "[summarize_chat] Wrote summary to memory-bank/activeContext.md "
         f"(length: {result.word_count} words)"
     )
-
-    if result.used_fallback:
-        print("[summarize_chat] OpenAI unavailable or failed; fallback summarizer was used.")
 
     if result.embedded:
         print("[summarize_chat] Embedded summary into retrieval index.")
