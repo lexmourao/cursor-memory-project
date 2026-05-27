@@ -120,6 +120,35 @@ def test_summarization_route_requires_token_when_enabled(
     assert response.json()["detail"] == "Invalid or missing local API token."
 
 
+def test_metrics_route_requires_token_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Metrics route should be protected when token mode is enabled."""
+    monkeypatch.setenv("ENABLE_LOCAL_API_TOKEN", "true")
+    monkeypatch.setenv("LOCAL_API_TOKEN", "test-token")
+
+    response = client.get("/metrics")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid or missing local API token."
+
+
+def test_metrics_route_allows_correct_token_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Metrics route should allow requests with the configured Bearer token."""
+    monkeypatch.setenv("ENABLE_LOCAL_API_TOKEN", "true")
+    monkeypatch.setenv("LOCAL_API_TOKEN", "test-token")
+
+    response = client.get(
+        "/metrics",
+        headers={"Authorization": "Bearer test-token"},
+    )
+
+    assert response.status_code == 200
+    assert "cursor_memory_backend_requests_total" in response.text
+
+
 def test_health_route_remains_public_when_token_enabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
