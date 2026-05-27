@@ -15,6 +15,7 @@ class RetrievalResult(BaseModel):
 
     score: float
     source: str
+    chunk_idx: int
     text: str
 
 
