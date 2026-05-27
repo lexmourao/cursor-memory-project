@@ -21,3 +21,15 @@ class RetrievalResponse(BaseModel):
 
     query: str
     results: list[RetrievalResult]
+
+
+class RetrievalStatusResponse(BaseModel):
+    """Response returned by the retrieval status endpoint."""
+
+    index_exists: bool
+    metadata_exists: bool
+    json_export_exists: bool
+    index_vector_count: int
+    metadata_record_count: int
+    json_record_count: int
+    ready: bool
