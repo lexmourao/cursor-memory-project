@@ -10,6 +10,7 @@
 - Avoid adding fake project knowledge to `memory-bank/`.
 - Improve the backend/service layer only through small, auditable, green steps.
 - Preserve existing CLI workflows while exposing selected capabilities through the FastAPI backend.
+- Record important architecture decisions through ADRs before making risky storage, security, or infrastructure changes.
 
 ## Completed Foundation
 
@@ -24,6 +25,15 @@
 - [x] Clarify Nginx as a starter local/single-VM reverse proxy.
 - [x] Keep public CI green without requiring private secrets.
 - [x] Keep GitHub code scanning active through repository security configuration.
+
+## Completed Architecture Decisions
+
+- [x] Add `docs/adr/0001-public-ci-vs-integration-tests.md`.
+- [x] Separate public CI smoke tests from secret-dependent integration workflows.
+- [x] Add `docs/adr/0002-retrieval-metadata-storage.md`.
+- [x] Decide to keep pickle for current FAISS metadata compatibility.
+- [x] Document JSON metadata export as the next inspectability step.
+- [x] Document SQLite as a later option for queryable dashboards or multi-project retrieval.
 
 ## Completed Backend Slices
 
@@ -109,7 +119,9 @@
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
-- [ ] Decide whether retrieval metadata should remain pickle-based or move to JSON/SQLite.
+- [ ] Add JSON metadata export option while preserving pickle as the internal FAISS runtime format.
+- [ ] Add tests for exported JSON metadata shape.
+- [ ] Document generated metadata files and version-control expectations.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
@@ -133,9 +145,11 @@
 
 - [ ] Add retrieval evaluation tests.
 - [ ] Add explicit retrieval index status endpoint or readiness check.
+- [ ] Add JSON metadata export for inspectability.
+- [ ] Validate JSON metadata export against `ChunkMetadata` / `RetrievedChunk`.
 - [ ] Evaluate local embedding fallback instead of zero-vector fallback.
 - [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
-- [ ] Consider JSON or SQLite metadata instead of pickle for safer inspectability.
+- [ ] Consider SQLite metadata storage only after dashboard, queryability, or multi-project requirements become real.
 - [ ] Add dashboard-ready retrieval metadata notes for future UI work.
 
 ## Security & Reliability
@@ -177,3 +191,4 @@
 - Do not require private secrets in public CI.
 - Do not add complex infrastructure before the local-first backend is clean and tested.
 - Do not break existing CLI workflows while adding backend APIs.
+- Do not migrate retrieval metadata storage before documenting and testing a safe transition path.
