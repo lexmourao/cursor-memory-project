@@ -182,12 +182,22 @@
 - [x] Restore public CI compatibility after the service refactor.
 - [x] Keep the FastAPI summarization API intact.
 
+### Slice 3C — Summarization CLI Compatibility Tests
+
+- [x] Add `tests/test_cli_summarize_chat.py`.
+- [x] Test CLI file input behavior.
+- [x] Test CLI manual stdin behavior.
+- [x] Test empty stdin handling.
+- [x] Test `--no-embed` behavior.
+- [x] Test isolated `activeContext.md` writing.
+- [x] Test backward-compatible `call_openai_summarize()` availability.
+- [x] Keep public CI green.
+
 ## Next
 
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
-- [ ] Decide whether to add dedicated CLI compatibility tests for `scripts/summarize_chat.py`.
 
 ## Retrieval & Memory Improvements
 
@@ -211,7 +221,7 @@
 - [x] Refactor `scripts/summarize_chat.py` to reuse `SummarizationService` for active context writing and optional embedding.
 - [x] Preserve backward-compatible `call_openai_summarize()` for existing tests and monkeypatches.
 - [x] Restore CI compatibility after the summarization CLI refactor.
-- [ ] Add dedicated CLI compatibility tests for `scripts/summarize_chat.py`.
+- [x] Add dedicated CLI compatibility tests for `scripts/summarize_chat.py`.
 - [ ] Add additional service-level summarization tests if summarization behavior expands.
 
 ## Security & Reliability
