@@ -13,6 +13,70 @@ import scripts.retrieve_context as retrieve_context
 client = TestClient(app)
 
 
+def test_retrieval_status_endpoint_reports_not_ready_for_missing_index(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Retrieval status should report not ready when index and metadata are missing."""
+    monkeypatch.setattr(retrieve_context, "INDEX_FILE", tmp_path / "missing.faiss")
+    monkeypatch.setattr(retrieve_context, "META_FILE", tmp_path / "missing_meta.pkl")
+    monkeypatch.setattr(retrieve_context, "META_JSON_FILE", tmp_path / "missing_meta.json")
+
+    response = client.get("/retrieval/status")
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["index_exists"] is False
+    assert payload["metadata_exists"] is False
+    assert payload["json_export_exists"] is False
+    assert payload["index_vector_count"] == 0
+    assert payload["metadata_record_count"] == 0
+    assert payload["json_record_count"] == 0
+    assert payload["ready"] is False
+
+
+def test_retrieval_status_endpoint_reports_ready_after_rebuild(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Retrieval status should report ready when index and metadata are populated."""
+    memory_bank = tmp_path / "memory-bank"
+    memory_bank.mkdir()
+
+    memory_file = memory_bank / "projectbrief.md"
+    memory_file.write_text(
+        "Project vision: build a local-first Cursor memory backend.\n\n"
+        "Architecture note: FastAPI exposes memory and retrieval endpoints.",
+        encoding="utf-8",
+    )
+
+    index_file = tmp_path / "test.faiss"
+    meta_file = tmp_path / "test_meta.pkl"
+    json_file = tmp_path / "test_meta.json"
+
+    monkeypatch.setattr(retrieve_context, "MEMORY_BANK_DIR", memory_bank)
+    monkeypatch.setattr(retrieve_context, "INDEX_FILE", index_file)
+    monkeypatch.setattr(retrieve_context, "META_FILE", meta_file)
+    monkeypatch.setattr(retrieve_context, "META_JSON_FILE", json_file)
+
+    retrieve_context.rebuild_index()
+    retrieve_context.export_metadata_json()
+
+    response = client.get("/retrieval/status")
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["index_exists"] is True
+    assert payload["metadata_exists"] is True
+    assert payload["json_export_exists"] is True
+    assert payload["index_vector_count"] == 2
+    assert payload["metadata_record_count"] == 2
+    assert payload["json_record_count"] == 2
+    assert payload["ready"] is True
+
+
 def test_retrieval_query_endpoint_returns_response_shape() -> None:
     """Retrieval endpoint should return the query and a results list."""
     response = client.post(
