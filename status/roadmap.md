@@ -150,27 +150,37 @@
 - [x] Update `docs/BACKEND_DESIGN.md`.
 - [x] Update `status/roadmap.md`.
 
+### Slice 3 — Summarization API
+
+- [x] Add `app/models/summarization.py`.
+- [x] Add `SummarizationRequest`.
+- [x] Add `SummarizationResponse`.
+- [x] Add `app/services/summarization_service.py`.
+- [x] Add manual summarization mode.
+- [x] Add fallback summarization mode.
+- [x] Add active context writing.
+- [x] Add optional embedding behavior.
+- [x] Add `app/api/routes_summarization.py`.
+- [x] Add `POST /summarization/summarize`.
+- [x] Register summarization router in `app/main.py`.
+- [x] Add `tests/test_api_summarization.py`.
+- [x] Test manual mode.
+- [x] Test fallback mode.
+- [x] Test empty text validation.
+- [x] Isolate active context writing in tests.
+- [x] Keep existing `scripts/summarize_chat.py` workflow intact.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `status/roadmap.md`.
+
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
+- [ ] Update README after summarization API is green.
+- [ ] Update demo workflow after summarization API is green.
+- [ ] Decide whether to refactor `scripts/summarize_chat.py` to call `SummarizationService`.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
-
-## Next Backend Slice — Summarization Service
-
-- [ ] Add `app/models/summarization.py`.
-- [ ] Add `app/services/summarization_service.py`.
-- [ ] Add `app/api/routes_summarization.py`.
-- [ ] Register summarization router in `app/main.py`.
-- [ ] Add `tests/test_api_summarization.py`.
-- [ ] Preserve existing `scripts/summarize_chat.py` CLI workflow.
-- [ ] Support manual/fallback summarization mode.
-- [ ] Document summarization API behavior after implementation.
-- [ ] Update README after summarization API is green.
-- [ ] Update demo workflow after summarization API is green.
-- [ ] Update backend design after summarization API is green.
-- [ ] Update roadmap after summarization API is green.
 
 ## Retrieval & Memory Improvements
 
@@ -183,6 +193,17 @@
 - [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
 - [ ] Consider SQLite metadata storage only after dashboard, queryability, or multi-project requirements become real.
 - [ ] Add dashboard-ready retrieval metadata notes for future UI work.
+
+## Summarization Improvements
+
+- [x] Add summarization API models.
+- [x] Add summarization service.
+- [x] Add summarization route.
+- [x] Add summarization API tests.
+- [x] Preserve existing `scripts/summarize_chat.py` CLI workflow.
+- [ ] Decide whether to refactor `scripts/summarize_chat.py` to call `SummarizationService`.
+- [ ] Add service-level summarization tests if the script is refactored.
+- [ ] Add CLI compatibility tests if the script is refactored.
 
 ## Security & Reliability
 
