@@ -2,6 +2,8 @@
 
 from pydantic import BaseModel, Field
 
+from app.models.chunk import RetrievedChunk
+
 
 class RetrievalRequest(BaseModel):
     """Request body for retrieval queries."""
@@ -10,13 +12,8 @@ class RetrievalRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=20)
 
 
-class RetrievalResult(BaseModel):
+class RetrievalResult(RetrievedChunk):
     """Single retrieval result returned by the retrieval API."""
-
-    score: float
-    source: str
-    chunk_idx: int
-    text: str
 
 
 class RetrievalResponse(BaseModel):
