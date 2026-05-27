@@ -8,7 +8,7 @@
 
 The Cursor Memory Project provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
 
-The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, and operational boundaries.
+The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, readiness/status reporting, and operational boundaries.
 
 The goal is not to turn this repository into a full production SaaS platform. The goal is to show how a local AI-assisted development memory system can evolve toward production-grade backend architecture while remaining useful as a developer tool.
 
@@ -51,6 +51,7 @@ GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+GET /retrieval/status
 POST /retrieval/query
 ```
 
@@ -69,12 +70,14 @@ The backend now has:
 - typed memory response models
 - formal chunk metadata models
 - typed retrieval request and response models
+- typed retrieval status response model
 - centralized local-first configuration
 - reusable memory service
 - reusable retrieval service
 - route modules for health, memory, and retrieval
 - Prometheus-compatible metrics endpoint
 - metadata-aware retrieval responses with source file and chunk index
+- retrieval status endpoint for index and metadata readiness
 - retrieval reliability coverage for missing and empty indexes
 - integration-style retrieval coverage after rebuilding a temporary index
 - JSON metadata export for inspectability while preserving pickle runtime compatibility
@@ -89,6 +92,7 @@ The backend layer should provide:
 
 - a clean API for memory access
 - retrieval query endpoints
+- retrieval status/readiness endpoint
 - health and readiness endpoints
 - metrics endpoint
 - typed request and response models
@@ -107,11 +111,13 @@ The implemented backend slices currently cover:
 - metrics
 - typed response models
 - typed retrieval request/response models
+- typed retrieval status model
 - formal chunk metadata schema
 - retrieval metadata JSON export
 - configuration
 - service separation
 - retrieval API route
+- retrieval status route
 - retrieval metadata traceability
 - missing-index reliability behavior
 - empty-index reliability behavior
@@ -322,6 +328,51 @@ Purpose:
 
 ---
 
+### Retrieval Status
+
+```text
+GET /retrieval/status
+```
+
+Status:
+
+```text
+Implemented
+```
+
+Purpose:
+
+- report retrieval index readiness
+- report whether FAISS index, pickle metadata, and JSON metadata export exist
+- report vector and metadata record counts
+- expose a conservative `ready` boolean for operational inspection
+- support debugging before querying retrieval
+
+Current response shape:
+
+```json
+{
+  "index_exists": true,
+  "metadata_exists": true,
+  "json_export_exists": true,
+  "index_vector_count": 2,
+  "metadata_record_count": 2,
+  "json_record_count": 2,
+  "ready": true
+}
+```
+
+Readiness behavior:
+
+- `ready` is true only when the FAISS index exists
+- pickle metadata exists
+- index vector count is greater than zero
+- metadata record count is greater than zero
+- index vector count matches metadata record count
+- JSON export is reported but not required for runtime readiness
+
+---
+
 ### Retrieval Query
 
 ```text
@@ -439,6 +490,16 @@ class RetrievalResult(RetrievedChunk):
 class RetrievalResponse(BaseModel):
     query: str
     results: list[RetrievalResult]
+
+
+class RetrievalStatusResponse(BaseModel):
+    index_exists: bool
+    metadata_exists: bool
+    json_export_exists: bool
+    index_vector_count: int
+    metadata_record_count: int
+    json_record_count: int
+    ready: bool
 ```
 
 Typed contracts make the API easier to test, document, and evolve.
@@ -500,11 +561,47 @@ Responsibilities:
 - return typed retrieval result models
 - expose source filename and chunk index in API results
 - reuse the formal chunk metadata schema through `RetrievedChunk`
+- report retrieval index and metadata readiness through `status()`
 - support missing and empty retrieval index behavior without API crashes
 - support rebuilt index retrieval behavior
 - support the backend retrieval route without breaking the CLI workflow
 
 Current implementation intentionally reuses the existing retrieval script instead of rewriting the retrieval system. This keeps the CLI workflow working while exposing retrieval through the backend API.
+
+### Retrieval Status
+
+Status:
+
+```text
+Implemented
+```
+
+The retrieval service now exposes:
+
+```text
+status()
+```
+
+This returns:
+
+```text
+index_exists
+metadata_exists
+json_export_exists
+index_vector_count
+metadata_record_count
+json_record_count
+ready
+```
+
+The status endpoint is useful for:
+
+- operational inspection
+- debugging retrieval setup
+- confirming whether index rebuild has happened
+- confirming whether metadata exists
+- checking whether FAISS vector count and metadata record count match
+- future dashboard/readiness workflows
 
 ### Chunk Metadata Schema
 
@@ -677,6 +774,12 @@ The retrieval API now has explicit test coverage for:
 - JSON metadata export source filename
 - JSON metadata export chunk index
 - JSON metadata export text content
+- retrieval status missing-state response
+- retrieval status ready-state response after rebuild and JSON export
+- retrieval status vector count
+- retrieval status metadata record count
+- retrieval status JSON record count
+- retrieval status readiness boolean
 
 The API returns empty results safely when retrieval storage is not ready and returns indexed results when the index is rebuilt with valid memory-bank content.
 
@@ -756,6 +859,7 @@ Current safety behavior:
 - retrieval API returns source filename and chunk index for traceability
 - retrieval metadata now has a reusable typed schema
 - retrieval API handles missing and empty index states safely
+- retrieval status endpoint reports readiness without requiring JSON export for runtime readiness
 - retrieval rebuild test uses a temporary memory-bank and temporary FAISS files to avoid polluting real starter memory
 - JSON metadata export is inspectable and generated from runtime pickle metadata
 - public CI remains secret-free
@@ -797,6 +901,14 @@ Current backend tests cover:
 - `GET /memory/{record_id}`
 - single record retrieval
 - 404 behavior for missing memory record
+- `GET /retrieval/status`
+- retrieval status missing-state response
+- retrieval status ready-state response after rebuild
+- retrieval status JSON export existence field
+- retrieval status index vector count
+- retrieval status metadata record count
+- retrieval status JSON record count
+- retrieval status readiness boolean
 - `POST /retrieval/query`
 - retrieval response shape
 - retrieval metadata fields when results are returned
@@ -874,14 +986,18 @@ Step 21: retrieval model updated to reuse chunk schema
 Step 22: retrieval metadata storage ADR added
 Step 23: JSON metadata export added
 Step 24: JSON metadata export test added
+Step 25: generated file expectations documented
+Step 26: retrieval status response model added
+Step 27: retrieval status service logic added
+Step 28: retrieval status route added
+Step 29: retrieval status tests added
 ```
 
 Next:
 
 ```text
-Step 25: update roadmap to reflect JSON metadata export
-Step 26: document generated metadata file expectations
-Step 27: extract summarization service
+Step 30: update roadmap to reflect retrieval status endpoint
+Step 31: extract summarization service
 ```
 
 ---
@@ -906,6 +1022,7 @@ This backend design demonstrates:
 - integration-style retrieval verification after index rebuild
 - explicit metadata storage decision-making through ADRs
 - inspectable metadata export without breaking runtime compatibility
+- operational retrieval readiness reporting
 
 The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, and extensible.
 
@@ -922,6 +1039,8 @@ The retrieval-after-rebuild test strengthens the system by proving the API can r
 The formal chunk metadata schema strengthens the system by making retrieval metadata reusable, typed, and ready for future storage, inspection, and dashboard layers.
 
 The JSON metadata export strengthens the system by giving reviewers and future dashboard workflows an inspectable metadata artifact while preserving pickle as the stable internal runtime format for FAISS compatibility.
+
+The retrieval status endpoint strengthens the system by giving developers and reviewers a clear operational view of whether retrieval storage is present, populated, aligned, and ready.
 
 ---
 
@@ -1006,6 +1125,25 @@ The JSON metadata export strengthens the system by giving reviewers and future d
 - [x] Validate JSON record count
 - [x] Validate JSON exported record fields
 
+### Completed Generated File Documentation
+
+- [x] Update `.gitignore` for generated retrieval metadata exports
+- [x] Add `docs/GENERATED_FILES.md`
+- [x] Document generated retrieval files
+- [x] Document version-control expectations
+- [x] Document secrets, logs, backups, caches, and temporary files
+
+### Completed Retrieval Status Endpoint
+
+- [x] Add `RetrievalStatusResponse`
+- [x] Add retrieval service `status()`
+- [x] Add index, metadata, and JSON export existence checks
+- [x] Add vector, metadata, and JSON record counts
+- [x] Add conservative readiness calculation
+- [x] Add `GET /retrieval/status`
+- [x] Add retrieval status API tests
+- [x] Keep retrieval query behavior unchanged
+
 ### Next Backend Slice: Summarization Service
 
 - [ ] Add `app/models/summarization.py`
@@ -1021,7 +1159,7 @@ The JSON metadata export strengthens the system by giving reviewers and future d
 - [ ] Add structured logging module
 - [ ] Add optional local API token security
 - [ ] Add configurable CORS
-- [ ] Add readiness endpoint
+- [ ] Add readiness endpoint if broader service readiness is needed beyond retrieval status
 - [ ] Add stronger integration tests
 - [ ] Add local backend run instructions
 - [ ] Consider converting `scripts/run_mcp_server.py` into a wrapper around `app.main`
@@ -1046,6 +1184,8 @@ template memory system
 → formal chunk metadata schema
 → metadata storage ADR
 → JSON metadata export
+→ generated file expectations
+→ retrieval status endpoint
 → summarization API
 → optional production hardening
 ```
@@ -1066,4 +1206,21 @@ The retrieval metadata storage ADR is accepted and green.
 
 The JSON metadata export is implemented, tested, documented, and green.
 
-The next meaningful engineering step is to update the roadmap, document generated metadata file expectations, then extract summarization into the backend service layer while preserving the existing CLI workflow.
+The generated file expectations are documented and green.
+
+The retrieval status endpoint is implemented, tested, documented, and green.
+
+The next meaningful engineering step is to update the roadmap, then extract summarization into the backend service layer while preserving the existing CLI workflow.
+```
+
+## COMMIT MESSAGE
+
+```text
+docs: document retrieval status endpoint
+```
+
+## EXTENDED DESCRIPTION
+
+```text
+Update backend design documentation to reflect GET /retrieval/status, the RetrievalStatusResponse model, retrieval service status logic, readiness calculation, status response fields, test coverage, and operational retrieval readiness reporting.
+```
