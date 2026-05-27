@@ -1,13 +1,14 @@
 # Cursor Memory Project 📚🤖
 
 ![CI](https://github.com/lexmourao/cursor-memory-project/actions/workflows/ci.yml/badge.svg)
-![CodeQL](https://github.com/lexmourao/cursor-memory-project/actions/workflows/codeql.yml/badge.svg)
 
-Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, documentation, automated logging, testing, and QA practices.
+Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, FastAPI backend structure, documentation, automated logging, testing, and QA practices.
 
 Welcome to the **Cursor Memory Project**.
 
-The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, and auditable development practices.
+The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, and auditable development practices.
+
+---
 
 ## What This Demonstrates
 
@@ -17,23 +18,29 @@ This repository demonstrates my approach to AI-assisted systems development:
 - Persistent project memory and rolling context for long-running AI projects
 - Retrieval and context-loading patterns for LLM-assisted work
 - MCP server structure for exposing project memory to an AI coding environment
+- Tested FastAPI backend slice for memory access, health checks, and metrics
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - CI practices using linting, type checking, dependency/security checks, and smoke tests
+- GitHub code scanning / CodeQL through repository security configuration
 - Documentation-first project structure for auditable and reproducible AI workflows
 - Human-in-the-loop fallback modes when API keys or external services are unavailable
 - Separation between public smoke tests and environment-specific integration tests
+
+---
 
 ## Why This Matters for LLM & Agent Systems
 
 LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, workflow documentation, and repeatable development practices.
 
-This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, and implementation tasks.
+This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, backend APIs, and implementation tasks.
 
-The repository is not intended to represent a complete production SaaS platform. It is a public technical artifact showing how I structure AI-assisted development infrastructure, retrieval patterns, project memory, CI/QA practices, and documentation workflows that can support larger LLM and agent-based systems.
+The repository is not intended to represent a complete production SaaS platform. It is a public technical artifact showing how I structure AI-assisted development infrastructure, retrieval patterns, project memory, backend evolution, CI/QA practices, and documentation workflows that can support larger LLM and agent-based systems.
+
+---
 
 ## Core System Concepts
 
-The system is organized around five core ideas:
+The system is organized around six core ideas:
 
 1. **Persistent project memory**  
    A structured `memory-bank` stores active context, summaries, and project knowledge that can be reused across sessions.
@@ -44,11 +51,78 @@ The system is organized around five core ideas:
 3. **MCP server structure**  
    A local MCP-oriented server pattern exposes project memory to Cursor or other AI-assisted development environments.
 
-4. **Documentation-first workflow**  
+4. **FastAPI backend slice**  
+   The `app/` package now exposes tested API endpoints for health, memory access, single memory-record retrieval, and Prometheus-compatible metrics.
+
+5. **Documentation-first workflow**  
    The repo includes docs, diary, status, logs, setup instructions, and project rules to make work auditable and easier to continue.
 
-5. **Quality and automation practices**  
-   CI, linting, type checking, smoke tests, dependency/security checks, and CodeQL help keep the public workflow maintainable.
+6. **Quality and automation practices**  
+   CI, linting, type checking, smoke tests, dependency/security checks, and GitHub code scanning help keep the public workflow maintainable.
+
+---
+
+## Implemented Backend Slice
+
+The first FastAPI backend slice is implemented, tested, and green.
+
+Implemented endpoints:
+
+```text
+GET /health
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+```
+
+Implemented backend files:
+
+```text
+app/
+  __init__.py
+  main.py
+  api/
+    __init__.py
+    routes_health.py
+    routes_memory.py
+  core/
+    __init__.py
+    config.py
+  models/
+    __init__.py
+    health.py
+    memory.py
+  services/
+    __init__.py
+    memory_service.py
+```
+
+Implemented API tests:
+
+```text
+tests/test_api_health.py
+tests/test_api_memory.py
+```
+
+This first backend slice demonstrates:
+
+- FastAPI application structure
+- typed Pydantic response models
+- local-first configuration
+- service-layer separation
+- route modules
+- memory-bank access through an API
+- missing-record 404 behavior
+- Prometheus-compatible metrics
+- tested backend behavior with FastAPI TestClient
+
+The next backend slice is planned for retrieval:
+
+```text
+POST /retrieval/query
+```
+
+---
 
 ## Memory-Bank Template Mode
 
@@ -62,9 +136,11 @@ See:
 memory-bank/README.md
 ```
 
+---
+
 ## Quickstart — Full Memory System
 
-These steps get the summarization, retrieval, and MCP server working locally. Cursor can automatically load memory via `.cursor-rules.md`.
+These steps get the summarization, retrieval, MCP server, and backend API working locally.
 
 1. Clone the repo and install dependencies:
 
@@ -81,13 +157,34 @@ cp env.template .env
 If `OPENAI_API_KEY` is present, automated summaries and embeddings can use OpenAI.  
 If it is absent, scripts fall back to manual or zero-cost modes.
 
-3. Start the MCP server:
+3. Start the FastAPI backend:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Then inspect:
+
+```text
+http://127.0.0.1:8000/health
+http://127.0.0.1:8000/memory
+http://127.0.0.1:8000/memory/README
+http://127.0.0.1:8000/metrics
+```
+
+4. Start the legacy/local MCP-style memory server if needed:
 
 ```bash
 python scripts/run_mcp_server.py &
 ```
 
-4. Generate or update the rolling summary:
+Cursor can fetch:
+
+```text
+http://localhost:7331/memory
+```
+
+5. Generate or update the rolling summary:
 
 ```bash
 python scripts/summarize_chat.py --chat-log path/to/chat.txt --max-lines 800
@@ -99,17 +196,19 @@ Manual mode:
 cat path/to/chat.txt | python scripts/summarize_chat.py --stdin --manual
 ```
 
-5. Build the retrieval index:
+6. Build the retrieval index:
 
 ```bash
 python scripts/retrieve_context.py rebuild
 ```
 
-6. Launch Cursor in the repo. On first chat turn, it can fetch:
+7. Query memory through the CLI retrieval workflow:
 
-```text
-http://localhost:7331/memory
+```bash
+python scripts/retrieve_context.py query --text "What is the current project architecture?" --top-k 5
 ```
+
+---
 
 ## Running Tests
 
@@ -126,7 +225,16 @@ The public CI workflow runs:
 - `pip-audit --strict` for dependency/security checks
 - focused smoke tests for public workflow validation
 
+Backend API tests include:
+
+```text
+tests/test_api_health.py
+tests/test_api_memory.py
+```
+
 Some backup and end-to-end tests require environment-specific configuration such as `GPG_KEY_ID` for encrypted backups. These are intentionally separated from the public smoke-test workflow and should be run in a configured integration environment.
+
+---
 
 ## Environment Variables
 
@@ -138,6 +246,11 @@ The project reads the following variables. See `env.template`.
 | `OPENAI_API_KEY_FILE` | Path inside container to a file containing the key when using Docker secrets. |
 | `GPG_KEY_ID` | Required for encrypted backup workflows. |
 | `GPG_KEY_ID_FILE` | Path to a file containing the recipient key ID for encrypted backups. |
+| `SERVICE_NAME` | Optional backend service name override. |
+| `RUNTIME_MODE` | Optional backend runtime mode, defaults to `local`. |
+| `MEMORY_BANK_DIR` | Optional path to memory-bank directory, defaults to `memory-bank`. |
+| `HOST` | Optional backend host setting, defaults to `127.0.0.1`. |
+| `PORT` | Optional backend port setting, defaults to `7331`. |
 
 Load them with:
 
@@ -147,37 +260,65 @@ source .env
 
 or your preferred shell mechanism.
 
+---
+
 ## High-Level Folder Overview
 
 | Path | Purpose |
 |---|---|
+| `app/` | FastAPI backend package for health, memory access, metrics, and future retrieval APIs |
 | `cursor_setup_instructions/` | Canonical setup guide and Cursor workflow instructions |
-| `docs/` | Architecture, security, deployment, and technical documentation |
+| `docs/` | Architecture, backend design, security, deployment, and technical documentation |
 | `memory-bank/` | Starter memory template for persistent context, active memory, and project knowledge |
 | `scripts/` | Automation, summarization, retrieval, backups, logging, and status scripts |
-| `tests/` | Unit, smoke, and validation tests |
+| `tests/` | Unit, smoke, validation, and backend API tests |
 | `status/` | Current status, checklists, and roadmap |
 | `diary/` | Project diary and development log |
 | `logs/solutions/` | Error logs, fixes, and implementation notes |
 | `nginx/` | Web/server configuration examples |
-| `.github/` | CI, CodeQL, Dependabot, and workflow automation |
+| `.github/` | CI, Dependabot, and workflow automation |
 | `Dockerfile` | Container setup |
 | `docker-compose.yml` | Local orchestration setup |
 | `Makefile` | Common developer commands |
 | `PROJECT_RULES.md` | Project operating rules and development constraints |
 
+---
+
 ## Technical Review Notes
 
-This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, documentation discipline, local automation, and CI/QA practices.
+This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, documentation discipline, local automation, backend evolution, and CI/QA practices.
+
+Recommended reviewer path:
+
+```text
+README.md
+memory-bank/README.md
+docs/ARCHITECTURE.md
+docs/BACKEND_DESIGN.md
+docs/DEMO_WORKFLOW.md
+docs/TECHNICAL_REVIEW.md
+app/main.py
+app/services/memory_service.py
+app/api/routes_health.py
+app/api/routes_memory.py
+tests/test_api_health.py
+tests/test_api_memory.py
+scripts/retrieve_context.py
+scripts/summarize_chat.py
+.github/workflows/ci.yml
+status/roadmap.md
+```
 
 Current scope:
 
 - Local-first memory and retrieval workflow
 - Cursor-oriented AI-assisted development setup
 - MCP server structure for exposing memory context
+- FastAPI backend slice for memory access, health, and metrics
 - Python automation scripts
 - Public CI smoke tests
 - Documentation and audit-oriented folder structure
+- GitHub code scanning through repository security configuration
 
 Not yet included in this public version:
 
@@ -188,11 +329,15 @@ Not yet included in this public version:
 - External managed vector database
 - Production-grade user permissions
 - Hosted UI or SaaS frontend
+- Retrieval API endpoint
+
+---
 
 ## Production Evolution Roadmap
 
 A production version of this architecture could evolve toward:
 
+- retrieval API endpoint: `POST /retrieval/query`
 - managed vector database integration such as Qdrant, Pinecone, or PgVector
 - authenticated API layer for memory access
 - user/project isolation
@@ -204,18 +349,42 @@ A production version of this architecture could evolve toward:
 - frontend dashboard for memory, logs, and retrieval inspection
 - stronger integration tests with configured secrets and encrypted backup workflows
 
+---
+
 ## Security and Reliability Considerations
 
 This repository uses environment variables and file-based secrets patterns to avoid hardcoding sensitive credentials. Public CI avoids requiring private secrets for smoke-test execution.
 
 The repo includes security and quality practices such as:
 
-- CodeQL checks
+- GitHub code scanning / CodeQL through repository security configuration
 - dependency/security auditing with `pip-audit`
 - type checking with `mypy`
 - linting with `ruff`
 - branch protection
 - documented fallback behavior when external APIs are unavailable
+- explicit separation between public CI and secret-dependent integration workflows
+
+The memory API exposes only allowed memory-bank markdown files and does not expose generated FAISS or pickle files as memory records.
+
+---
+
+## Pending Non-Blocking Cleanup
+
+Some GitHub Actions runs may show a warning that certain actions are running on Node.js 20 and may need future updates.
+
+This is non-blocking because workflows are passing successfully.
+
+Future cleanup may include reviewing stable action versions such as:
+
+```text
+actions/checkout@v4 → actions/checkout@v5
+actions/setup-python@v5 → actions/setup-python@v6
+```
+
+This should be done later, after the backend documentation and first backend slices are stable.
+
+---
 
 ## Relationship to AI Agents and LLM Systems
 
@@ -225,15 +394,20 @@ The same principles can support broader LLM and agent systems:
 
 - persistent memory
 - retrieval-augmented context
+- local memory APIs
 - tool-access patterns
 - human-in-the-loop fallbacks
 - system documentation
 - workflow traceability
 - separation between local development, public CI, and production integration
 
+---
+
 ## Status
 
-This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, documentation, and QA practices.
+This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, documentation, backend structure, and QA practices.
+
+The first FastAPI backend slice is implemented, tested, documented, and green. The next meaningful engineering step is the retrieval API slice.
 
 ---
 
