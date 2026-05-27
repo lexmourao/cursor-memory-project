@@ -1,6 +1,6 @@
 # Backend Design – Cursor Memory Project
 
-> This document describes the backend architecture and evolution path for the Cursor Memory Project as a local-first memory and retrieval service for Cursor, ChatGPT, Codex, and AI-assisted development workflows.
+> This document describes the backend architecture and evolution path for the Cursor Memory Project as a local-first memory, retrieval, summarization, and security-aware backend service for Cursor, ChatGPT, Codex, and AI-assisted development workflows.
 
 ---
 
@@ -8,7 +8,7 @@
 
 The Cursor Memory Project provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
 
-The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, readiness/status reporting, summarization workflows, and operational boundaries.
+The backend layer has evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, readiness/status reporting, summarization workflows, optional local API token protection, and operational boundaries.
 
 The goal is not to turn this repository into a full production SaaS platform. The goal is to show how a local AI-assisted development memory system can evolve toward production-grade backend architecture while remaining useful as a developer tool.
 
@@ -16,7 +16,7 @@ The goal is not to turn this repository into a full production SaaS platform. Th
 
 ## 2. Current Backend Status
 
-The first, second, and summarization backend slices have been implemented and tested.
+The health/memory, retrieval, summarization, CLI compatibility, and local security backend slices have been implemented and tested.
 
 Implemented:
 
@@ -33,6 +33,7 @@ app/
   core/
     __init__.py
     config.py
+    security.py
   models/
     __init__.py
     chunk.py
@@ -59,6 +60,23 @@ POST /retrieval/query
 POST /summarization/summarize
 ```
 
+Protected when optional local API token mode is enabled:
+
+```text
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
+POST /retrieval/query
+POST /summarization/summarize
+```
+
+Intentionally public for local readiness checks:
+
+```text
+GET /health
+```
+
 Implemented tests:
 
 ```text
@@ -66,6 +84,8 @@ tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 ```
 
 The backend now has:
@@ -78,6 +98,8 @@ The backend now has:
 - typed retrieval status response model
 - typed summarization request and response models
 - centralized local-first configuration
+- optional local API token configuration
+- reusable local API token security helper
 - reusable memory service
 - reusable retrieval service
 - reusable summarization service
@@ -90,7 +112,8 @@ The backend now has:
 - JSON metadata export for inspectability while preserving pickle runtime compatibility
 - summarization endpoint with manual mode and fallback mode
 - isolated active context writing tests
-- API tests using FastAPI TestClient
+- CLI compatibility tests for `scripts/summarize_chat.py`
+- optional local API token security tests
 - green public CI for implemented backend slices
 
 ---
@@ -109,6 +132,7 @@ The backend layer should provide:
 - reusable metadata schemas
 - reusable service modules
 - centralized configuration
+- optional local API token protection
 - structured logging
 - local-first security defaults
 - testable business logic
@@ -126,6 +150,7 @@ The implemented backend slices currently cover:
 - formal chunk metadata schema
 - retrieval metadata JSON export
 - configuration
+- optional token security configuration
 - service separation
 - retrieval API route
 - retrieval status route
@@ -137,9 +162,11 @@ The implemented backend slices currently cover:
 - summarization manual mode
 - summarization fallback mode
 - active context writing
+- CLI compatibility for summarization
+- optional local API token behavior
 - API tests
 
-Future backend work should focus on preserving CLI compatibility, structured logging, local security hardening, and retrieval/summarization evaluation beyond smoke/integration coverage.
+Future backend work should focus on structured logging, configurable CORS, MCP/server security defaults, retrieval/summarization evaluation, backup/restore validation, and final reviewer polish.
 
 ---
 
@@ -178,6 +205,7 @@ app/
   core/
     __init__.py
     config.py
+    security.py
   models/
     __init__.py
     chunk.py
@@ -207,6 +235,7 @@ app/
     config.py
     logging.py
     security.py
+    cors.py
   models/
     chunk.py
     health.py
@@ -239,12 +268,19 @@ Status:
 Implemented
 ```
 
+Protection:
+
+```text
+Public by design
+```
+
 Purpose:
 
 - confirm service is running
 - confirm memory-bank directory is readable
 - confirm basic runtime configuration
 - return memory record count
+- remain available for local readiness checks even when optional token protection is enabled
 
 Current response shape:
 
@@ -270,6 +306,12 @@ Status:
 
 ```text
 Implemented
+```
+
+Protection:
+
+```text
+Protected when ENABLE_LOCAL_API_TOKEN=true
 ```
 
 Purpose:
@@ -308,6 +350,12 @@ Status:
 Implemented
 ```
 
+Protection:
+
+```text
+Protected when ENABLE_LOCAL_API_TOKEN=true
+```
+
 Purpose:
 
 - return one memory record by ID
@@ -338,11 +386,23 @@ Status:
 Implemented
 ```
 
+Protection:
+
+```text
+Protected when ENABLE_LOCAL_API_TOKEN=true
+```
+
 Purpose:
 
 - expose Prometheus-compatible metrics
 - support local monitoring
 - track request counts and service health indicators
+
+Security note:
+
+- `/metrics` remains open by default for local-first development.
+- When token protection is enabled, `/metrics` requires `Authorization: Bearer <LOCAL_API_TOKEN>`.
+- `/health` remains public for readiness checks.
 
 ---
 
@@ -356,6 +416,12 @@ Status:
 
 ```text
 Implemented
+```
+
+Protection:
+
+```text
+Protected when ENABLE_LOCAL_API_TOKEN=true
 ```
 
 Purpose:
@@ -401,6 +467,12 @@ Status:
 
 ```text
 Implemented
+```
+
+Protection:
+
+```text
+Protected when ENABLE_LOCAL_API_TOKEN=true
 ```
 
 Purpose:
@@ -472,6 +544,12 @@ Status:
 Implemented
 ```
 
+Protection:
+
+```text
+Protected when ENABLE_LOCAL_API_TOKEN=true
+```
+
 Purpose:
 
 - accept text to summarize
@@ -523,7 +601,89 @@ Operational behavior:
 
 ---
 
-## 7. Typed Models
+## 7. Optional Local API Token Protection
+
+Status:
+
+```text
+Implemented
+```
+
+The backend supports optional local API token protection for sensitive local routes.
+
+Configuration:
+
+```text
+ENABLE_LOCAL_API_TOKEN=false
+LOCAL_API_TOKEN=
+```
+
+Default behavior:
+
+```text
+Token protection disabled.
+Routes remain open for local-first development.
+```
+
+Enabled behavior:
+
+```text
+ENABLE_LOCAL_API_TOKEN=true
+LOCAL_API_TOKEN=<token>
+```
+
+Protected requests must include:
+
+```text
+Authorization: Bearer <LOCAL_API_TOKEN>
+```
+
+Protected routes:
+
+```text
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
+POST /retrieval/query
+POST /summarization/summarize
+```
+
+Public route:
+
+```text
+GET /health
+```
+
+Fail-closed behavior:
+
+- If `ENABLE_LOCAL_API_TOKEN=true` but `LOCAL_API_TOKEN` is missing, protected routes return a server error instead of silently allowing access.
+- Missing or invalid bearer tokens return `401 Unauthorized`.
+- Correct bearer tokens allow access to protected routes.
+- `GET /health` remains public for local readiness checks.
+
+Implemented files:
+
+```text
+app/core/config.py
+app/core/security.py
+app/api/routes_memory.py
+app/api/routes_retrieval.py
+app/api/routes_summarization.py
+app/main.py
+tests/test_api_security.py
+env.template
+```
+
+Security rationale:
+
+- The project is local-first, so token protection is disabled by default.
+- When users expose the backend outside trusted localhost usage, token protection can be enabled without changing route code.
+- The token is intentionally simple and local-scoped. It is not a replacement for production authentication, RBAC, TLS, or network controls.
+
+---
+
+## 8. Typed Models
 
 The backend uses typed models for API contracts and reusable metadata structures.
 
@@ -613,7 +773,7 @@ The summarization schema makes active context updates and fallback behavior expl
 
 ---
 
-## 8. Service Layer
+## 9. Service Layer
 
 The backend separates route handling from business logic.
 
@@ -667,6 +827,53 @@ Responsibilities:
 
 Current implementation intentionally reuses the existing retrieval script instead of rewriting the retrieval system. This keeps the CLI workflow working while exposing retrieval through the backend API.
 
+### Summarization Service
+
+Status:
+
+```text
+Implemented
+```
+
+Responsibilities:
+
+- summarize text through the backend API
+- support manual summary mode
+- support OpenAI-backed summarization when configured
+- use fallback summarization when OpenAI is unavailable or fails
+- write generated content to `memory-bank/activeContext.md`
+- optionally embed the summary through the existing retrieval workflow
+- return typed summarization response metadata
+- support CLI reuse through `scripts/summarize_chat.py`
+
+The summarization service is now reused by the CLI for active context writing and optional embedding while preserving backward-compatible `call_openai_summarize()` behavior for existing tests and scripts.
+
+### Security Helper
+
+Status:
+
+```text
+Implemented
+```
+
+The backend now includes:
+
+```text
+app/core/security.py
+```
+
+Responsibilities:
+
+- read local token settings through `get_settings()`
+- allow requests when token protection is disabled
+- require `Authorization: Bearer <LOCAL_API_TOKEN>` when token protection is enabled
+- return `401 Unauthorized` for missing or incorrect tokens
+- return a fail-closed server error when token protection is enabled but `LOCAL_API_TOKEN` is not configured
+
+---
+
+## 10. Retrieval Metadata and Storage
+
 ### Retrieval Status
 
 Status:
@@ -675,7 +882,7 @@ Status:
 Implemented
 ```
 
-The retrieval service now exposes:
+The retrieval service exposes:
 
 ```text
 status()
@@ -710,7 +917,7 @@ Status:
 Implemented
 ```
 
-The backend now includes:
+The backend includes:
 
 ```text
 app/models/chunk.py
@@ -751,7 +958,7 @@ Status:
 Implemented
 ```
 
-The retrieval script now supports:
+The retrieval script supports:
 
 ```text
 query_with_metadata()
@@ -803,7 +1010,7 @@ Current vector index remains:
 memory-bank/embeddings.faiss
 ```
 
-The project now also supports an inspectable JSON metadata export:
+The project also supports an inspectable JSON metadata export:
 
 ```text
 memory-bank/embeddings_meta.json
@@ -847,92 +1054,9 @@ Add JSON export for inspectability.
 Consider SQLite later for queryability and dashboards.
 ```
 
-### Summarization Service
-
-Status:
-
-```text
-Implemented
-```
-
-The backend now includes:
-
-```text
-app/services/summarization_service.py
-```
-
-Responsibilities:
-
-- summarize text through the backend API
-- support manual summary mode
-- support OpenAI-backed summarization when configured
-- use fallback summarization when OpenAI is unavailable or fails
-- write generated content to `memory-bank/activeContext.md`
-- optionally embed the summary through the existing retrieval workflow
-- return typed summarization response metadata
-
-Current implementation intentionally does not remove the existing `scripts/summarize_chat.py` CLI workflow. The backend service adds an API-facing summarization path while preserving the existing script-based workflow.
-
-### Retrieval Reliability
-
-Status:
-
-```text
-Implemented
-```
-
-The retrieval API now has explicit test coverage for:
-
-- missing index file
-- missing metadata file
-- empty FAISS index
-- validation errors
-- metadata fields when results are returned
-- rebuilt temporary index returning expected memory content
-- rebuilt temporary index preserving expected source filename
-- rebuilt temporary index preserving expected chunk index
-- rebuilt temporary index isolation from the real `memory-bank/`
-- JSON metadata export shape
-- JSON metadata export record count
-- JSON metadata export source pickle path
-- JSON metadata export FAISS index path
-- JSON metadata export source filename
-- JSON metadata export chunk index
-- JSON metadata export text content
-- retrieval status missing-state response
-- retrieval status ready-state response after rebuild and JSON export
-- retrieval status vector count
-- retrieval status metadata record count
-- retrieval status JSON record count
-- retrieval status readiness boolean
-
-The API returns empty results safely when retrieval storage is not ready and returns indexed results when the index is rebuilt with valid memory-bank content.
-
-### Summarization Reliability
-
-Status:
-
-```text
-Implemented
-```
-
-The summarization API now has explicit test coverage for:
-
-- manual summarization mode
-- fallback summarization mode when OpenAI is unavailable
-- active context writing through an isolated temporary path
-- disabled embedding behavior for safe tests
-- response fields
-- word count
-- model field
-- fallback reporting
-- empty text validation
-
-The tests avoid polluting the real `memory-bank/activeContext.md` by monkeypatching the active context path.
-
 ---
 
-## 9. Configuration
+## 11. Configuration
 
 Configuration is centralized in:
 
@@ -948,12 +1072,16 @@ RUNTIME_MODE=local
 MEMORY_BANK_DIR=memory-bank
 HOST=127.0.0.1
 PORT=7331
+ENABLE_LOCAL_API_TOKEN=false
+LOCAL_API_TOKEN=
 ```
 
 Defaults favor local-first security:
 
 - bind to `127.0.0.1` by default
 - require explicit configuration for external exposure
+- keep token protection disabled by default for local-first development
+- allow token protection to be enabled when exposing protected routes outside trusted localhost usage
 - avoid requiring private secrets in public CI
 - keep `env.template` safe to commit
 
@@ -962,14 +1090,13 @@ Future configuration may include:
 ```text
 EMBED_MODEL=text-embedding-3-small
 EMBED_DIM=1536
-OPENAI_API_KEY=
 CORS_ORIGINS=http://localhost
-LOCAL_API_TOKEN=
+ENABLE_CORS=false
 ```
 
 ---
 
-## 10. Security Posture
+## 12. Security Posture
 
 The backend is local-first.
 
@@ -981,6 +1108,7 @@ Default assumptions:
 - `env.template` is safe to commit
 - public CI should not require private secrets
 - Nginx is a starter reverse-proxy example, not a fully hardened production gateway
+- optional local API token protection is useful for non-localhost usage but is not full production authentication
 
 Current safety behavior:
 
@@ -988,30 +1116,34 @@ Current safety behavior:
 - generated FAISS and pickle files are not exposed as memory records
 - retrieval API uses typed request validation for query and `top_k`
 - retrieval API returns source filename and chunk index for traceability
-- retrieval metadata now has a reusable typed schema
+- retrieval metadata has a reusable typed schema
 - retrieval API handles missing and empty index states safely
 - retrieval status endpoint reports readiness without requiring JSON export for runtime readiness
 - retrieval rebuild test uses a temporary memory-bank and temporary FAISS files to avoid polluting real starter memory
 - JSON metadata export is inspectable and generated from runtime pickle metadata
 - summarization tests isolate active context writes from the real memory-bank
 - summarization can disable embedding for safer test and API workflows
+- CLI summarization compatibility is tested
+- optional local API token protects memory, retrieval, summarization, and metrics routes when enabled
+- `/health` remains public for local readiness checks
 - public CI remains secret-free
 - dependency checks remain active
 - GitHub code scanning remains enabled through the repository security configuration
 
 Future hardening may include:
 
-- optional bearer token for non-localhost usage
 - configurable CORS
 - rate limiting
 - structured audit logs
+- request size limits
 - managed secret storage
 - encrypted storage
 - workspace-level access boundaries
+- production authentication and authorization if the project becomes externally hosted
 
 ---
 
-## 11. Testing Strategy
+## 13. Testing Strategy
 
 ### Implemented Tests
 
@@ -1020,6 +1152,8 @@ tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 ```
 
 Current backend tests cover:
@@ -1035,6 +1169,9 @@ Current backend tests cover:
 - `GET /memory/{record_id}`
 - single record retrieval
 - 404 behavior for missing memory record
+- `GET /metrics`
+- metrics response
+- metrics token protection
 - `GET /retrieval/status`
 - retrieval status missing-state response
 - retrieval status ready-state response after rebuild
@@ -1070,22 +1207,38 @@ Current backend tests cover:
 - summarization disabled embedding behavior
 - summarization response shape
 - summarization empty text validation
+- CLI file input behavior for `scripts/summarize_chat.py`
+- CLI manual stdin behavior
+- CLI empty stdin handling
+- CLI `--no-embed` behavior
+- CLI isolated `activeContext.md` writing
+- backward-compatible `call_openai_summarize()` availability
+- optional token default-open behavior
+- optional token missing-token rejection
+- optional token wrong-token rejection
+- optional token correct-token access
+- optional token fail-closed misconfiguration behavior
+- protected retrieval and summarization routes
+- protected metrics route
+- public health route behavior
 - empty retrieval query validation
 - invalid low `top_k` validation
 - invalid high `top_k` validation
 
 ### Planned Tests
 
-Future tests should cover:
+Future tests may cover:
 
-- fallback mode without OpenAI key in additional service-level tests
-- additional retrieval evaluation metrics
-- CLI-to-service summarization compatibility if `scripts/summarize_chat.py` is refactored
-- configured API token behavior if enabled later
+- configurable CORS behavior
+- structured logging behavior
+- retrieval evaluation metrics
+- backup/restore validation
+- MCP server exposure defaults
+- additional service-level summarization behavior if summarization expands
 
 ---
 
-## 12. Migration Path from Current Scripts
+## 14. Migration Path from Current Scripts
 
 Current scripts remain valuable.
 
@@ -1093,10 +1246,11 @@ Planned evolution:
 
 1. Keep scripts working as CLI tools.
 2. Move reusable logic into `app/services/`.
-3. Update scripts to call service functions.
-4. Add API routes that call the same services.
-5. Add tests for both CLI and API behavior.
-6. Keep public CI focused and secret-free.
+3. Update scripts to call service functions where safe.
+4. Preserve backward-compatible helpers when tests or external scripts rely on them.
+5. Add API routes that call the same services.
+6. Add tests for both CLI and API behavior.
+7. Keep public CI focused and secret-free.
 
 This avoids a risky rewrite and preserves the working current system.
 
@@ -1137,19 +1291,30 @@ Step 31: summarization service added
 Step 32: summarization route added
 Step 33: summarization router registered in app
 Step 34: summarization API tests added
+Step 35: backend design, roadmap, README, and demo workflow updated for summarization
+Step 36: summarize_chat.py refactored to reuse SummarizationService
+Step 37: call_openai_summarize() compatibility restored
+Step 38: CLI compatibility tests added
+Step 39: SECURITY.md expanded for local-first security and exposure assumptions
+Step 40: optional local API token settings added
+Step 41: local API token security helper added
+Step 42: memory, retrieval, summarization, and metrics routes protected when token mode is enabled
+Step 43: API security tests added and expanded
+Step 44: env.template and README updated for local token usage
 ```
 
 Next:
 
 ```text
-Step 35: update roadmap to reflect summarization API
-Step 36: update README and demo workflow after summarization API is green
-Step 37: decide whether to refactor scripts/summarize_chat.py to call SummarizationService
+Step 45: update roadmap for optional local API token implementation
+Step 46: update demo workflow with optional token demo
+Step 47: consider configurable CORS settings
+Step 48: add structured logging
 ```
 
 ---
 
-## 13. Senior Engineering Rationale
+## 15. Senior Engineering Rationale
 
 This backend design demonstrates:
 
@@ -1160,6 +1325,7 @@ This backend design demonstrates:
 - typed backend models
 - reusable metadata schema design
 - reusable summarization service design
+- optional local API token protection
 - testability
 - operational awareness
 - clear public CI vs configured integration separation
@@ -1172,8 +1338,11 @@ This backend design demonstrates:
 - inspectable metadata export without breaking runtime compatibility
 - operational retrieval readiness reporting
 - summarization API behavior with manual and fallback modes
+- backward-compatible CLI refactoring
+- local security documentation and implementation
+- protected sensitive local routes while preserving public readiness checks
 
-The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, and extensible.
+The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, secure-by-configuration, and extensible.
 
 The first backend slice strengthened the senior-backend signal by moving the repository from documentation and scripts into a tested FastAPI service structure without breaking the existing workflow.
 
@@ -1193,9 +1362,13 @@ The retrieval status endpoint strengthens the system by giving developers and re
 
 The summarization API strengthens the system by exposing active context summarization through typed backend contracts while preserving fallback behavior and avoiding real memory-bank pollution in tests.
 
+The CLI compatibility tests strengthen the system by protecting the existing script workflow after refactoring toward shared service logic.
+
+The optional local API token slice strengthens the security posture by documenting and implementing a lightweight local protection mechanism for sensitive endpoints without breaking default local development.
+
 ---
 
-## 14. Implementation Checklist
+## 16. Implementation Checklist
 
 ### Completed First Backend Slice: Health, Memory, Metrics
 
@@ -1315,15 +1488,46 @@ The summarization API strengthens the system by exposing active context summariz
 - [x] Isolate active context writing in tests
 - [x] Keep existing `scripts/summarize_chat.py` workflow intact
 
+### Completed Summarization CLI Compatibility Slice
+
+- [x] Refactor `scripts/summarize_chat.py` to reuse `SummarizationService`
+- [x] Preserve `call_openai_summarize()` compatibility
+- [x] Add `tests/test_cli_summarize_chat.py`
+- [x] Test file input
+- [x] Test manual stdin
+- [x] Test empty stdin
+- [x] Test `--no-embed`
+- [x] Test isolated active context writing
+- [x] Test backward-compatible helper availability
+
+### Completed Local Security Slice
+
+- [x] Expand `docs/SECURITY.md`
+- [x] Add local token settings to `app/core/config.py`
+- [x] Add `app/core/security.py`
+- [x] Protect memory routes
+- [x] Protect retrieval routes
+- [x] Protect summarization route
+- [x] Protect metrics route
+- [x] Keep health route public
+- [x] Add `tests/test_api_security.py`
+- [x] Test default open local-first behavior
+- [x] Test missing token rejection
+- [x] Test wrong token rejection
+- [x] Test correct token access
+- [x] Test fail-closed missing token configuration
+- [x] Test protected retrieval route
+- [x] Test protected summarization route
+- [x] Test protected metrics route
+- [x] Update `env.template`
+- [x] Update `README.md`
+
 ### Next Backend Slices
 
-- [ ] Update roadmap after summarization API is green
-- [ ] Update README after summarization API is green
-- [ ] Update demo workflow after summarization API is green
-- [ ] Decide whether to refactor `scripts/summarize_chat.py` to call `SummarizationService`
-- [ ] Add structured logging module
-- [ ] Add optional local API token security
+- [ ] Update roadmap for optional local API token implementation
+- [ ] Update demo workflow with optional token demo
 - [ ] Add configurable CORS
+- [ ] Add structured logging module
 - [ ] Add broader readiness endpoint if needed beyond retrieval status
 - [ ] Add stronger integration tests
 - [ ] Add local backend run instructions
@@ -1331,7 +1535,7 @@ The summarization API strengthens the system by exposing active context summariz
 
 ---
 
-## 15. Summary
+## 17. Summary
 
 The backend evolution is turning the current script-based memory system into a clearer local-first API service without overclaiming production SaaS maturity.
 
@@ -1352,12 +1556,15 @@ template memory system
 → generated file expectations
 → retrieval status endpoint
 → summarization API
+→ CLI compatibility
+→ local security documentation
+→ optional local API token protection
 → optional production hardening
 ```
 
 The first FastAPI backend slice is implemented, tested, documented, and green.
 
-The second retrieval API slice is implemented, tested, documented, and green.
+The retrieval API slice is implemented, tested, documented, and green.
 
 The retrieval metadata improvement is implemented, tested, documented, and green.
 
@@ -1377,4 +1584,10 @@ The retrieval status endpoint is implemented, tested, documented, and green.
 
 The summarization API is implemented, tested, documented, and green.
 
-The next meaningful engineering step is to update the roadmap, README, and demo workflow for the summarization API, then decide whether to refactor `scripts/summarize_chat.py` to call the shared backend summarization service.
+The summarization CLI compatibility slice is implemented, tested, documented, and green.
+
+The local security documentation is complete and green.
+
+The optional local API token protection slice is implemented, tested, documented, and green.
+
+The next meaningful engineering steps are to update the roadmap and demo workflow for optional token usage, then add configurable CORS and structured logging as final senior-backend hardening items.
