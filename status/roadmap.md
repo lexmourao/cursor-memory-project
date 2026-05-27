@@ -11,6 +11,7 @@
 - Improve the backend/service layer only through small, auditable, green steps.
 - Preserve existing CLI workflows while exposing selected capabilities through the FastAPI backend.
 - Record important architecture decisions through ADRs before making risky storage, security, or infrastructure changes.
+- Keep generated runtime artifacts out of version control unless intentionally curated as safe examples.
 
 ## Completed Foundation
 
@@ -25,6 +26,9 @@
 - [x] Clarify Nginx as a starter local/single-VM reverse proxy.
 - [x] Keep public CI green without requiring private secrets.
 - [x] Keep GitHub code scanning active through repository security configuration.
+- [x] Update `.gitignore` for generated retrieval metadata exports.
+- [x] Add `docs/GENERATED_FILES.md`.
+- [x] Document generated metadata files and version-control expectations.
 
 ## Completed Architecture Decisions
 
@@ -136,7 +140,7 @@
 ## Next
 
 - [ ] Update `status/roadmap.md` after each completed backend slice.
-- [ ] Document generated metadata files and version-control expectations.
+- [ ] Add explicit retrieval index status endpoint or readiness check.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
@@ -162,6 +166,7 @@
 - [ ] Add explicit retrieval index status endpoint or readiness check.
 - [x] Add JSON metadata export for inspectability.
 - [x] Validate JSON metadata export against current retrieval metadata shape.
+- [x] Document generated metadata files and version-control expectations.
 - [ ] Evaluate local embedding fallback instead of zero-vector fallback.
 - [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
 - [ ] Consider SQLite metadata storage only after dashboard, queryability, or multi-project requirements become real.
@@ -207,3 +212,4 @@
 - Do not add complex infrastructure before the local-first backend is clean and tested.
 - Do not break existing CLI workflows while adding backend APIs.
 - Do not migrate retrieval metadata storage before documenting and testing a safe transition path.
+- Do not commit generated retrieval indexes, pickle metadata, JSON metadata exports, logs, backups, secrets, caches, or temporary files unless intentionally curated as safe examples.
