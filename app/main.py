@@ -6,15 +6,16 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
 from app.api.routes_health import router as health_router
 from app.api.routes_memory import router as memory_router
+from app.api.routes_retrieval import router as retrieval_router
 
 
 app = FastAPI(
     title="Cursor Memory Project Backend",
     description=(
         "Local-first backend API for Cursor Memory Project memory-bank access, "
-        "health checks, and future retrieval workflows."
+        "health checks, metrics, and retrieval workflows."
     ),
-    version="0.1.0",
+    version="0.2.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -42,6 +43,7 @@ def metrics() -> Response:
 
 app.include_router(health_router)
 app.include_router(memory_router)
+app.include_router(retrieval_router)
 
 
 def create_app() -> FastAPI:
