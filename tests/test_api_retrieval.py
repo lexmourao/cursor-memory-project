@@ -1,8 +1,12 @@
 """API tests for backend retrieval endpoint."""
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
+import pytest
 
 from app.main import app
+import scripts.retrieve_context as retrieve_context
 
 
 client = TestClient(app)
@@ -31,6 +35,26 @@ def test_retrieval_query_endpoint_returns_response_shape() -> None:
         assert isinstance(result["source"], str)
         assert isinstance(result["chunk_idx"], int)
         assert isinstance(result["text"], str)
+
+
+def test_retrieval_query_endpoint_handles_missing_index(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Retrieval endpoint should return an empty result list if no index exists."""
+    monkeypatch.setattr(retrieve_context, "INDEX_FILE", tmp_path / "missing.faiss")
+    monkeypatch.setattr(retrieve_context, "META_FILE", tmp_path / "missing_meta.pkl")
+
+    response = client.post(
+        "/retrieval/query",
+        json={"query": "What is the project architecture?", "top_k": 5},
+    )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["query"] == "What is the project architecture?"
+    assert payload["results"] == []
 
 
 def test_retrieval_query_endpoint_rejects_empty_query() -> None:
