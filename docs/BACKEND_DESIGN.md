@@ -1,6 +1,6 @@
 # Backend Design – Cursor Memory Project
 
-> This document describes the backend architecture and evolution path for the Cursor Memory Project as a local-first memory, retrieval, summarization, security-aware, and CORS-configurable backend service for Cursor, ChatGPT, Codex, and AI-assisted development workflows.
+> This document describes the backend architecture and evolution path for the Cursor Memory Project as a local-first memory, retrieval, summarization, security-aware, CORS-configurable, and logging-aware backend service for Cursor, ChatGPT, Codex, and AI-assisted development workflows.
 
 ---
 
@@ -8,7 +8,7 @@
 
 The Cursor Memory Project provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
 
-The backend layer has evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, readiness/status reporting, summarization workflows, optional local API token protection, configurable CORS, and operational boundaries.
+The backend layer has evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, metadata export workflows, readiness/status reporting, summarization workflows, optional local API token protection, configurable CORS, structured logging, and operational boundaries.
 
 The goal is not to turn this repository into a full production SaaS platform. The goal is to show how a local AI-assisted development memory system can evolve toward production-grade backend architecture while remaining useful as a developer tool.
 
@@ -16,7 +16,7 @@ The goal is not to turn this repository into a full production SaaS platform. Th
 
 ## 2. Current Backend Status
 
-The health/memory, retrieval, summarization, CLI compatibility, local security, and configurable CORS backend slices have been implemented and tested.
+The health/memory, retrieval, summarization, CLI compatibility, local security, configurable CORS, and structured logging backend slices have been implemented and tested.
 
 Implemented:
 
@@ -33,6 +33,7 @@ app/
   core/
     __init__.py
     config.py
+    logging.py
     security.py
   models/
     __init__.py
@@ -102,7 +103,9 @@ The backend now has:
 - centralized local-first configuration
 - optional local API token configuration
 - configurable CORS configuration
+- structured logging configuration
 - reusable local API token security helper
+- reusable backend logging helper
 - reusable memory service
 - reusable retrieval service
 - reusable summarization service
@@ -118,6 +121,7 @@ The backend now has:
 - CLI compatibility tests for `scripts/summarize_chat.py`
 - optional local API token security tests
 - configurable CORS tests
+- safe startup logging for service mode, token-protection status, and CORS status
 - green public CI for implemented backend slices
 
 ---
@@ -157,6 +161,7 @@ The implemented backend slices currently cover:
 - configuration
 - optional token security configuration
 - configurable CORS configuration
+- structured logging configuration
 - service separation
 - retrieval API route
 - retrieval status route
@@ -172,9 +177,10 @@ The implemented backend slices currently cover:
 - optional local API token behavior
 - CORS default-disabled behavior
 - explicit allowed-origin behavior
+- safe startup logging behavior
 - API tests
 
-Future backend work should focus on structured logging, MCP/server security defaults, retrieval/summarization evaluation, backup/restore validation, and final reviewer polish.
+Future backend work should focus on retrieval/summarization evaluation, MCP/server security defaults, backup/restore validation, and final reviewer polish.
 
 ---
 
@@ -213,6 +219,7 @@ app/
   core/
     __init__.py
     config.py
+    logging.py
     security.py
   models/
     __init__.py
@@ -759,7 +766,89 @@ Design rationale:
 
 ---
 
-## 9. Typed Models
+## 9. Structured Logging
+
+Status:
+
+```text
+Implemented
+```
+
+The backend supports safe structured logging configuration for local-first service visibility.
+
+Configuration:
+
+```text
+LOG_LEVEL=INFO
+LOG_FORMAT=plain
+```
+
+Supported log levels follow standard Python logging levels, including:
+
+```text
+DEBUG
+INFO
+WARNING
+ERROR
+```
+
+Supported log formats:
+
+```text
+plain
+compact
+```
+
+Implemented files:
+
+```text
+app/core/config.py
+app/core/logging.py
+app/main.py
+env.template
+```
+
+Implemented helpers:
+
+```text
+configure_logging(settings)
+get_logger(name)
+```
+
+Current startup logs may include:
+
+```text
+service name
+runtime mode
+token-protection enabled/disabled status
+CORS enabled/disabled status
+configured CORS origin count
+```
+
+Logging intentionally avoids:
+
+```text
+token values
+secrets
+authorization headers
+request bodies
+memory-bank content
+retrieved memory content
+summarized content
+```
+
+Design rationale:
+
+- Logging is configured at app creation through `create_app(settings)`.
+- Logging is safe by default and writes to stdout for local development, containers, and CI visibility.
+- Startup logs provide operational context without exposing sensitive values.
+- Token values and memory content are intentionally never logged.
+- `LOG_LEVEL` and `LOG_FORMAT` make the behavior configurable without changing code.
+- The current implementation uses Python standard logging to avoid adding unnecessary dependencies.
+
+---
+
+## 10. Typed Models
 
 The backend uses typed models for API contracts and reusable metadata structures.
 
@@ -849,7 +938,7 @@ The summarization schema makes active context updates and fallback behavior expl
 
 ---
 
-## 10. Service Layer
+## 11. Service Layer
 
 The backend separates route handling from business logic.
 
@@ -946,9 +1035,32 @@ Responsibilities:
 - return `401 Unauthorized` for missing or incorrect tokens
 - return a fail-closed server error when token protection is enabled but `LOCAL_API_TOKEN` is not configured
 
+### Logging Helper
+
+Status:
+
+```text
+Implemented
+```
+
+The backend now includes:
+
+```text
+app/core/logging.py
+```
+
+Responsibilities:
+
+- configure backend logging from runtime settings
+- support safe plain and compact log formats
+- support configurable log levels
+- write logs to stdout
+- expose named loggers through `get_logger(name)`
+- keep logging centralized instead of configuring log behavior inside route modules or services
+
 ---
 
-## 11. Retrieval Metadata and Storage
+## 12. Retrieval Metadata and Storage
 
 ### Retrieval Status
 
@@ -1132,7 +1244,7 @@ Consider SQLite later for queryability and dashboards.
 
 ---
 
-## 12. Configuration
+## 13. Configuration
 
 Configuration is centralized in:
 
@@ -1152,6 +1264,8 @@ ENABLE_LOCAL_API_TOKEN=false
 LOCAL_API_TOKEN=
 ENABLE_CORS=false
 CORS_ALLOW_ORIGINS=
+LOG_LEVEL=INFO
+LOG_FORMAT=plain
 ```
 
 Defaults favor local-first security:
@@ -1162,6 +1276,8 @@ Defaults favor local-first security:
 - allow token protection to be enabled when exposing protected routes outside trusted localhost usage
 - keep CORS disabled by default
 - require explicit allowed origins when CORS is enabled
+- use `INFO` logging by default
+- use plain log format by default
 - avoid requiring private secrets in public CI
 - keep `env.template` safe to commit
 
@@ -1175,13 +1291,13 @@ Future configuration may include:
 ```text
 EMBED_MODEL=text-embedding-3-small
 EMBED_DIM=1536
-LOG_LEVEL=INFO
-LOG_FORMAT=json
+LOG_DESTINATION=stdout
+REQUEST_BODY_LOGGING=false
 ```
 
 ---
 
-## 13. Security Posture
+## 14. Security Posture
 
 The backend is local-first.
 
@@ -1195,6 +1311,7 @@ Default assumptions:
 - Nginx is a starter reverse-proxy example, not a fully hardened production gateway
 - optional local API token protection is useful for non-localhost usage but is not full production authentication
 - CORS is disabled unless explicitly configured for trusted browser clients
+- logging must never expose sensitive values or memory-bank content
 
 Current safety behavior:
 
@@ -1217,6 +1334,8 @@ Current safety behavior:
 - CORS does not allow credentials
 - CORS allows only `GET`, `POST`, and `OPTIONS`
 - CORS allows only `Authorization` and `Content-Type` headers
+- startup logs may report service name, runtime mode, token-protection status, CORS status, and CORS origin count
+- logs do not include token values, secrets, request bodies, authorization headers, memory-bank content, retrieved content, or summarized content
 - public CI remains secret-free
 - dependency checks remain active
 - GitHub code scanning remains enabled through the repository security configuration
@@ -1233,7 +1352,7 @@ Future hardening may include:
 
 ---
 
-## 14. Testing Strategy
+## 15. Testing Strategy
 
 ### Implemented Tests
 
@@ -1332,7 +1451,7 @@ Future tests may cover:
 
 ---
 
-## 15. Migration Path from Current Scripts
+## 16. Migration Path from Current Scripts
 
 Current scripts remain valuable.
 
@@ -1402,19 +1521,25 @@ Step 48: CORS middleware wired into the FastAPI app
 Step 49: FastAPI app factory refactored for testable settings injection
 Step 50: CORS tests added
 Step 51: env.template and README updated for configurable CORS
+Step 52: roadmap updated for configurable CORS implementation
+Step 53: demo workflow updated with CORS demo
+Step 54: backend logging settings added
+Step 55: backend logging module added
+Step 56: backend logging wired into FastAPI app startup
+Step 57: env.template and README updated for backend logging
 ```
 
 Next:
 
 ```text
-Step 52: update roadmap for configurable CORS implementation
-Step 53: update demo workflow with CORS demo
-Step 54: add structured logging
+Step 58: update roadmap for structured logging implementation
+Step 59: update demo workflow with logging notes
+Step 60: final QA/freeze pass
 ```
 
 ---
 
-## 16. Senior Engineering Rationale
+## 17. Senior Engineering Rationale
 
 This backend design demonstrates:
 
@@ -1428,6 +1553,8 @@ This backend design demonstrates:
 - optional local API token protection
 - configurable CORS with explicit origins
 - testable app factory pattern
+- safe structured logging
+- operational visibility without sensitive logging
 - testability
 - operational awareness
 - clear public CI vs configured integration separation
@@ -1444,8 +1571,9 @@ This backend design demonstrates:
 - local security documentation and implementation
 - protected sensitive local routes while preserving public readiness checks
 - CORS disabled by default with tested explicit-origin behavior
+- logs that expose service posture without exposing secrets or memory content
 
-The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, secure-by-configuration, and extensible.
+The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, secure-by-configuration, observable, and extensible.
 
 The first backend slice strengthened the senior-backend signal by moving the repository from documentation and scripts into a tested FastAPI service structure without breaking the existing workflow.
 
@@ -1471,9 +1599,11 @@ The optional local API token slice strengthens the security posture by documenti
 
 The configurable CORS slice strengthens the backend by making browser access explicit, testable, and disabled by default, which supports trusted local dashboards without widening the default exposure model.
 
+The structured logging slice strengthens the backend by adding operational visibility while explicitly avoiding sensitive values, request bodies, authorization headers, and memory-bank content.
+
 ---
 
-## 17. Implementation Checklist
+## 18. Implementation Checklist
 
 ### Completed First Backend Slice: Health, Memory, Metrics
 
@@ -1646,11 +1776,25 @@ The configurable CORS slice strengthens the backend by making browser access exp
 - [x] Update `README.md`
 - [x] Update `docs/BACKEND_DESIGN.md`
 
+### Completed Structured Logging Slice
+
+- [x] Add `LOG_LEVEL` setting
+- [x] Add `LOG_FORMAT` setting
+- [x] Add `app/core/logging.py`
+- [x] Add `configure_logging(settings)`
+- [x] Add `get_logger(name)`
+- [x] Configure logging during `create_app(settings)`
+- [x] Add safe startup logs for service name, runtime mode, token-protection status, and CORS status
+- [x] Log configured CORS origin count without logging origin values
+- [x] Avoid logging tokens, secrets, authorization headers, request bodies, memory-bank content, retrieved content, or summarized content
+- [x] Update `env.template`
+- [x] Update `README.md`
+- [x] Update `docs/BACKEND_DESIGN.md`
+
 ### Next Backend Slices
 
-- [ ] Update roadmap for configurable CORS implementation
-- [ ] Update demo workflow with CORS demo
-- [ ] Add structured logging module
+- [ ] Update roadmap for structured logging implementation
+- [ ] Update demo workflow with logging notes
 - [ ] Add broader readiness endpoint if needed beyond retrieval status
 - [ ] Add stronger integration tests
 - [ ] Add local backend run instructions
@@ -1658,7 +1802,7 @@ The configurable CORS slice strengthens the backend by making browser access exp
 
 ---
 
-## 18. Summary
+## 19. Summary
 
 The backend evolution is turning the current script-based memory system into a clearer local-first API service without overclaiming production SaaS maturity.
 
@@ -1683,6 +1827,7 @@ template memory system
 → local security documentation
 → optional local API token protection
 → configurable CORS
+→ structured logging
 → optional production hardening
 ```
 
@@ -1716,4 +1861,6 @@ The optional local API token protection slice is implemented, tested, documented
 
 The configurable CORS slice is implemented, tested, documented, and green.
 
-The next meaningful engineering steps are to update the roadmap and demo workflow for configurable CORS, then add structured logging as the final senior-backend hardening item.
+The structured logging slice is implemented, documented, and green.
+
+The next meaningful engineering steps are to update the roadmap and demo workflow for structured logging, then run a final QA/freeze pass.
