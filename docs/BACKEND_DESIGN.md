@@ -72,6 +72,7 @@ The backend now has:
 - reusable retrieval service
 - route modules for health, memory, and retrieval
 - Prometheus-compatible metrics endpoint
+- metadata-aware retrieval responses with source file and chunk index
 - API tests using FastAPI TestClient
 - green public CI for implemented backend slices
 
@@ -103,9 +104,10 @@ The implemented backend slices currently cover:
 - configuration
 - service separation
 - retrieval API route
+- retrieval metadata traceability
 - API tests
 
-Future backend work should focus on summarization service extraction, structured logging, local security hardening, and deeper retrieval evaluation.
+Future backend work should focus on deeper retrieval reliability, summarization service extraction, structured logging, local security hardening, and retrieval evaluation.
 
 ---
 
@@ -325,6 +327,7 @@ Purpose:
 - search the retrieval index
 - return top-K relevant memory chunks
 - validate query text and `top_k` bounds
+- expose source file and chunk index for traceability
 
 Example request:
 
@@ -343,7 +346,8 @@ Example response:
   "results": [
     {
       "score": 0.82,
-      "source": "memory-bank",
+      "source": "systemPatterns.md",
+      "chunk_idx": 3,
       "text": "..."
     }
   ]
@@ -355,6 +359,13 @@ Validation behavior:
 - empty query returns validation error
 - `top_k` below 1 returns validation error
 - `top_k` above 20 returns validation error
+
+Traceability behavior:
+
+- `source` returns the memory-bank source filename
+- `chunk_idx` returns the source chunk index
+- `text` returns the retrieved chunk text
+- `score` returns the FAISS similarity score
 
 ---
 
@@ -392,6 +403,7 @@ class RetrievalRequest(BaseModel):
 class RetrievalResult(BaseModel):
     score: float
     source: str
+    chunk_idx: int
     text: str
 
 
@@ -446,12 +458,53 @@ Implemented
 
 Responsibilities:
 
-- wrap the existing `scripts.retrieve_context.query` workflow
+- wrap the existing `scripts.retrieve_context.query_with_metadata` workflow
 - query memory chunks through the existing retrieval index logic
 - return typed retrieval result models
+- expose source filename and chunk index in API results
 - support the backend retrieval route without breaking the CLI workflow
 
 Current implementation intentionally reuses the existing retrieval script instead of rewriting the retrieval system. This keeps the CLI workflow working while exposing retrieval through the backend API.
+
+### Metadata-Aware Retrieval
+
+Status:
+
+```text
+Implemented
+```
+
+The retrieval script now supports:
+
+```text
+query_with_metadata()
+```
+
+This returns:
+
+```text
+score
+file
+chunk_idx
+text
+```
+
+The backend maps this into the retrieval API response:
+
+```text
+score
+source
+chunk_idx
+text
+```
+
+This improves:
+
+- traceability
+- debugging
+- retrieval inspection
+- future dashboard readiness
+- auditability of returned context
 
 ### Summarization Service
 
@@ -526,6 +579,7 @@ Current safety behavior:
 - only explicitly allowed memory-bank markdown files are exposed through the memory service
 - generated FAISS and pickle files are not exposed as memory records
 - retrieval API uses typed request validation for query and `top_k`
+- retrieval API returns source filename and chunk index for traceability
 - public CI remains secret-free
 - dependency checks remain active
 - GitHub code scanning remains enabled through the repository security configuration
@@ -567,6 +621,11 @@ Current backend tests cover:
 - 404 behavior for missing memory record
 - `POST /retrieval/query`
 - retrieval response shape
+- retrieval metadata fields when results are returned
+- `score` field type
+- `source` field type
+- `chunk_idx` field type
+- `text` field type
 - empty query validation
 - invalid low `top_k` validation
 - invalid high `top_k` validation
@@ -579,7 +638,7 @@ Future tests should cover:
 - missing retrieval index behavior
 - empty retrieval index behavior
 - fallback mode without OpenAI key
-- retrieval result source metadata
+- retrieval result source metadata values
 - summarization service behavior after backend extraction
 - configured API token behavior if enabled later
 
@@ -615,14 +674,20 @@ Step 9: retrieval service created
 Step 10: retrieval route created
 Step 11: retrieval router registered
 Step 12: retrieval API tests created
+Step 13: metadata-aware retrieval query created
+Step 14: retrieval API model updated with chunk index
+Step 15: retrieval service updated to return source metadata
+Step 16: retrieval API tests updated to validate metadata fields
 ```
 
 Next:
 
 ```text
-Step 13: update public docs to reflect retrieval API
-Step 14: add deeper retrieval behavior tests
-Step 15: extract summarization service
+Step 17: update public docs to reflect retrieval metadata
+Step 18: add deeper retrieval behavior tests
+Step 19: test missing retrieval index behavior
+Step 20: test empty retrieval index behavior
+Step 21: extract summarization service
 ```
 
 ---
@@ -641,12 +706,15 @@ This backend design demonstrates:
 - clear public CI vs configured integration separation
 - realistic evolution from scripts to backend services
 - incremental delivery through green, auditable slices
+- traceable retrieval response design
 
 The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, and extensible.
 
 The first backend slice strengthened the senior-backend signal by moving the repository from documentation and scripts into a tested FastAPI service structure without breaking the existing workflow.
 
-The second backend slice strengthens the AI systems/backend signal further by exposing retrieval through a typed API while preserving the existing CLI retrieval workflow.
+The second backend slice strengthened the AI systems/backend signal further by exposing retrieval through a typed API while preserving the existing CLI retrieval workflow.
+
+The retrieval metadata improvement strengthens the system further by making retrieval results easier to inspect, debug, audit, and eventually display in a dashboard.
 
 ---
 
@@ -673,6 +741,16 @@ The second backend slice strengthens the AI systems/backend signal further by ex
 - [x] Register retrieval router in `app/main.py`
 - [x] Add `tests/test_api_retrieval.py`
 - [x] Keep existing `scripts/retrieve_context.py` working
+
+### Completed Retrieval Metadata Improvement
+
+- [x] Add `query_with_metadata()` to `scripts/retrieve_context.py`
+- [x] Preserve existing `query()` function behavior
+- [x] Preserve CLI retrieval behavior
+- [x] Add `chunk_idx` to `RetrievalResult`
+- [x] Return source filename from retrieval API
+- [x] Return chunk index from retrieval API
+- [x] Update retrieval API tests to validate metadata fields
 
 ### Next Backend Slice: Summarization Service
 
@@ -708,6 +786,7 @@ template memory system
 → typed FastAPI backend slice
 → tested service layer
 → retrieval API
+→ metadata-aware retrieval
 → summarization API
 → optional production hardening
 ```
@@ -715,5 +794,7 @@ template memory system
 The first FastAPI backend slice is implemented, tested, documented, and green.
 
 The second retrieval API slice is implemented, tested, documented, and green.
+
+The retrieval metadata improvement is implemented, tested, documented, and green.
 
 The next meaningful engineering step is to extract summarization into the backend service layer while preserving the existing CLI workflow.
