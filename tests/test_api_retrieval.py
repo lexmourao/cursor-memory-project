@@ -1,5 +1,6 @@
 """API tests for backend retrieval endpoint."""
 
+import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -74,6 +75,51 @@ def test_retrieval_query_endpoint_returns_indexed_memory_after_rebuild(
     assert result["chunk_idx"] == 0
     assert "local-first Cursor memory backend" in result["text"]
     assert isinstance(result["score"], float)
+
+
+def test_retrieval_metadata_json_export(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Metadata export should create inspectable JSON without replacing pickle runtime metadata."""
+    memory_bank = tmp_path / "memory-bank"
+    memory_bank.mkdir()
+
+    memory_file = memory_bank / "projectbrief.md"
+    memory_file.write_text(
+        "Project vision: build a local-first Cursor memory backend.\n\n"
+        "Architecture note: FastAPI exposes memory and retrieval endpoints.",
+        encoding="utf-8",
+    )
+
+    index_file = tmp_path / "test.faiss"
+    meta_file = tmp_path / "test_meta.pkl"
+    json_file = tmp_path / "test_meta.json"
+
+    monkeypatch.setattr(retrieve_context, "MEMORY_BANK_DIR", memory_bank)
+    monkeypatch.setattr(retrieve_context, "INDEX_FILE", index_file)
+    monkeypatch.setattr(retrieve_context, "META_FILE", meta_file)
+    monkeypatch.setattr(retrieve_context, "META_JSON_FILE", json_file)
+
+    retrieve_context.rebuild_index()
+    exported_path = retrieve_context.export_metadata_json()
+
+    assert exported_path == json_file
+    assert meta_file.exists()
+    assert json_file.exists()
+
+    payload = json.loads(json_file.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == 1
+    assert payload["source"] == str(meta_file)
+    assert payload["index_file"] == str(index_file)
+    assert payload["record_count"] == 2
+    assert len(payload["records"]) == 2
+
+    first_record = payload["records"][0]
+    assert first_record["file"] == "projectbrief.md"
+    assert first_record["chunk_idx"] == 0
+    assert "local-first Cursor memory backend" in first_record["text"]
 
 
 def test_retrieval_query_endpoint_handles_missing_index(
