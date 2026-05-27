@@ -205,9 +205,37 @@
 - [x] Document public CI vs secret-dependent workflow separation.
 - [x] Document future hardening items before public exposure.
 
+### Slice 4B — Optional Local API Token Protection
+
+- [x] Add optional local API token settings to `app/core/config.py`.
+- [x] Add `ENABLE_LOCAL_API_TOKEN`.
+- [x] Add `LOCAL_API_TOKEN`.
+- [x] Add reusable token validation helper in `app/core/security.py`.
+- [x] Protect `GET /memory`.
+- [x] Protect `GET /memory/{record_id}`.
+- [x] Protect `GET /retrieval/status`.
+- [x] Protect `POST /retrieval/query`.
+- [x] Protect `POST /summarization/summarize`.
+- [x] Protect `GET /metrics`.
+- [x] Keep `GET /health` public for local readiness checks.
+- [x] Add security tests in `tests/test_api_security.py`.
+- [x] Test default open local-first behavior.
+- [x] Test missing token rejection.
+- [x] Test wrong token rejection.
+- [x] Test correct Bearer token access.
+- [x] Test fail-closed behavior when token mode is enabled without `LOCAL_API_TOKEN`.
+- [x] Test protected retrieval route behavior.
+- [x] Test protected summarization route behavior.
+- [x] Test protected metrics route behavior.
+- [x] Update `env.template`.
+- [x] Update `README.md`.
+- [x] Update `docs/BACKEND_DESIGN.md`.
+- [x] Update `docs/DEMO_WORKFLOW.md`.
+
 ## Next
 
-- [ ] Add optional local API token authentication for non-localhost usage.
+- [ ] Add configurable CORS settings for local vs Docker/Nginx modes.
+- [ ] Add structured logging for backend service events.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
@@ -241,7 +269,16 @@
 
 - [x] Document local CORS assumptions.
 - [x] Document localhost vs Docker/Nginx exposure modes.
-- [ ] Add optional local API token authentication for non-localhost usage.
+- [x] Add optional local API token authentication for non-localhost usage.
+- [x] Protect memory routes when token mode is enabled.
+- [x] Protect retrieval routes when token mode is enabled.
+- [x] Protect summarization route when token mode is enabled.
+- [x] Protect metrics route when token mode is enabled.
+- [x] Keep health route public for readiness checks.
+- [x] Add optional local API token tests.
+- [x] Document optional local API token usage in README.
+- [x] Document optional local API token usage in backend design.
+- [x] Document optional local API token usage in demo workflow.
 - [ ] Add configurable CORS settings for local vs Docker/Nginx modes.
 - [ ] Improve encrypted backup restore workflow.
 - [ ] Evaluate `age` as an alternative to current GPG-encrypted backup flow.
