@@ -1,25 +1,28 @@
 # Demo Workflow – Cursor Memory Project
 
-> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, MCP-oriented context delivery, and CI/QA practices.
+> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, MCP-oriented context delivery, local-first backend structure, and CI/QA practices.
 
 ---
 
 ## 1. What This Demo Proves
 
-This repository demonstrates how an AI-assisted development workflow can preserve project context across long-running work.
+This repository demonstrates how an AI-assisted development workflow can preserve project context across long-running work without relying only on Cursor chat history, ChatGPT memory, or one-off prompt context.
 
 It shows:
 
-- persistent project memory using markdown files
+- persistent project memory using structured markdown files
+- memory-bank template mode for new projects
 - rolling active context summarization
 - retrieval-based context loading
 - MCP server structure for exposing memory to Cursor
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - fallback behavior when external API keys are unavailable
 - public CI with linting, type checking, dependency/security checks, and smoke tests
+- CodeQL security analysis
 - documentation-first engineering practices
+- separation between public smoke tests and environment-specific integration workflows
 
-This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems.
+This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable setup method before a real project begins.
 
 ---
 
@@ -28,25 +31,34 @@ This demo is not intended to prove a complete production SaaS product. It is int
 A reviewer can inspect the repository in this order:
 
 1. `README.md`  
-   Public overview, system purpose, scope, CI strategy, and production evolution path.
+   Public overview, system purpose, memory-bank template mode, scope, CI strategy, and production evolution path.
 
-2. `docs/ARCHITECTURE.md`  
+2. `memory-bank/README.md`  
+   Explains why memory-bank files start mostly empty and how they should be populated after real project kickoff.
+
+3. `docs/ARCHITECTURE.md`  
    System architecture, data flow, runtime modes, failure modes, tradeoffs, and production roadmap.
 
-3. `docs/adr/0001-public-ci-vs-integration-tests.md`  
+4. `docs/adr/0001-public-ci-vs-integration-tests.md`  
    Architecture Decision Record explaining public CI vs secret-dependent integration tests.
 
-4. `scripts/summarize_chat.py`  
+5. `.cursor-rules.md`  
+   Operational rules for how Cursor should use memory, logs, project rules, and context.
+
+6. `scripts/summarize_chat.py`  
    Summarization workflow for converting recent session logs into active project context.
 
-5. `scripts/retrieve_context.py`  
+7. `scripts/retrieve_context.py`  
    Retrieval workflow for building and querying the memory index.
 
-6. `scripts/run_mcp_server.py`  
+8. `scripts/run_mcp_server.py`  
    Local server structure for exposing project memory.
 
-7. `.github/workflows/ci.yml`  
+9. `.github/workflows/ci.yml`  
    Public CI workflow.
+
+10. `status/roadmap.md`  
+   Roadmap for evolving the project toward a stronger local-first backend/service layer.
 
 ---
 
@@ -72,7 +84,7 @@ If no API key is configured, the system can still run in fallback/manual mode.
 
 ## 4. Step-by-Step Demo
 
-### Step 1 — Prepare project memory
+### Step 1 — Inspect template memory
 
 Inspect the memory-bank folder:
 
@@ -80,7 +92,15 @@ Inspect the memory-bank folder:
 ls memory-bank
 ```
 
-The memory-bank stores project context, active memory, system patterns, technical notes, and progress.
+The memory-bank stores the starter files for project context, active memory, system patterns, technical notes, and progress.
+
+The files start mostly empty by design. This repository is a setup method for Cursor-based work. Real project knowledge should be added only after project kickoff, real discovery, implementation, decisions, errors, and milestones.
+
+Read:
+
+```text
+memory-bank/README.md
+```
 
 ---
 
@@ -104,7 +124,7 @@ Expected result:
 memory-bank/activeContext.md
 ```
 
-is created or updated.
+is created or updated with a rolling summary.
 
 ---
 
@@ -121,6 +141,7 @@ Expected result:
 - memory-bank content is processed
 - embeddings are generated or fallback vectors are used
 - retrieval index files are created or updated
+- generated retrieval files remain excluded from version control
 
 ---
 
@@ -129,7 +150,7 @@ Expected result:
 Run:
 
 ```bash
-echo "What is the current project architecture?" | python scripts/retrieve_context.py query --top-k 5
+python scripts/retrieve_context.py query --text "What is the current project architecture?" --top-k 5
 ```
 
 Expected result:
@@ -139,7 +160,7 @@ Expected result:
 
 ---
 
-### Step 5 — Start MCP server
+### Step 5 — Start the local memory server
 
 Run:
 
@@ -157,6 +178,21 @@ Example local endpoint:
 ```text
 http://localhost:7331/memory
 ```
+
+---
+
+### Step 6 — Inspect operational status
+
+Review:
+
+```text
+status/release_checklist.md
+status/roadmap.md
+status/checklist_onboarding.md
+status/checklist_deployment.md
+```
+
+These files show how the project separates template setup, local development, deployment assumptions, release readiness, and future backend evolution.
 
 ---
 
@@ -179,6 +215,7 @@ This demonstrates:
 - type-checking discipline
 - dependency/security awareness
 - smoke-test coverage for public workflows
+- public CI that does not depend on private secrets
 
 Backup and full end-to-end tests are intentionally separated because they require environment-specific secrets such as `GPG_KEY_ID`.
 
@@ -199,10 +236,11 @@ Inspect:
 ```text
 .cursor-rules.md
 README.md
+memory-bank/README.md
 docs/ARCHITECTURE.md
 ```
 
-These files show how project memory, documentation, and AI-assisted development rules are structured.
+These files show how project memory, documentation, AI-assisted development rules, and template-mode assumptions are structured.
 
 ### Retrieval workflow
 
@@ -212,7 +250,7 @@ Inspect:
 scripts/retrieve_context.py
 ```
 
-This file demonstrates FAISS-based retrieval logic, embedding fallback behavior, and memory index operations.
+This file demonstrates FAISS-based retrieval logic, embedding fallback behavior, memory index rebuilds, chunk metadata, and query operations.
 
 ### Summarization workflow
 
@@ -240,9 +278,23 @@ Inspect:
 
 ```text
 .github/workflows/ci.yml
+.github/workflows/codeql.yml
 ```
 
-This file demonstrates public quality checks.
+These files demonstrate public quality and security checks.
+
+### Operational documentation
+
+Inspect:
+
+```text
+status/release_checklist.md
+status/roadmap.md
+docs/DEMO_WORKFLOW.md
+docs/adr/0001-public-ci-vs-integration-tests.md
+```
+
+These files show how the repository documents decisions, release assumptions, and future backend evolution.
 
 ---
 
@@ -260,15 +312,32 @@ It demonstrates:
 - documentation maturity
 - production-evolution awareness
 - clear separation between public smoke tests and configured integration tests
+- practical Python automation for LLM-assisted development workflows
 
 It should not be interpreted as a complete production SaaS application. Instead, it shows the workflow and infrastructure patterns that can support larger LLM and agent-based systems.
 
 ---
 
-## 8. Production Evolution
+## 8. Current Scope vs Future Backend Evolution
 
-A production-grade version of this workflow could add:
+### Current Scope
 
+- local-first memory-bank setup
+- markdown-based project memory
+- summarization workflow
+- retrieval workflow
+- MCP-oriented local memory server
+- public CI and CodeQL
+- Docker/Nginx starter configuration
+- documentation and status checklists
+
+### Future Backend Evolution
+
+A stronger backend-oriented version of this workflow could add:
+
+- typed FastAPI application structure under `app/`
+- request/response models for memory and retrieval endpoints
+- service layer for memory, retrieval, summarization, and status
 - authenticated API endpoints
 - external managed vector database
 - user/project isolation
