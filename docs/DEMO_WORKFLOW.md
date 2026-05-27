@@ -1,6 +1,6 @@
 # Demo Workflow – Cursor Memory Project
 
-> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, MCP-oriented context delivery, local-first backend structure, and CI/QA practices.
+> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, summarization, MCP-oriented context delivery, local-first backend structure, and CI/QA practices.
 
 ---
 
@@ -15,6 +15,9 @@ It shows:
 - rolling active context summarization
 - retrieval-based context loading
 - metadata-aware retrieval results with source filename and chunk index
+- retrieval status/readiness reporting for local index and metadata state
+- JSON metadata export for retrieval inspection
+- summarization API workflows for active context updates
 - MCP server structure for exposing memory to Cursor
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - fallback behavior when external API keys are unavailable
@@ -22,7 +25,7 @@ It shows:
 - GitHub code scanning / CodeQL security analysis through repository security configuration
 - documentation-first engineering practices
 - separation between public smoke tests and environment-specific integration workflows
-- tested FastAPI backend slices for health, memory access, metrics, retrieval, and retrieval metadata
+- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, and retrieval metadata
 
 This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable setup method before a real project begins.
 
@@ -42,40 +45,52 @@ A reviewer can inspect the repository in this order:
    System architecture, data flow, runtime modes, failure modes, tradeoffs, and production roadmap.
 
 4. `docs/BACKEND_DESIGN.md`  
-   Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, tests, and next summarization slice.
+   Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, retrieval status, summarization API, tests, and next backend evolution steps.
 
-5. `docs/adr/0001-public-ci-vs-integration-tests.md`  
+5. `docs/GENERATED_FILES.md`  
+   Explains generated retrieval files, JSON metadata exports, backups, logs, secrets, caches, and version-control expectations.
+
+6. `docs/adr/0001-public-ci-vs-integration-tests.md`  
    Architecture Decision Record explaining public CI vs secret-dependent integration tests.
 
-6. `.cursor-rules.md`  
+7. `docs/adr/0002-retrieval-metadata-storage.md`  
+   Architecture Decision Record explaining pickle metadata compatibility, JSON export inspectability, and possible future SQLite evolution.
+
+8. `.cursor-rules.md`  
    Operational rules for how Cursor should use memory, logs, project rules, and context.
 
-7. `app/main.py`  
-   FastAPI backend entry point with health, memory, metrics, and retrieval routes.
+9. `app/main.py`  
+   FastAPI backend entry point with health, memory, metrics, retrieval, retrieval status, and summarization routes.
 
-8. `app/services/memory_service.py`  
-   Reusable service layer for loading allowed memory-bank files.
+10. `app/services/memory_service.py`  
+    Reusable service layer for loading allowed memory-bank files.
 
-9. `app/services/retrieval_service.py`  
-   Reusable retrieval service that exposes metadata-aware retrieval results through typed backend responses.
+11. `app/services/retrieval_service.py`  
+    Reusable retrieval service that exposes metadata-aware retrieval results and retrieval readiness through typed backend responses.
 
-10. `app/api/routes_retrieval.py`  
-   FastAPI route for `POST /retrieval/query`.
+12. `app/services/summarization_service.py`  
+    Reusable summarization service for manual mode, fallback mode, active context writing, and optional embedding.
 
-11. `scripts/retrieve_context.py`  
-   CLI retrieval workflow for building and querying the memory index, including metadata-aware retrieval through `query_with_metadata()`.
+13. `app/api/routes_retrieval.py`  
+    FastAPI routes for `GET /retrieval/status` and `POST /retrieval/query`.
 
-12. `scripts/summarize_chat.py`  
-   Summarization workflow for converting recent session logs into active project context.
+14. `app/api/routes_summarization.py`  
+    FastAPI route for `POST /summarization/summarize`.
 
-13. `.github/workflows/ci.yml`  
-   Public CI workflow.
+15. `scripts/retrieve_context.py`  
+    CLI retrieval workflow for building and querying the memory index, including metadata-aware retrieval and JSON metadata export.
 
-14. `tests/test_api_health.py`, `tests/test_api_memory.py`, and `tests/test_api_retrieval.py`  
-   FastAPI TestClient tests for the implemented backend slices and retrieval metadata fields.
+16. `scripts/summarize_chat.py`  
+    Existing CLI summarization workflow for converting recent session logs into active project context. This workflow is preserved.
 
-15. `status/roadmap.md`  
-   Roadmap for evolving the project toward a stronger local-first backend/service layer.
+17. `.github/workflows/ci.yml`  
+    Public CI workflow.
+
+18. `tests/test_api_health.py`, `tests/test_api_memory.py`, `tests/test_api_retrieval.py`, and `tests/test_api_summarization.py`  
+    FastAPI TestClient tests for the implemented backend slices, retrieval metadata fields, retrieval status, and summarization behavior.
+
+19. `status/roadmap.md`  
+    Roadmap for evolving the project toward a stronger local-first backend/service layer.
 
 ---
 
@@ -132,15 +147,19 @@ app/
     routes_health.py
     routes_memory.py
     routes_retrieval.py
+    routes_summarization.py
   core/
     config.py
   models/
+    chunk.py
     health.py
     memory.py
     retrieval.py
+    summarization.py
   services/
     memory_service.py
     retrieval_service.py
+    summarization_service.py
 ```
 
 The implemented backend currently supports:
@@ -150,7 +169,9 @@ GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+GET /retrieval/status
 POST /retrieval/query
+POST /summarization/summarize
 ```
 
 It demonstrates:
@@ -158,11 +179,15 @@ It demonstrates:
 - FastAPI application structure
 - typed Pydantic response models
 - typed retrieval request/response models
+- typed retrieval status model
+- typed summarization request/response models
 - centralized local-first configuration
 - service-layer separation
 - explicit route modules
 - metrics endpoint
 - retrieval API
+- retrieval status API
+- summarization API
 - metadata-aware retrieval results
 - API tests
 
@@ -183,6 +208,7 @@ http://127.0.0.1:8000/health
 http://127.0.0.1:8000/memory
 http://127.0.0.1:8000/memory/README
 http://127.0.0.1:8000/metrics
+http://127.0.0.1:8000/retrieval/status
 ```
 
 Expected result:
@@ -191,6 +217,7 @@ Expected result:
 - `/memory` returns allowed memory-bank markdown records
 - `/memory/README` returns the memory-bank README record
 - `/metrics` exposes Prometheus-compatible metrics
+- `/retrieval/status` reports retrieval index and metadata readiness
 
 To test the retrieval endpoint, use an API client or curl:
 
@@ -210,9 +237,30 @@ Expected result:
 - `top_k` below 1 is rejected
 - `top_k` above 20 is rejected
 
+To test the summarization endpoint in manual mode:
+
+```bash
+curl -X POST http://127.0.0.1:8000/summarization/summarize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Manual summary for the current backend slice.",
+    "model": "gpt-4o",
+    "manual": true,
+    "embed": false
+  }'
+```
+
+Expected result:
+
+- `/summarization/summarize` returns a typed summarization response
+- manual mode treats the input text as the summary
+- the service writes the summary to `memory-bank/activeContext.md`
+- embedding can be disabled with `"embed": false`
+- response fields include `summary`, `word_count`, `model`, `used_fallback`, `wrote_active_context`, and `embedded`
+
 ---
 
-### Step 4 — Generate or update active context
+### Step 4 — Generate or update active context through the CLI
 
 Automated mode:
 
@@ -234,6 +282,12 @@ memory-bank/activeContext.md
 
 is created or updated with a rolling summary.
 
+The existing CLI workflow remains available while the backend also exposes summarization through:
+
+```text
+POST /summarization/summarize
+```
+
 ---
 
 ### Step 5 — Build the retrieval index
@@ -254,7 +308,42 @@ Expected result:
 
 ---
 
-### Step 6 — Query memory through the CLI retrieval workflow
+### Step 6 — Export inspectable retrieval metadata
+
+Run:
+
+```bash
+python scripts/retrieve_context.py export-meta-json
+```
+
+Expected result:
+
+```text
+memory-bank/embeddings_meta.json
+```
+
+is generated as an inspectable metadata export.
+
+The JSON export is intended for local inspection and debugging. It does not replace the pickle metadata used by the current FAISS runtime workflow.
+
+Generated retrieval files remain ignored by `.gitignore`:
+
+```text
+memory-bank/embeddings.faiss
+memory-bank/embeddings_meta.pkl
+memory-bank/embeddings_meta.json
+```
+
+See:
+
+```text
+docs/GENERATED_FILES.md
+docs/adr/0002-retrieval-metadata-storage.md
+```
+
+---
+
+### Step 7 — Query memory through the CLI retrieval workflow
 
 Run:
 
@@ -267,7 +356,7 @@ Expected result:
 - the retrieval engine returns relevant memory chunks
 - the assistant can use retrieved context to continue work with less information loss
 
-The same retrieval capability is now also exposed through the backend endpoint:
+The same retrieval capability is also exposed through the backend endpoint:
 
 ```text
 POST /retrieval/query
@@ -284,7 +373,33 @@ text
 
 ---
 
-### Step 7 — Start the legacy/local memory server
+### Step 8 — Check retrieval readiness
+
+Call:
+
+```text
+http://127.0.0.1:8000/retrieval/status
+```
+
+Expected response fields:
+
+```text
+index_exists
+metadata_exists
+json_export_exists
+index_vector_count
+metadata_record_count
+json_record_count
+ready
+```
+
+The `ready` field is conservative. It is true only when the FAISS index exists, pickle metadata exists, both counts are greater than zero, and the index vector count matches the metadata record count.
+
+The JSON export is reported for inspection but is not required for runtime readiness.
+
+---
+
+### Step 9 — Start the legacy/local memory server
 
 Run:
 
@@ -307,7 +422,7 @@ This script remains useful while the backend package evolves. Over time, it may 
 
 ---
 
-### Step 8 — Inspect operational status
+### Step 10 — Inspect operational status
 
 Review:
 
@@ -341,6 +456,7 @@ Additional backend API tests exist in:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 ```
 
 These demonstrate:
@@ -352,8 +468,15 @@ These demonstrate:
 - missing-record 404 behavior
 - retrieval endpoint response shape
 - retrieval metadata field validation
+- retrieval status readiness behavior
+- JSON metadata export behavior
+- summarization manual mode
+- summarization fallback mode
+- summarization active context writing through an isolated temporary path
+- summarization disabled embedding behavior
 - empty query validation
 - `top_k` validation
+- empty summarization text validation
 
 The public CI demonstrates:
 
@@ -397,15 +520,18 @@ app/main.py
 app/api/routes_health.py
 app/api/routes_memory.py
 app/api/routes_retrieval.py
+app/api/routes_summarization.py
 app/core/config.py
 app/models/health.py
 app/models/memory.py
 app/models/retrieval.py
+app/models/summarization.py
 app/services/memory_service.py
 app/services/retrieval_service.py
+app/services/summarization_service.py
 ```
 
-These files show the implemented backend slices: health, memory access, retrieval, typed models, service separation, metrics, and metadata-aware retrieval responses.
+These files show the implemented backend slices: health, memory access, retrieval, retrieval status, summarization, typed models, service separation, metrics, and metadata-aware retrieval responses.
 
 ### Backend API tests
 
@@ -415,9 +541,10 @@ Inspect:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 ```
 
-These files demonstrate FastAPI TestClient coverage for the implemented backend routes and retrieval metadata fields.
+These files demonstrate FastAPI TestClient coverage for the implemented backend routes, retrieval metadata fields, retrieval status behavior, and summarization behavior.
 
 ### Retrieval workflow
 
@@ -431,7 +558,7 @@ app/api/routes_retrieval.py
 
 These files demonstrate how the existing FAISS-based retrieval logic is preserved while being exposed through the FastAPI backend.
 
-The retrieval flow now supports metadata-aware results through:
+The retrieval flow supports metadata-aware results through:
 
 ```text
 query_with_metadata()
@@ -446,23 +573,52 @@ score
 text
 ```
 
+The retrieval workflow also supports JSON metadata export through:
+
+```text
+export_metadata_json()
+```
+
+and the CLI command:
+
+```bash
+python scripts/retrieve_context.py export-meta-json
+```
+
 ### Summarization workflow
 
 Inspect:
 
 ```text
 scripts/summarize_chat.py
-```
-
-This file demonstrates how session logs can be transformed into rolling active context.
-
-The next backend slice may extract this into:
-
-```text
 app/models/summarization.py
 app/services/summarization_service.py
 app/api/routes_summarization.py
 tests/test_api_summarization.py
+```
+
+These files demonstrate how session logs or supplied text can be transformed into rolling active context.
+
+The backend summarization API supports:
+
+```text
+POST /summarization/summarize
+```
+
+with:
+
+```text
+manual mode
+fallback mode
+active context writing
+optional embedding
+typed response metadata
+```
+
+The existing CLI workflow remains preserved:
+
+```text
+scripts/summarize_chat.py
 ```
 
 ### MCP/context delivery
@@ -496,10 +652,12 @@ status/release_checklist.md
 status/roadmap.md
 docs/DEMO_WORKFLOW.md
 docs/BACKEND_DESIGN.md
+docs/GENERATED_FILES.md
 docs/adr/0001-public-ci-vs-integration-tests.md
+docs/adr/0002-retrieval-metadata-storage.md
 ```
 
-These files show how the repository documents decisions, release assumptions, backend implementation status, and future backend evolution.
+These files show how the repository documents decisions, release assumptions, backend implementation status, generated-file expectations, and future backend evolution.
 
 ---
 
@@ -513,6 +671,7 @@ It demonstrates:
 - context engineering
 - retrieval workflow design
 - metadata-aware retrieval traceability
+- summarization workflow design
 - local automation
 - CI and QA discipline
 - documentation maturity
@@ -521,6 +680,7 @@ It demonstrates:
 - practical Python automation for LLM-assisted development workflows
 - tested FastAPI backend structure for local memory access
 - typed retrieval API
+- typed summarization API
 - incremental backend delivery through green, auditable slices
 
 It should not be interpreted as a complete production SaaS application. Instead, it shows the workflow and infrastructure patterns that can support larger LLM and agent-based systems.
@@ -536,8 +696,10 @@ It should not be interpreted as a complete production SaaS application. Instead,
 - summarization workflow
 - CLI retrieval workflow
 - metadata-aware retrieval workflow
+- retrieval status/readiness endpoint
+- JSON metadata export
 - MCP-oriented local memory server
-- tested FastAPI backend slices for health, memory access, metrics, and retrieval
+- tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, and summarization
 - public CI
 - GitHub code scanning / CodeQL through repository security configuration
 - Docker/Nginx starter configuration
@@ -552,7 +714,9 @@ GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+GET /retrieval/status
 POST /retrieval/query
+POST /summarization/summarize
 ```
 
 Implemented tests:
@@ -561,6 +725,7 @@ Implemented tests:
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
+tests/test_api_summarization.py
 ```
 
 Implemented retrieval response fields:
@@ -572,9 +737,32 @@ chunk_idx
 text
 ```
 
-### Next Backend Slice
+Implemented retrieval status fields:
 
-The next backend slice may extract summarization into the backend service layer:
+```text
+index_exists
+metadata_exists
+json_export_exists
+index_vector_count
+metadata_record_count
+json_record_count
+ready
+```
+
+Implemented summarization response fields:
+
+```text
+summary
+word_count
+model
+used_fallback
+wrote_active_context
+embedded
+```
+
+### Current Backend Slice
+
+The summarization API slice has been implemented:
 
 ```text
 app/models/summarization.py
@@ -583,7 +771,7 @@ app/api/routes_summarization.py
 tests/test_api_summarization.py
 ```
 
-The existing CLI workflow should remain available:
+The existing CLI workflow remains available:
 
 ```text
 scripts/summarize_chat.py
@@ -593,7 +781,7 @@ scripts/summarize_chat.py
 
 A stronger backend-oriented version of this workflow could add:
 
-- service layer for summarization
+- refactoring `scripts/summarize_chat.py` to call `SummarizationService`
 - authenticated API endpoints
 - external managed vector database
 - user/project isolation
@@ -621,15 +809,15 @@ actions/checkout@v4 → actions/checkout@v5
 actions/setup-python@v5 → actions/setup-python@v6
 ```
 
-This should be done later, after the backend documentation and first backend slices are stable.
+This should be done later, after the backend documentation and implemented backend slices are stable.
 
 ---
 
 ## 10. Summary
 
-The demo shows how to structure an AI-assisted development environment that can preserve memory, retrieve context, support human review, maintain documentation, expose a local backend API, and keep public quality checks green.
+The demo shows how to structure an AI-assisted development environment that can preserve memory, retrieve context, summarize active context, support human review, maintain documentation, expose a local backend API, and keep public quality checks green.
 
-The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, documentation, production-aware engineering decisions, and metadata-aware traceability.
+The main technical value is not a single script. The value is the architecture of the workflow: persistent memory, retrieval, summarization, MCP-oriented context delivery, FastAPI backend structure, automation, CI/QA, documentation, production-aware engineering decisions, and metadata-aware traceability.
 
 The health/memory backend slice is implemented, tested, documented, and green.
 
@@ -637,4 +825,8 @@ The retrieval API slice is implemented, tested, documented, and green.
 
 The retrieval metadata improvement is implemented, tested, documented, and green.
 
-The next meaningful engineering step is the summarization service slice.
+The retrieval status endpoint is implemented, tested, documented, and green.
+
+The summarization API slice is implemented, tested, documented, and green.
+
+The next meaningful engineering step is deciding whether to refactor the existing CLI summarization script to call the shared backend summarization service.
