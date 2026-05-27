@@ -171,16 +171,23 @@
 - [x] Keep existing `scripts/summarize_chat.py` workflow intact.
 - [x] Update `docs/BACKEND_DESIGN.md`.
 - [x] Update `status/roadmap.md`.
+- [x] Update `README.md`.
+- [x] Update `docs/DEMO_WORKFLOW.md`.
+
+### Slice 3B — Summarization CLI Service Reuse
+
+- [x] Refactor `scripts/summarize_chat.py` to reuse `SummarizationService` for active context writing and optional embedding.
+- [x] Preserve backward-compatible `call_openai_summarize()` helper for existing tests and monkeypatches.
+- [x] Preserve existing CLI behavior for file input, stdin input, manual mode, model selection, and no-embed mode.
+- [x] Restore public CI compatibility after the service refactor.
+- [x] Keep the FastAPI summarization API intact.
 
 ## Next
 
-- [ ] Update `status/roadmap.md` after each completed backend slice.
-- [ ] Update README after summarization API is green.
-- [ ] Update demo workflow after summarization API is green.
-- [ ] Decide whether to refactor `scripts/summarize_chat.py` to call `SummarizationService`.
 - [ ] Improve benchmark isolation so synthetic data does not pollute real memory-bank files.
 - [ ] Improve backup/restore validation for encrypted archives.
 - [ ] Review MCP server defaults for local-first security.
+- [ ] Decide whether to add dedicated CLI compatibility tests for `scripts/summarize_chat.py`.
 
 ## Retrieval & Memory Improvements
 
@@ -201,9 +208,11 @@
 - [x] Add summarization route.
 - [x] Add summarization API tests.
 - [x] Preserve existing `scripts/summarize_chat.py` CLI workflow.
-- [ ] Decide whether to refactor `scripts/summarize_chat.py` to call `SummarizationService`.
-- [ ] Add service-level summarization tests if the script is refactored.
-- [ ] Add CLI compatibility tests if the script is refactored.
+- [x] Refactor `scripts/summarize_chat.py` to reuse `SummarizationService` for active context writing and optional embedding.
+- [x] Preserve backward-compatible `call_openai_summarize()` for existing tests and monkeypatches.
+- [x] Restore CI compatibility after the summarization CLI refactor.
+- [ ] Add dedicated CLI compatibility tests for `scripts/summarize_chat.py`.
+- [ ] Add additional service-level summarization tests if summarization behavior expands.
 
 ## Security & Reliability
 
