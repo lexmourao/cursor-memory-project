@@ -8,7 +8,7 @@
 
 The Cursor Memory Project provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
 
-The backend layer is now being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, and operational boundaries.
+The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, and operational boundaries.
 
 The goal is not to turn this repository into a full production SaaS platform. The goal is to show how a local AI-assisted development memory system can evolve toward production-grade backend architecture while remaining useful as a developer tool.
 
@@ -16,7 +16,7 @@ The goal is not to turn this repository into a full production SaaS platform. Th
 
 ## 2. Current Backend Status
 
-The first backend slice has been implemented and tested.
+The first and second backend slices have been implemented and tested.
 
 Implemented:
 
@@ -28,6 +28,7 @@ app/
     __init__.py
     routes_health.py
     routes_memory.py
+    routes_retrieval.py
   core/
     __init__.py
     config.py
@@ -35,9 +36,11 @@ app/
     __init__.py
     health.py
     memory.py
+    retrieval.py
   services/
     __init__.py
     memory_service.py
+    retrieval_service.py
 ```
 
 Implemented endpoints:
@@ -47,6 +50,7 @@ GET /health
 GET /memory
 GET /memory/{record_id}
 GET /metrics
+POST /retrieval/query
 ```
 
 Implemented tests:
@@ -54,6 +58,7 @@ Implemented tests:
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 ```
 
 The backend now has:
@@ -61,12 +66,14 @@ The backend now has:
 - a FastAPI application entry point
 - typed health response model
 - typed memory response models
+- typed retrieval request and response models
 - centralized local-first configuration
 - reusable memory service
-- route modules for health and memory
+- reusable retrieval service
+- route modules for health, memory, and retrieval
 - Prometheus-compatible metrics endpoint
 - API tests using FastAPI TestClient
-- green public CI for the first backend slice
+- green public CI for implemented backend slices
 
 ---
 
@@ -86,9 +93,19 @@ The backend layer should provide:
 - testable business logic
 - clear separation between CLI scripts and backend services
 
-The first backend slice already covers memory access, health, metrics, typed response models, configuration, service separation, and API tests.
+The implemented backend slices currently cover:
 
-The next backend slice should add retrieval.
+- memory access
+- health status
+- metrics
+- typed response models
+- typed retrieval request/response models
+- configuration
+- service separation
+- retrieval API route
+- API tests
+
+Future backend work should focus on summarization service extraction, structured logging, local security hardening, and deeper retrieval evaluation.
 
 ---
 
@@ -122,6 +139,7 @@ app/
     __init__.py
     routes_health.py
     routes_memory.py
+    routes_retrieval.py
   core/
     __init__.py
     config.py
@@ -129,12 +147,14 @@ app/
     __init__.py
     health.py
     memory.py
+    retrieval.py
   services/
     __init__.py
     memory_service.py
+    retrieval_service.py
 ```
 
-### Planned Structure
+### Planned Future Structure
 
 ```text
 app/
@@ -144,6 +164,7 @@ app/
     routes_memory.py
     routes_retrieval.py
     routes_metrics.py
+    routes_summarization.py
   core/
     config.py
     logging.py
@@ -152,6 +173,7 @@ app/
     health.py
     memory.py
     retrieval.py
+    summarization.py
   services/
     memory_service.py
     retrieval_service.py
@@ -160,7 +182,7 @@ app/
     memory_repository.py
 ```
 
-Existing `scripts/` should remain useful as CLI entry points. Over time, scripts can call reusable services from `app/services/` rather than duplicating logic.
+Existing `scripts/` remain useful as CLI entry points. Over time, scripts can call reusable services from `app/services/` rather than duplicating logic.
 
 ---
 
@@ -294,7 +316,7 @@ POST /retrieval/query
 Status:
 
 ```text
-Planned for second backend slice
+Implemented
 ```
 
 Purpose:
@@ -302,6 +324,7 @@ Purpose:
 - accept a query
 - search the retrieval index
 - return top-K relevant memory chunks
+- validate query text and `top_k` bounds
 
 Example request:
 
@@ -320,12 +343,18 @@ Example response:
   "results": [
     {
       "score": 0.82,
-      "source": "systemPatterns.md",
+      "source": "memory-bank",
       "text": "..."
     }
   ]
 }
 ```
+
+Validation behavior:
+
+- empty query returns validation error
+- `top_k` below 1 returns validation error
+- `top_k` above 20 returns validation error
 
 ---
 
@@ -353,13 +382,10 @@ class MemoryRecord(BaseModel):
 
 class MemoryListResponse(BaseModel):
     records: list[MemoryRecord]
-```
 
-Planned retrieval model concepts:
 
-```python
 class RetrievalRequest(BaseModel):
-    query: str
+    query: str = Field(..., min_length=1)
     top_k: int = Field(default=5, ge=1, le=20)
 
 
@@ -415,17 +441,17 @@ progress.md
 Status:
 
 ```text
-Planned for second backend slice
+Implemented
 ```
 
 Responsibilities:
 
-- build or load retrieval index
-- query memory chunks
-- return top-K results
-- handle empty index states
-- support fallback behavior when embeddings are unavailable
-- avoid crashes when the memory index has not been built yet
+- wrap the existing `scripts.retrieve_context.query` workflow
+- query memory chunks through the existing retrieval index logic
+- return typed retrieval result models
+- support the backend retrieval route without breaking the CLI workflow
+
+Current implementation intentionally reuses the existing retrieval script instead of rewriting the retrieval system. This keeps the CLI workflow working while exposing retrieval through the backend API.
 
 ### Summarization Service
 
@@ -441,6 +467,7 @@ Responsibilities:
 - support manual/fallback mode
 - update `activeContext.md`
 - optionally update the retrieval index
+- preserve compatibility with `scripts/summarize_chat.py`
 
 ---
 
@@ -498,6 +525,7 @@ Current safety behavior:
 
 - only explicitly allowed memory-bank markdown files are exposed through the memory service
 - generated FAISS and pickle files are not exposed as memory records
+- retrieval API uses typed request validation for query and `top_k`
 - public CI remains secret-free
 - dependency checks remain active
 - GitHub code scanning remains enabled through the repository security configuration
@@ -521,6 +549,7 @@ Future hardening may include:
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
+tests/test_api_retrieval.py
 ```
 
 Current backend tests cover:
@@ -536,22 +565,23 @@ Current backend tests cover:
 - `GET /memory/{record_id}`
 - single record retrieval
 - 404 behavior for missing memory record
+- `POST /retrieval/query`
+- retrieval response shape
+- empty query validation
+- invalid low `top_k` validation
+- invalid high `top_k` validation
 
 ### Planned Tests
 
-```text
-tests/test_api_retrieval.py
-```
+Future tests should cover:
 
-Future retrieval tests should cover:
-
-- `POST /retrieval/query`
-- valid query returns 200
-- invalid `top_k` is rejected
-- empty index returns empty results safely
-- missing index does not crash the API
-- response shape is correct
+- retrieval behavior after an index rebuild
+- missing retrieval index behavior
+- empty retrieval index behavior
 - fallback mode without OpenAI key
+- retrieval result source metadata
+- summarization service behavior after backend extraction
+- configured API token behavior if enabled later
 
 ---
 
@@ -580,15 +610,19 @@ Step 4: memory service created
 Step 5: health and memory routes created
 Step 6: FastAPI app entry point created
 Step 7: API tests for health and memory created
+Step 8: retrieval models created
+Step 9: retrieval service created
+Step 10: retrieval route created
+Step 11: retrieval router registered
+Step 12: retrieval API tests created
 ```
 
 Next:
 
 ```text
-Step 8: retrieval models
-Step 9: retrieval service
-Step 10: retrieval route
-Step 11: retrieval API tests
+Step 13: update public docs to reflect retrieval API
+Step 14: add deeper retrieval behavior tests
+Step 15: extract summarization service
 ```
 
 ---
@@ -610,13 +644,15 @@ This backend design demonstrates:
 
 The repository is intentionally scoped as a developer infrastructure project. Its backend value comes from making AI-assisted development memory reliable, inspectable, testable, and extensible.
 
-The first backend slice strengthens the senior-backend signal because it moves the repository from documentation and scripts into a tested FastAPI service structure without breaking the existing workflow.
+The first backend slice strengthened the senior-backend signal by moving the repository from documentation and scripts into a tested FastAPI service structure without breaking the existing workflow.
+
+The second backend slice strengthens the AI systems/backend signal further by exposing retrieval through a typed API while preserving the existing CLI retrieval workflow.
 
 ---
 
-## 14. Next Implementation Steps
+## 14. Implementation Checklist
 
-### Completed First Backend Slice
+### Completed First Backend Slice: Health, Memory, Metrics
 
 - [x] Create `app/` package structure
 - [x] Add `app/core/config.py`
@@ -629,19 +665,27 @@ The first backend slice strengthens the senior-backend signal because it moves t
 - [x] Add FastAPI health endpoint test
 - [x] Add FastAPI memory endpoint tests
 
-### Second Backend Slice: Retrieval
+### Completed Second Backend Slice: Retrieval
 
-- [ ] Add `app/models/retrieval.py`
-- [ ] Add `app/services/retrieval_service.py`
-- [ ] Add `app/api/routes_retrieval.py`
-- [ ] Register retrieval router in `app/main.py`
-- [ ] Add `tests/test_api_retrieval.py`
-- [ ] Keep existing `scripts/retrieve_context.py` working
-- [ ] Update docs after retrieval API is green
+- [x] Add `app/models/retrieval.py`
+- [x] Add `app/services/retrieval_service.py`
+- [x] Add `app/api/routes_retrieval.py`
+- [x] Register retrieval router in `app/main.py`
+- [x] Add `tests/test_api_retrieval.py`
+- [x] Keep existing `scripts/retrieve_context.py` working
+
+### Next Backend Slice: Summarization Service
+
+- [ ] Add `app/models/summarization.py`
+- [ ] Add `app/services/summarization_service.py`
+- [ ] Add `app/api/routes_summarization.py`
+- [ ] Register summarization router in `app/main.py`
+- [ ] Add `tests/test_api_summarization.py`
+- [ ] Preserve `scripts/summarize_chat.py` CLI workflow
+- [ ] Update docs after summarization API is green
 
 ### Later Backend Slices
 
-- [ ] Add summarization service layer
 - [ ] Add structured logging module
 - [ ] Add optional local API token security
 - [ ] Add configurable CORS
@@ -664,15 +708,12 @@ template memory system
 → typed FastAPI backend slice
 → tested service layer
 → retrieval API
+→ summarization API
 → optional production hardening
 ```
 
-The first FastAPI backend slice is now implemented, tested, and green.
+The first FastAPI backend slice is implemented, tested, documented, and green.
 
-The next meaningful engineering step is the retrieval API slice:
+The second retrieval API slice is implemented, tested, documented, and green.
 
-```text
-POST /retrieval/query
-```
-
-This will connect the backend more directly to the core value of the project: helping AI-assisted development tools retrieve relevant project memory across sessions.
+The next meaningful engineering step is to extract summarization into the backend service layer while preserving the existing CLI workflow.
