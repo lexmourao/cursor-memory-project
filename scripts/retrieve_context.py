@@ -1,9 +1,9 @@
 import argparse
 import os
 import pickle
+import sys
 from pathlib import Path
 from typing import List, Tuple
-import sys
 
 import numpy as np
 
@@ -23,11 +23,12 @@ META_FILE = MEMORY_BANK_DIR / "embeddings_meta.pkl"
 EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1536  # per OpenAI docs for model above
 
+
 def get_openai_embedding(text: str) -> np.ndarray:
     """Return embedding vector (np.float32). Falls back to zeros if unavailable."""
     if openai is None or os.getenv("OPENAI_API_KEY") is None:
-        # fallback zero vector
         return np.zeros(EMBED_DIM, dtype="float32")
+
     response = openai.Embedding.create(input=[text], model=EMBED_MODEL)  # type: ignore[attr-defined]
     vec = np.array(response["data"][0]["embedding"], dtype="float32")
     return vec
@@ -45,7 +46,7 @@ def _save_meta(meta: List[dict]) -> None:
         pickle.dump(meta, fh)
 
 
-def _init_index() -> faiss.IndexFlatIP:
+def _init_index() -> faiss.Index:
     if INDEX_FILE.exists():
         index = faiss.read_index(str(INDEX_FILE))
     else:
@@ -53,12 +54,14 @@ def _init_index() -> faiss.IndexFlatIP:
     return index
 
 
-def _save_index(index: faiss.IndexFlatIP) -> None:
+def _save_index(index: faiss.Index) -> None:
     faiss.write_index(index, str(INDEX_FILE))
+
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def rebuild_index() -> None:
     """Embed all markdown files in memory-bank and rebuild FAISS index."""
@@ -73,6 +76,7 @@ def rebuild_index() -> None:
             vec = get_openai_embedding(chunk)
             index.add(vec.reshape(1, -1))
             meta.append({"file": fp.name, "chunk_idx": idx, "text": chunk})
+
     _save_index(index)
     _save_meta(meta)
     print(f"[retrieve_context] Rebuilt index with {index.ntotal} vectors from {len(md_files)} files.")
@@ -95,28 +99,33 @@ def query(text: str, top_k: int = 5) -> List[Tuple[float, str]]:
     """Return list of (score, chunk_text) for top_k matches."""
     index = _init_index()
     meta = _load_meta()
+
     if index.ntotal == 0:
         print("[retrieve_context] Index empty. Rebuild index first.")
         return []
 
     qvec = get_openai_embedding(text).reshape(1, -1)
     scores, ids = index.search(qvec, top_k)
+
     results: List[Tuple[float, str]] = []
     for score, idx in zip(scores[0], ids[0]):
         if idx == -1:
             continue
         results.append((float(score), meta[idx]["text"]))
+
     return results
+
 
 # ---------------------------------------------------------------------------
 # CLI Interface
 # ---------------------------------------------------------------------------
 
+
 def _cli() -> None:
     parser = argparse.ArgumentParser(description="Context retrieval over Memory Bank")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    # cmd_rebuild = sub.add_parser("rebuild", help="Rebuild vector index from scratch")
+    sub.add_parser("rebuild", help="Rebuild vector index from scratch")
 
     cmd_add = sub.add_parser("add", help="Add a new chunk to the index (stdin)")
     cmd_add.add_argument("--source", default="activeContext", help="Source label for chunk")
@@ -145,5 +154,6 @@ def _cli() -> None:
         for score, chunk in results:
             print(f"--- score: {score:.3f}\n{chunk}\n")
 
+
 if __name__ == "__main__":
-    _cli() 
+    _cli()
