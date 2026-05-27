@@ -2,11 +2,11 @@
 
 ![CI](https://github.com/lexmourao/cursor-memory-project/actions/workflows/ci.yml/badge.svg)
 
-Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, FastAPI backend structure, local-first security controls, configurable CORS, documentation, automated logging, testing, and QA practices.
+Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, FastAPI backend structure, local-first security controls, configurable CORS, structured logging, documentation, automated logging, testing, and QA practices.
 
 Welcome to the **Cursor Memory Project**.
 
-The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, summarization workflows, optional local API token protection, configurable CORS, and auditable development practices.
+The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, summarization workflows, optional local API token protection, configurable CORS, structured backend logging, and auditable development practices.
 
 ---
 
@@ -21,7 +21,7 @@ This repository demonstrates my approach to AI-assisted systems development:
 - Retrieval status/readiness reporting for local index and metadata state
 - Summarization API workflows for active context updates
 - MCP server structure for exposing project memory to an AI coding environment
-- Tested FastAPI backend slices for memory access, retrieval, summarization, health checks, metrics, optional local token protection, and configurable CORS
+- Tested FastAPI backend slices for memory access, retrieval, summarization, health checks, metrics, optional local token protection, configurable CORS, and structured logging
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - CI practices using linting, type checking, dependency/security checks, and smoke tests
 - GitHub code scanning / CodeQL through repository security configuration
@@ -30,16 +30,17 @@ This repository demonstrates my approach to AI-assisted systems development:
 - Separation between public smoke tests and environment-specific integration tests
 - Local-first security assumptions with optional token enforcement for protected routes
 - Explicit CORS configuration for trusted local dashboards or frontends
+- Safe backend logging that avoids tokens, request bodies, authorization headers, secrets, and memory-bank content
 
 ---
 
 ## Why This Matters for LLM & Agent Systems
 
-LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, summarization, workflow documentation, traceability, security boundaries, and repeatable development practices.
+LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, summarization, workflow documentation, traceability, security boundaries, observability, and repeatable development practices.
 
-This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, backend APIs, security controls, CORS boundaries, and implementation tasks.
+This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, backend APIs, security controls, CORS boundaries, logging, and implementation tasks.
 
-The repository is not intended to represent a complete production SaaS platform. It is a public technical artifact showing how I structure AI-assisted development infrastructure, retrieval patterns, project memory, backend evolution, CI/QA practices, local-first security assumptions, configurable CORS, and documentation workflows that can support larger LLM and agent-based systems.
+The repository is not intended to represent a complete production SaaS platform. It is a public technical artifact showing how I structure AI-assisted development infrastructure, retrieval patterns, project memory, backend evolution, CI/QA practices, local-first security assumptions, configurable CORS, structured logging, and documentation workflows that can support larger LLM and agent-based systems.
 
 ---
 
@@ -57,13 +58,13 @@ The system is organized around six core ideas:
    A local MCP-oriented server pattern exposes project memory to Cursor or other AI-assisted development environments.
 
 4. **FastAPI backend slices**  
-   The `app/` package exposes tested API endpoints for health, memory access, single memory-record retrieval, retrieval queries, retrieval status, summarization, metadata-aware retrieval results, Prometheus-compatible metrics, optional local token protection, and configurable CORS.
+   The `app/` package exposes tested API endpoints for health, memory access, single memory-record retrieval, retrieval queries, retrieval status, summarization, metadata-aware retrieval results, Prometheus-compatible metrics, optional local token protection, configurable CORS, and structured logging.
 
 5. **Documentation-first workflow**  
    The repo includes docs, diary, status, logs, setup instructions, project rules, generated-file expectations, and security guidance to make work auditable and easier to continue.
 
 6. **Quality, security, and automation practices**  
-   CI, linting, type checking, smoke tests, dependency/security checks, GitHub code scanning, local-first security guidance, optional API token tests, and CORS tests help keep the public workflow maintainable.
+   CI, linting, type checking, smoke tests, dependency/security checks, GitHub code scanning, local-first security guidance, optional API token tests, CORS tests, and safe logging practices help keep the public workflow maintainable.
 
 ---
 
@@ -115,6 +116,7 @@ app/
   core/
     __init__.py
     config.py
+    logging.py
     security.py
   models/
     __init__.py
@@ -152,7 +154,9 @@ These backend slices demonstrate:
 - local-first configuration
 - optional local API token configuration
 - configurable CORS settings
+- structured logging settings
 - reusable security helper
+- reusable logging configuration module
 - service-layer separation
 - route modules
 - app factory pattern through `create_app(settings)`
@@ -169,6 +173,7 @@ These backend slices demonstrate:
 - public health route for readiness checks
 - CORS disabled by default
 - explicit allowed origins when CORS is enabled
+- safe startup logging for service mode and security posture
 - tested backend behavior with FastAPI TestClient
 
 The retrieval API returns traceable result fields:
@@ -247,7 +252,42 @@ cp env.template .env
 If `OPENAI_API_KEY` is present, automated summaries and embeddings can use OpenAI.  
 If it is absent, scripts and APIs fall back to manual, fallback, or zero-cost modes.
 
-3. Start the FastAPI backend:
+3. Optional: configure backend logging.
+
+Logging is enabled with safe local defaults:
+
+```env
+LOG_LEVEL=INFO
+LOG_FORMAT=plain
+```
+
+Supported `LOG_LEVEL` values follow standard Python logging levels, such as:
+
+```text
+DEBUG
+INFO
+WARNING
+ERROR
+```
+
+Supported `LOG_FORMAT` values:
+
+```text
+plain
+compact
+```
+
+Logging intentionally avoids:
+
+```text
+tokens
+secrets
+request bodies
+authorization headers
+memory-bank content
+```
+
+4. Start the FastAPI backend:
 
 ```bash
 uvicorn app.main:app --reload
@@ -304,7 +344,7 @@ wrote_active_context
 embedded
 ```
 
-4. Optional: enable local API token protection for protected routes.
+5. Optional: enable local API token protection for protected routes.
 
 In `.env`:
 
@@ -337,7 +377,7 @@ curl http://127.0.0.1:8000/metrics \
 
 `GET /health` remains public for local readiness checks.
 
-5. Optional: enable CORS for a trusted local dashboard or frontend.
+6. Optional: enable CORS for a trusted local dashboard or frontend.
 
 CORS is disabled by default.
 
@@ -367,7 +407,7 @@ Content-Type
 
 Use this only for trusted local dashboards, documentation demos, or known frontends. Do not use wildcard origins for this project unless you intentionally change the security model.
 
-6. Start the legacy/local MCP-style memory server if needed:
+7. Start the legacy/local MCP-style memory server if needed:
 
 ```bash
 python scripts/run_mcp_server.py &
@@ -379,7 +419,7 @@ Cursor can fetch:
 http://localhost:7331/memory
 ```
 
-7. Generate or update the rolling summary through the CLI:
+8. Generate or update the rolling summary through the CLI:
 
 ```bash
 python scripts/summarize_chat.py --chat-log path/to/chat.txt --max-lines 800
@@ -391,19 +431,19 @@ Manual mode:
 cat path/to/chat.txt | python scripts/summarize_chat.py --stdin --manual
 ```
 
-8. Build the retrieval index:
+9. Build the retrieval index:
 
 ```bash
 python scripts/retrieve_context.py rebuild
 ```
 
-9. Export inspectable retrieval metadata JSON:
+10. Export inspectable retrieval metadata JSON:
 
 ```bash
 python scripts/retrieve_context.py export-meta-json
 ```
 
-10. Query memory through the CLI retrieval workflow:
+11. Query memory through the CLI retrieval workflow:
 
 ```bash
 python scripts/retrieve_context.py query --text "What is the current project architecture?" --top-k 5
@@ -495,6 +535,8 @@ The project reads the following variables. See `env.template`.
 | `LOCAL_API_TOKEN` | Token required in `Authorization: Bearer <LOCAL_API_TOKEN>` when local API token protection is enabled. |
 | `ENABLE_CORS` | Enables CORS middleware when set to `true`. Defaults to `false`. |
 | `CORS_ALLOW_ORIGINS` | Comma-separated list of trusted origins allowed when CORS is enabled, such as `http://localhost:3000,http://127.0.0.1:3000`. |
+| `LOG_LEVEL` | Backend logging level. Defaults to `INFO`. Supports standard Python logging levels such as `DEBUG`, `INFO`, `WARNING`, and `ERROR`. |
+| `LOG_FORMAT` | Backend logging format. Defaults to `plain`. Supports `plain` and `compact`. |
 | `GPG_KEY_ID` | Required for encrypted backup workflows. |
 | `GPG_KEY_ID_FILE` | Path to a file containing the recipient key ID for encrypted backups. |
 | `SERVICE_NAME` | Optional backend service name override. |
@@ -517,7 +559,7 @@ or your preferred shell mechanism.
 
 | Path | Purpose |
 |---|---|
-| `app/` | FastAPI backend package for health, memory access, retrieval, retrieval status, summarization, metadata-aware retrieval results, metrics, optional local token protection, and configurable CORS |
+| `app/` | FastAPI backend package for health, memory access, retrieval, retrieval status, summarization, metadata-aware retrieval results, metrics, optional local token protection, configurable CORS, and structured logging |
 | `cursor_setup_instructions/` | Canonical setup guide and Cursor workflow instructions |
 | `docs/` | Architecture, backend design, generated-file guidance, security, deployment, and technical documentation |
 | `memory-bank/` | Starter memory template for persistent context, active memory, and project knowledge |
@@ -537,7 +579,7 @@ or your preferred shell mechanism.
 
 ## Technical Review Notes
 
-This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, summarization workflow, documentation discipline, local automation, backend evolution, security boundaries, configurable CORS, and CI/QA practices.
+This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, summarization workflow, documentation discipline, local automation, backend evolution, security boundaries, configurable CORS, structured logging, and CI/QA practices.
 
 Recommended reviewer path:
 
@@ -552,6 +594,7 @@ docs/SECURITY.md
 docs/TECHNICAL_REVIEW.md
 app/main.py
 app/core/config.py
+app/core/logging.py
 app/core/security.py
 app/services/memory_service.py
 app/services/retrieval_service.py
@@ -580,7 +623,7 @@ Current scope:
 - Local-first memory and retrieval workflow
 - Cursor-oriented AI-assisted development setup
 - MCP server structure for exposing memory context
-- FastAPI backend slices for memory access, retrieval, retrieval status, summarization, health, metrics, optional local token protection, and configurable CORS
+- FastAPI backend slices for memory access, retrieval, retrieval status, summarization, health, metrics, optional local token protection, configurable CORS, and structured logging
 - Metadata-aware retrieval with source file and chunk index traceability
 - JSON metadata export for retrieval inspection
 - Python automation scripts
@@ -633,6 +676,7 @@ The repo includes security and quality practices such as:
 - explicit separation between public CI and secret-dependent integration workflows
 - optional local API token protection for sensitive local backend routes
 - configurable CORS that remains disabled unless explicitly enabled
+- structured logging with safe startup/configuration logs
 
 The memory API exposes only allowed memory-bank markdown files and does not expose generated FAISS or pickle files as memory records.
 
@@ -647,6 +691,8 @@ The summarization API validates text input, supports fallback behavior, and can 
 The optional local API token protects memory, retrieval, summarization, and metrics routes when `ENABLE_LOCAL_API_TOKEN=true`, while keeping `GET /health` public for local readiness checks.
 
 Configurable CORS remains disabled by default. When enabled, only explicitly trusted origins from `CORS_ALLOW_ORIGINS` receive CORS headers. The middleware is intentionally limited to `GET`, `POST`, and `OPTIONS` methods and the `Authorization` and `Content-Type` headers.
+
+Backend logging is configured through `LOG_LEVEL` and `LOG_FORMAT`. Startup logs may report service name, runtime mode, token-protection status, CORS status, and configured-origin count. Logging intentionally avoids token values, request bodies, authorization headers, secrets, and memory-bank content.
 
 ---
 
@@ -687,6 +733,7 @@ The same principles can support broader LLM and agent systems:
 - local-first security boundaries
 - optional protected local APIs
 - explicit CORS controls for trusted frontends
+- safe logging and operational visibility
 - separation between local development, public CI, and production integration
 
 ---
@@ -695,9 +742,9 @@ The same principles can support broader LLM and agent systems:
 
 This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, summarization, documentation, backend structure, security boundaries, and QA practices.
 
-The health/memory backend slice is implemented, tested, documented, and green. The retrieval API slice is implemented, tested, documented, and green. The retrieval metadata improvement is implemented, tested, documented, and green. The retrieval status endpoint is implemented, tested, documented, and green. The summarization API slice is implemented, tested, documented, and green. The summarization CLI compatibility slice is implemented, tested, documented, and green. The optional local API token protection slice is implemented, tested, documented, and green. The configurable CORS slice is implemented, tested, documented, and green.
+The health/memory backend slice is implemented, tested, documented, and green. The retrieval API slice is implemented, tested, documented, and green. The retrieval metadata improvement is implemented, tested, documented, and green. The retrieval status endpoint is implemented, tested, documented, and green. The summarization API slice is implemented, tested, documented, and green. The summarization CLI compatibility slice is implemented, tested, documented, and green. The optional local API token protection slice is implemented, tested, documented, and green. The configurable CORS slice is implemented, tested, documented, and green. The structured logging slice is implemented, documented, and green.
 
-The next meaningful engineering steps are structured logging, retrieval evaluation tests, and additional local-first hardening around MCP/server exposure modes.
+The next meaningful engineering steps are backend logging documentation closure, retrieval evaluation tests, and additional local-first hardening around MCP/server exposure modes.
 
 ---
 
