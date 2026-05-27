@@ -8,7 +8,7 @@
 
 The Cursor Memory Project provides a local-first memory system using markdown files, Python automation scripts, retrieval, summarization, and an MCP-oriented memory server.
 
-The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, and operational boundaries.
+The backend layer is being evolved into a clearer FastAPI service structure with typed contracts, explicit routes, reusable services, configuration management, tests, metadata schemas, and operational boundaries.
 
 The goal is not to turn this repository into a full production SaaS platform. The goal is to show how a local AI-assisted development memory system can evolve toward production-grade backend architecture while remaining useful as a developer tool.
 
@@ -34,6 +34,7 @@ app/
     config.py
   models/
     __init__.py
+    chunk.py
     health.py
     memory.py
     retrieval.py
@@ -66,6 +67,7 @@ The backend now has:
 - a FastAPI application entry point
 - typed health response model
 - typed memory response models
+- formal chunk metadata models
 - typed retrieval request and response models
 - centralized local-first configuration
 - reusable memory service
@@ -89,6 +91,7 @@ The backend layer should provide:
 - health and readiness endpoints
 - metrics endpoint
 - typed request and response models
+- reusable metadata schemas
 - reusable service modules
 - centralized configuration
 - structured logging
@@ -103,6 +106,7 @@ The implemented backend slices currently cover:
 - metrics
 - typed response models
 - typed retrieval request/response models
+- formal chunk metadata schema
 - configuration
 - service separation
 - retrieval API route
@@ -152,6 +156,7 @@ app/
     config.py
   models/
     __init__.py
+    chunk.py
     health.py
     memory.py
     retrieval.py
@@ -177,6 +182,7 @@ app/
     logging.py
     security.py
   models/
+    chunk.py
     health.py
     memory.py
     retrieval.py
@@ -385,7 +391,7 @@ Reliability behavior:
 
 ## 7. Typed Models
 
-The backend uses typed models for API contracts.
+The backend uses typed models for API contracts and reusable metadata structures.
 
 Implemented model concepts:
 
@@ -409,16 +415,23 @@ class MemoryListResponse(BaseModel):
     records: list[MemoryRecord]
 
 
+class ChunkMetadata(BaseModel):
+    source: str = Field(..., min_length=1)
+    chunk_idx: int = Field(..., ge=0)
+
+
+class RetrievedChunk(ChunkMetadata):
+    score: float
+    text: str
+
+
 class RetrievalRequest(BaseModel):
     query: str = Field(..., min_length=1)
     top_k: int = Field(default=5, ge=1, le=20)
 
 
-class RetrievalResult(BaseModel):
-    score: float
-    source: str
-    chunk_idx: int
-    text: str
+class RetrievalResult(RetrievedChunk):
+    pass
 
 
 class RetrievalResponse(BaseModel):
@@ -427,6 +440,14 @@ class RetrievalResponse(BaseModel):
 ```
 
 Typed contracts make the API easier to test, document, and evolve.
+
+The shared chunk schema now makes retrieval metadata reusable across:
+
+- retrieval API responses
+- future metadata storage
+- future retrieval dashboards
+- future inspection endpoints
+- future retrieval evaluation tests
 
 ---
 
@@ -476,11 +497,53 @@ Responsibilities:
 - query memory chunks through the existing retrieval index logic
 - return typed retrieval result models
 - expose source filename and chunk index in API results
+- reuse the formal chunk metadata schema through `RetrievedChunk`
 - support missing and empty retrieval index behavior without API crashes
 - support rebuilt index retrieval behavior
 - support the backend retrieval route without breaking the CLI workflow
 
 Current implementation intentionally reuses the existing retrieval script instead of rewriting the retrieval system. This keeps the CLI workflow working while exposing retrieval through the backend API.
+
+### Chunk Metadata Schema
+
+Status:
+
+```text
+Implemented
+```
+
+The backend now includes:
+
+```text
+app/models/chunk.py
+```
+
+Implemented models:
+
+```text
+ChunkMetadata
+RetrievedChunk
+```
+
+This schema formalizes the source and chunk-level structure used by retrieval results.
+
+Current fields:
+
+```text
+source
+chunk_idx
+score
+text
+```
+
+This improves:
+
+- model reuse
+- metadata consistency
+- future JSON/SQLite migration readiness
+- dashboard readiness
+- retrieval inspection
+- source traceability
 
 ### Metadata-Aware Retrieval
 
@@ -618,6 +681,7 @@ Current safety behavior:
 - generated FAISS and pickle files are not exposed as memory records
 - retrieval API uses typed request validation for query and `top_k`
 - retrieval API returns source filename and chunk index for traceability
+- retrieval metadata now has a reusable typed schema
 - retrieval API handles missing and empty index states safely
 - retrieval rebuild test uses a temporary memory-bank and temporary FAISS files to avoid polluting real starter memory
 - public CI remains secret-free
@@ -724,13 +788,16 @@ Step 16: retrieval API tests updated to validate metadata fields
 Step 17: missing retrieval index test added
 Step 18: empty retrieval index test added
 Step 19: retrieval-after-rebuild test added
+Step 20: formal chunk metadata schema added
+Step 21: retrieval model updated to reuse chunk schema
 ```
 
 Next:
 
 ```text
-Step 20: update roadmap to reflect retrieval-after-rebuild test
-Step 21: extract summarization service
+Step 22: update roadmap to reflect formal chunk metadata schema
+Step 23: decide whether retrieval metadata should remain pickle-based or move to JSON/SQLite
+Step 24: extract summarization service
 ```
 
 ---
@@ -744,6 +811,7 @@ This backend design demonstrates:
 - local-first security posture
 - service-oriented architecture
 - typed backend models
+- reusable metadata schema design
 - testability
 - operational awareness
 - clear public CI vs configured integration separation
@@ -764,6 +832,8 @@ The retrieval metadata improvement strengthens the system further by making retr
 The retrieval reliability tests strengthen the system by proving the API handles missing and empty local retrieval state safely.
 
 The retrieval-after-rebuild test strengthens the system by proving the API can return actual indexed memory content from an isolated temporary memory-bank without polluting the real starter memory.
+
+The formal chunk metadata schema strengthens the system by making retrieval metadata reusable, typed, and ready for future storage, inspection, and dashboard layers.
 
 ---
 
@@ -818,6 +888,15 @@ The retrieval-after-rebuild test strengthens the system by proving the API can r
 - [x] Validate returned text content
 - [x] Avoid polluting real `memory-bank/`
 
+### Completed Formal Chunk Metadata Schema
+
+- [x] Add `app/models/chunk.py`
+- [x] Add `ChunkMetadata`
+- [x] Add `RetrievedChunk`
+- [x] Update `RetrievalResult` to inherit from `RetrievedChunk`
+- [x] Preserve existing retrieval API response shape
+- [x] Keep tests green
+
 ### Next Backend Slice: Summarization Service
 
 - [ ] Add `app/models/summarization.py`
@@ -855,6 +934,7 @@ template memory system
 → metadata-aware retrieval
 → retrieval reliability
 → retrieval after rebuild
+→ formal chunk metadata schema
 → summarization API
 → optional production hardening
 ```
@@ -869,4 +949,6 @@ The retrieval reliability tests for missing and empty indexes are implemented, t
 
 The retrieval-after-rebuild test is implemented, tested, documented, and green.
 
-The next meaningful engineering step is to extract summarization into the backend service layer while preserving the existing CLI workflow.
+The formal chunk metadata schema is implemented, documented, and green.
+
+The next meaningful engineering step is to update the roadmap, then decide whether retrieval metadata should remain pickle-based or move to JSON/SQLite before extracting summarization into the backend service layer.
