@@ -2,11 +2,11 @@
 
 ![CI](https://github.com/lexmourao/cursor-memory-project/actions/workflows/ci.yml/badge.svg)
 
-Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, FastAPI backend structure, documentation, automated logging, testing, and QA practices.
+Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, FastAPI backend structure, local-first security controls, documentation, automated logging, testing, and QA practices.
 
 Welcome to the **Cursor Memory Project**.
 
-The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, summarization workflows, and auditable development practices.
+The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, summarization workflows, optional local API token protection, and auditable development practices.
 
 ---
 
@@ -21,23 +21,24 @@ This repository demonstrates my approach to AI-assisted systems development:
 - Retrieval status/readiness reporting for local index and metadata state
 - Summarization API workflows for active context updates
 - MCP server structure for exposing project memory to an AI coding environment
-- Tested FastAPI backend slices for memory access, retrieval, summarization, health checks, and metrics
+- Tested FastAPI backend slices for memory access, retrieval, summarization, health checks, metrics, and optional local token protection
 - Python automation for summarization, retrieval, logging, backups, and status updates
 - CI practices using linting, type checking, dependency/security checks, and smoke tests
 - GitHub code scanning / CodeQL through repository security configuration
 - Documentation-first project structure for auditable and reproducible AI workflows
 - Human-in-the-loop fallback modes when API keys or external services are unavailable
 - Separation between public smoke tests and environment-specific integration tests
+- Local-first security assumptions with optional token enforcement for protected routes
 
 ---
 
 ## Why This Matters for LLM & Agent Systems
 
-LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, summarization, workflow documentation, traceability, and repeatable development practices.
+LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, summarization, workflow documentation, traceability, security boundaries, and repeatable development practices.
 
-This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, backend APIs, and implementation tasks.
+This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, backend APIs, security controls, and implementation tasks.
 
-The repository is not intended to represent a complete production SaaS platform. It is a public technical artifact showing how I structure AI-assisted development infrastructure, retrieval patterns, project memory, backend evolution, CI/QA practices, and documentation workflows that can support larger LLM and agent-based systems.
+The repository is not intended to represent a complete production SaaS platform. It is a public technical artifact showing how I structure AI-assisted development infrastructure, retrieval patterns, project memory, backend evolution, CI/QA practices, local-first security assumptions, and documentation workflows that can support larger LLM and agent-based systems.
 
 ---
 
@@ -55,13 +56,13 @@ The system is organized around six core ideas:
    A local MCP-oriented server pattern exposes project memory to Cursor or other AI-assisted development environments.
 
 4. **FastAPI backend slices**  
-   The `app/` package exposes tested API endpoints for health, memory access, single memory-record retrieval, retrieval queries, retrieval status, summarization, metadata-aware retrieval results, and Prometheus-compatible metrics.
+   The `app/` package exposes tested API endpoints for health, memory access, single memory-record retrieval, retrieval queries, retrieval status, summarization, metadata-aware retrieval results, Prometheus-compatible metrics, and optional local token protection.
 
 5. **Documentation-first workflow**  
-   The repo includes docs, diary, status, logs, setup instructions, and project rules to make work auditable and easier to continue.
+   The repo includes docs, diary, status, logs, setup instructions, project rules, generated-file expectations, and security guidance to make work auditable and easier to continue.
 
-6. **Quality and automation practices**  
-   CI, linting, type checking, smoke tests, dependency/security checks, and GitHub code scanning help keep the public workflow maintainable.
+6. **Quality, security, and automation practices**  
+   CI, linting, type checking, smoke tests, dependency/security checks, GitHub code scanning, local-first security guidance, and optional API token tests help keep the public workflow maintainable.
 
 ---
 
@@ -81,6 +82,23 @@ POST /retrieval/query
 POST /summarization/summarize
 ```
 
+Protected when optional local API token mode is enabled:
+
+```text
+GET /memory
+GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
+POST /retrieval/query
+POST /summarization/summarize
+```
+
+Intentionally public for local readiness checks:
+
+```text
+GET /health
+```
+
 Implemented backend files:
 
 ```text
@@ -96,6 +114,7 @@ app/
   core/
     __init__.py
     config.py
+    security.py
   models/
     __init__.py
     chunk.py
@@ -117,6 +136,8 @@ tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 ```
 
 These backend slices demonstrate:
@@ -127,6 +148,8 @@ These backend slices demonstrate:
 - typed retrieval status model
 - typed summarization request/response models
 - local-first configuration
+- optional local API token configuration
+- reusable security helper
 - service-layer separation
 - route modules
 - memory-bank access through an API
@@ -138,6 +161,8 @@ These backend slices demonstrate:
 - request validation for retrieval queries
 - request validation for summarization input
 - Prometheus-compatible metrics
+- optional token protection for sensitive local routes
+- public health route for readiness checks
 - tested backend behavior with FastAPI TestClient
 
 The retrieval API returns traceable result fields:
@@ -273,7 +298,40 @@ wrote_active_context
 embedded
 ```
 
-4. Start the legacy/local MCP-style memory server if needed:
+4. Optional: enable local API token protection for protected routes.
+
+In `.env`:
+
+```env
+ENABLE_LOCAL_API_TOKEN=true
+LOCAL_API_TOKEN=replace-with-a-local-dev-token
+```
+
+When token mode is enabled, protected routes require:
+
+```text
+Authorization: Bearer <LOCAL_API_TOKEN>
+```
+
+Example protected retrieval request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/retrieval/query \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer replace-with-a-local-dev-token" \
+  -d '{"query": "What is the project architecture?", "top_k": 5}'
+```
+
+Example protected metrics request:
+
+```bash
+curl http://127.0.0.1:8000/metrics \
+  -H "Authorization: Bearer replace-with-a-local-dev-token"
+```
+
+`GET /health` remains public for local readiness checks.
+
+5. Start the legacy/local MCP-style memory server if needed:
 
 ```bash
 python scripts/run_mcp_server.py &
@@ -285,7 +343,7 @@ Cursor can fetch:
 http://localhost:7331/memory
 ```
 
-5. Generate or update the rolling summary through the CLI:
+6. Generate or update the rolling summary through the CLI:
 
 ```bash
 python scripts/summarize_chat.py --chat-log path/to/chat.txt --max-lines 800
@@ -297,19 +355,19 @@ Manual mode:
 cat path/to/chat.txt | python scripts/summarize_chat.py --stdin --manual
 ```
 
-6. Build the retrieval index:
+7. Build the retrieval index:
 
 ```bash
 python scripts/retrieve_context.py rebuild
 ```
 
-7. Export inspectable retrieval metadata JSON:
+8. Export inspectable retrieval metadata JSON:
 
 ```bash
 python scripts/retrieve_context.py export-meta-json
 ```
 
-8. Query memory through the CLI retrieval workflow:
+9. Query memory through the CLI retrieval workflow:
 
 ```bash
 python scripts/retrieve_context.py query --text "What is the current project architecture?" --top-k 5
@@ -363,18 +421,24 @@ The public CI workflow runs:
 - `pip-audit --strict` for dependency/security checks
 - focused smoke tests for public workflow validation
 
-Backend API tests include:
+Backend API and CLI tests include:
 
 ```text
 tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 ```
 
 The retrieval tests validate response shape, query validation, `top_k` validation, metadata fields, missing/empty index behavior, retrieval after index rebuild, JSON metadata export, and retrieval status readiness.
 
 The summarization tests validate manual mode, fallback mode, active context writing through an isolated temporary path, disabled embedding behavior, response fields, and empty text validation.
+
+The CLI compatibility tests validate file input, manual stdin mode, empty stdin handling, `--no-embed` behavior, isolated `activeContext.md` writing, and backward-compatible `call_openai_summarize()` availability.
+
+The security tests validate default open local-first behavior, missing token rejection, wrong token rejection, correct Bearer token access, fail-closed misconfiguration handling, protected memory/retrieval/summarization/metrics routes, and public health route behavior.
 
 Some backup and end-to-end tests require environment-specific configuration such as `GPG_KEY_ID` for encrypted backups. These are intentionally separated from the public smoke-test workflow and should be run in a configured integration environment.
 
@@ -388,6 +452,8 @@ The project reads the following variables. See `env.template`.
 |---|---|
 | `OPENAI_API_KEY` | Enables automated summarization and embeddings via OpenAI API. Leaving it blank triggers fallback modes. |
 | `OPENAI_API_KEY_FILE` | Path inside container to a file containing the key when using Docker secrets. |
+| `ENABLE_LOCAL_API_TOKEN` | Enables optional Bearer token protection for protected local API routes when set to `true`. Defaults to `false`. |
+| `LOCAL_API_TOKEN` | Token required in `Authorization: Bearer <LOCAL_API_TOKEN>` when local API token protection is enabled. |
 | `GPG_KEY_ID` | Required for encrypted backup workflows. |
 | `GPG_KEY_ID_FILE` | Path to a file containing the recipient key ID for encrypted backups. |
 | `SERVICE_NAME` | Optional backend service name override. |
@@ -410,12 +476,12 @@ or your preferred shell mechanism.
 
 | Path | Purpose |
 |---|---|
-| `app/` | FastAPI backend package for health, memory access, retrieval, retrieval status, summarization, metadata-aware retrieval results, and metrics |
+| `app/` | FastAPI backend package for health, memory access, retrieval, retrieval status, summarization, metadata-aware retrieval results, metrics, and optional local token protection |
 | `cursor_setup_instructions/` | Canonical setup guide and Cursor workflow instructions |
 | `docs/` | Architecture, backend design, generated-file guidance, security, deployment, and technical documentation |
 | `memory-bank/` | Starter memory template for persistent context, active memory, and project knowledge |
 | `scripts/` | Automation, summarization, retrieval, backups, logging, and status scripts |
-| `tests/` | Unit, smoke, validation, and backend API tests |
+| `tests/` | Unit, smoke, validation, security, CLI compatibility, and backend API tests |
 | `status/` | Current status, checklists, and roadmap |
 | `diary/` | Project diary and development log |
 | `logs/solutions/` | Error logs, fixes, and implementation notes |
@@ -430,7 +496,7 @@ or your preferred shell mechanism.
 
 ## Technical Review Notes
 
-This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, summarization workflow, documentation discipline, local automation, backend evolution, and CI/QA practices.
+This repository is designed as a public technical artifact for AI-assisted development workflows. It demonstrates system structure, retrieval logic, summarization workflow, documentation discipline, local automation, backend evolution, security boundaries, and CI/QA practices.
 
 Recommended reviewer path:
 
@@ -441,8 +507,11 @@ docs/ARCHITECTURE.md
 docs/BACKEND_DESIGN.md
 docs/DEMO_WORKFLOW.md
 docs/GENERATED_FILES.md
+docs/SECURITY.md
 docs/TECHNICAL_REVIEW.md
 app/main.py
+app/core/config.py
+app/core/security.py
 app/services/memory_service.py
 app/services/retrieval_service.py
 app/services/summarization_service.py
@@ -456,6 +525,8 @@ tests/test_api_health.py
 tests/test_api_memory.py
 tests/test_api_retrieval.py
 tests/test_api_summarization.py
+tests/test_api_security.py
+tests/test_cli_summarize_chat.py
 scripts/retrieve_context.py
 scripts/summarize_chat.py
 .github/workflows/ci.yml
@@ -467,7 +538,7 @@ Current scope:
 - Local-first memory and retrieval workflow
 - Cursor-oriented AI-assisted development setup
 - MCP server structure for exposing memory context
-- FastAPI backend slices for memory access, retrieval, retrieval status, summarization, health, and metrics
+- FastAPI backend slices for memory access, retrieval, retrieval status, summarization, health, metrics, and optional local token protection
 - Metadata-aware retrieval with source file and chunk index traceability
 - JSON metadata export for retrieval inspection
 - Python automation scripts
@@ -496,6 +567,7 @@ A production version of this architecture could evolve toward:
 - scheduled summarization jobs
 - retrieval evaluation tests
 - structured observability and logging
+- configurable CORS
 - agent workflow monitoring
 - deployment via cloud infrastructure
 - frontend dashboard for memory, logs, summaries, retrieval chunks, and retrieval metadata inspection
@@ -517,6 +589,7 @@ The repo includes security and quality practices such as:
 - branch protection
 - documented fallback behavior when external APIs are unavailable
 - explicit separation between public CI and secret-dependent integration workflows
+- optional local API token protection for sensitive local backend routes
 
 The memory API exposes only allowed memory-bank markdown files and does not expose generated FAISS or pickle files as memory records.
 
@@ -527,6 +600,8 @@ The retrieval API returns source filename and chunk index fields to improve trac
 The retrieval status API reports index, metadata, JSON export, and readiness state for operational inspection.
 
 The summarization API validates text input, supports fallback behavior, and can disable embedding for safer test or controlled workflows.
+
+The optional local API token protects memory, retrieval, summarization, and metrics routes when `ENABLE_LOCAL_API_TOKEN=true`, while keeping `GET /health` public for local readiness checks.
 
 ---
 
@@ -564,17 +639,19 @@ The same principles can support broader LLM and agent systems:
 - human-in-the-loop fallbacks
 - system documentation
 - workflow traceability
+- local-first security boundaries
+- optional protected local APIs
 - separation between local development, public CI, and production integration
 
 ---
 
 ## Status
 
-This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, summarization, documentation, backend structure, and QA practices.
+This repository is maintained as a public showcase of AI-assisted development workflow architecture and tooling. Some private/client AI agent systems cannot be fully shared publicly due to confidentiality, so this repository serves as a shareable technical layer demonstrating development workflow, retrieval, summarization, documentation, backend structure, security boundaries, and QA practices.
 
-The health/memory backend slice is implemented, tested, documented, and green. The retrieval API slice is implemented, tested, documented, and green. The retrieval metadata improvement is implemented, tested, documented, and green. The retrieval status endpoint is implemented, tested, documented, and green. The summarization API slice is implemented, tested, documented, and green.
+The health/memory backend slice is implemented, tested, documented, and green. The retrieval API slice is implemented, tested, documented, and green. The retrieval metadata improvement is implemented, tested, documented, and green. The retrieval status endpoint is implemented, tested, documented, and green. The summarization API slice is implemented, tested, documented, and green. The summarization CLI compatibility slice is implemented, tested, documented, and green. The optional local API token protection slice is implemented, tested, documented, and green.
 
-The next meaningful engineering step is updating the demo workflow, then deciding whether to refactor the existing CLI summarization script to call the shared backend summarization service.
+The next meaningful engineering steps are adding configurable CORS settings, structured logging, retrieval evaluation tests, and additional local-first hardening around MCP/server exposure modes.
 
 ---
 
