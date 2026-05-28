@@ -1,5 +1,4 @@
 """FastAPI application entry point for the Cursor Memory Project backend."""
-
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -12,7 +11,6 @@ from app.api.routes_summarization import router as summarization_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.security import require_local_api_token
-
 
 REQUEST_COUNT = Counter(
     "cursor_memory_backend_requests_total",
@@ -37,13 +35,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
     )
-token_protection_status = "enabled" if active_settings.enable_local_api_token else "disabled"
 
+    token_protection_status = (
+        "enabled" if active_settings.enable_local_api_token else "disabled"
+    )
     logger.info(
         "Starting backend service=%s runtime_mode=%s token_protection=%s cors_enabled=%s",
         active_settings.service_name,
         active_settings.runtime_mode,
-        token_protection_status,,
+        token_protection_status,
         active_settings.enable_cors,
     )
 
