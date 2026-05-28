@@ -154,38 +154,48 @@ Before using Nginx in a public or shared environment, add:
 
 ## 6. Authentication Boundary
 
-The current backend does not yet implement API authentication.
+The backend includes optional local API token protection for sensitive local routes.
 
-Current assumption:
-
-```text
-Safe only for local or controlled environments.
-```
-
-Future recommended enhancement:
+Token protection is disabled by default to preserve the local-first developer workflow:
 
 ```text
-Optional local API token authentication for non-localhost usage.
+ENABLE_LOCAL_API_TOKEN=false
+LOCAL_API_TOKEN=
 ```
 
-A future API token should protect at least:
+When `ENABLE_LOCAL_API_TOKEN=true`, protected routes require:
+
+```text
+Authorization: Bearer <LOCAL_API_TOKEN>
+```
+
+The token is configured through environment variables or local secrets, not hardcoded.
+
+Protected when optional local API token mode is enabled:
 
 ```text
 GET /memory
 GET /memory/{record_id}
+GET /metrics
+GET /retrieval/status
 POST /retrieval/query
 POST /summarization/summarize
-GET /retrieval/status
-GET /metrics
 ```
 
-The token should be configured through environment variables or secrets, not hardcoded.
-
-Example future configuration:
+Intentionally public for local readiness checks:
 
 ```text
-LOCAL_API_TOKEN=
-ENABLE_LOCAL_API_TOKEN=true
+GET /health
+```
+
+If token protection is enabled but `LOCAL_API_TOKEN` is not configured, the backend fails closed instead of allowing access.
+
+This optional local API token is a lightweight local protection mechanism. It should not be interpreted as production-grade authentication, authorization, RBAC, multi-tenant identity management, or enterprise access control.
+
+Current assumption:
+
+```text
+Safe only for local or controlled environments unless additional production hardening is added.
 ```
 
 ---
@@ -343,10 +353,18 @@ for roles, severity levels, and procedures.
 Current controls include:
 
 - local-first default posture
+- localhost-first runtime assumptions
 - `.env` ignored by Git
 - safe `env.template`
 - generated retrieval files ignored by Git
 - memory API exposing only allowed markdown memory records
+- optional local API token protection for sensitive local routes
+- fail-closed behavior when token mode is enabled without `LOCAL_API_TOKEN`
+- public `/health` endpoint for local readiness checks
+- configurable CORS disabled by default
+- explicit allowed origins when CORS is enabled
+- safe startup logging for service mode, token-protection status, and CORS status
+- logging configuration documented to avoid request bodies, authorization headers, tokens, secrets, and memory-bank content
 - retrieval query validation
 - summarization input validation
 - retrieval status reporting
@@ -355,6 +373,7 @@ Current controls include:
 - type checking with `mypy`
 - linting with `ruff`
 - GitHub code scanning / CodeQL through repository security configuration
+- additional security scanning with Bandit and TruffleHog
 - documentation of generated-file expectations
 - ADR separation for public CI vs integration workflows
 
@@ -365,12 +384,12 @@ Current controls include:
 Planned or recommended improvements:
 
 ```text
-[ ] Add optional local API token authentication for non-localhost usage.
-[ ] Add configurable CORS settings.
-[ ] Document Docker/Nginx deployment security assumptions in more detail.
-[ ] Add structured security-related logging.
+[ ] Add production-grade authentication and authorization beyond the existing optional local token before public deployment.
+[ ] Add RBAC or role-based access controls if multi-user or multi-project usage becomes real.
 [ ] Add rate limiting for non-localhost usage.
 [ ] Add request size limits for summarization input.
+[ ] Add stricter network controls for Docker/Nginx or hosted deployments.
+[ ] Document Docker/Nginx deployment security assumptions in more detail if deployment becomes a real target.
 [ ] Add configured integration CI examples using GitHub Actions secrets.
 [ ] Improve encrypted backup restore validation.
 [ ] Evaluate age as an alternative to GPG-encrypted backup flow.
@@ -392,4 +411,4 @@ It is appropriate for:
 
 It should not be treated as publicly deployable without additional hardening.
 
-Before any public exposure, the project should add authentication, explicit CORS controls, network restrictions, request limits, logging review, and a careful audit of memory-bank contents and generated artifacts.
+Before any public exposure, the project should add production-grade authentication and authorization, network restrictions, request limits, deployment-specific logging review, rate limiting where appropriate, and a careful audit of memory-bank contents and generated artifacts. The existing optional local API token protection, configurable CORS, and structured logging are useful local-first controls, but they are not a substitute for a full production security model.
