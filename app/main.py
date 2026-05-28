@@ -37,12 +37,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
     )
+token_protection_status = "enabled" if active_settings.enable_local_api_token else "disabled"
 
     logger.info(
         "Starting backend service=%s runtime_mode=%s token_protection=%s cors_enabled=%s",
         active_settings.service_name,
         active_settings.runtime_mode,
-        active_settings.enable_local_api_token,
+        token_protection_status,,
         active_settings.enable_cors,
     )
 
