@@ -96,12 +96,13 @@ PR #17 later archived the scheduled nightly integration workflow. The workflow i
 
 This follow-up cleanup later archived the scheduled OpenAI smoke workflow. The workflow is now preserved at `archive/deprecated-workflows/weekly-openai.yml` and is no longer part of the active `.github/workflows/` set.
 
+PR #23 later archived the Docker, Docker Compose, Nginx, and Prometheus deployment scaffolding. The files are now preserved under `archive/deprecated-deployment/` and are no longer part of the active repository root or active local-first workflow surface.
+
 ## Next recommended work
 
 1. Clarify README positioning.
 2. Align docs/TECHNICAL_REVIEW.md and docs/DEMO_WORKFLOW.md with the methodology scope.
 3. Run stale-reference cleanup across active docs.
 4. Fix the real bootstrap script shell-call issue in a dedicated code-safety commit.
-5. Review Docker, Nginx, Prometheus, and deployment scaffolding for scope fit.
-6. Simplify the roadmap around methodology milestones.
-7. Add a final methodology cleanup release note.
+5. Simplify the roadmap around methodology milestones.
+6. Add a final methodology cleanup release note.
