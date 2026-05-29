@@ -72,7 +72,7 @@ This repository covers:
 - Python automation scripts for logging, status updates, retrieval, summarization, and backups
 - local-first developer workflows
 - CI smoke tests, linting, type checking, dependency/security checks, and CodeQL
-- Docker/Nginx starter configuration for local or single-VM deployments
+- Archived Docker/Nginx starter configuration preserved as reference-only deployment scaffolding
 - documentation-first project governance
 
 ### Out of Scope
@@ -303,8 +303,8 @@ cursor-memory-project/
   ├── scripts/                       # Automation, retrieval, summarization, backup scripts
   ├── status/                        # Roadmap, checklists, project status
   ├── tests/                         # Unit, smoke, and validation tests
-  ├── Dockerfile                     # Container setup
-  ├── docker-compose.yml             # Local orchestration setup
+  ├── archive/deprecated-deployment/Dockerfile          # Archived container setup reference
+  ├── archive/deprecated-deployment/docker-compose.yml  # Archived local orchestration reference
   ├── env.template                   # Safe environment template
   ├── Makefile                       # Developer commands
   ├── PROJECT_RULES.md               # Operating rules
@@ -355,8 +355,8 @@ In Template Mode, these files may be mostly empty. In Active Project Mode, they 
 | Type checking | Mypy | Static type confidence |
 | Dependency/security checks | pip-audit | Dependency vulnerability detection |
 | Security analysis | CodeQL | GitHub-native code scanning |
-| Containers | Docker / docker-compose | Local reproducibility and deployment evolution path |
-| Reverse proxy | Nginx starter config | Local/single-VM deployment pattern, not a fully hardened production gateway |
+| Archived container scaffolding | Docker / docker-compose | Preserved under archive/deprecated-deployment/ as reference material, not part of the active local-first workflow surface |
+| Archived reverse proxy scaffold | Nginx starter config | Preserved under archive/deprecated-deployment/ for future review before any hosted or single-VM usage |
 | Environment template | env.template | Safe local setup template without committed secrets |
 
 ---
