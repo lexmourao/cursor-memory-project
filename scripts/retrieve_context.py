@@ -56,7 +56,8 @@ def get_openai_embedding(text: str) -> np.ndarray:
 def _load_meta() -> List[RetrievalMetadata]:
     if META_FILE.exists():
         with META_FILE.open("rb") as fh:
-            return pickle.load(fh)
+            # Loads locally generated FAISS metadata only; JSON migration is tracked separately.
+            return pickle.load(fh)  # nosec B301
     return []
 
 
