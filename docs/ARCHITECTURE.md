@@ -299,12 +299,13 @@ cursor-memory-project/
   ├── docs/                          # Architecture, security, deployment docs
   ├── logs/solutions/                # Error logs and implementation notes
   ├── memory-bank/                   # Starter project memory template
-  ├── nginx/                         # Starter reverse-proxy configuration
+  ├── archive/deprecated-deployment/nginx/             # Archived reverse-proxy configuration reference
   ├── scripts/                       # Automation, retrieval, summarization, backup scripts
   ├── status/                        # Roadmap, checklists, project status
   ├── tests/                         # Unit, smoke, and validation tests
   ├── archive/deprecated-deployment/Dockerfile          # Archived container setup reference
   ├── archive/deprecated-deployment/docker-compose.yml  # Archived local orchestration reference
+  ├── archive/deprecated-deployment/gen_self_signed.sh  # Archived TLS/basic-auth helper for Nginx scaffold
   ├── env.template                   # Safe environment template
   ├── Makefile                       # Developer commands
   ├── PROJECT_RULES.md               # Operating rules

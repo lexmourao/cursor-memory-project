@@ -53,7 +53,7 @@ The previous GitHub Actions backup artifact workflow has been archived at `archi
 ### TLS & Basic Auth Proxy
 Run once to generate self-signed cert & basic-auth credentials:
 ```bash
-./scripts/gen_self_signed.sh
+./archive/deprecated-deployment/gen_self_signed.sh
 ```
 Then start the stack:
 ```bash
