@@ -74,11 +74,12 @@ async def memory():
 def main():
     parser = argparse.ArgumentParser(description="Run local MCP stub server for memory bank")
     parser.add_argument("--port", type=int, default=7331)
+    parser.add_argument("--host", default="127.0.0.1", help="Host interface to bind. Defaults to local-only 127.0.0.1.")
     args = parser.parse_args()
 
     _start_watcher()
-    print(f"[mcp_server] Serving memory bank with hot-reload on http://localhost:{args.port}/memory")
-    uvicorn.run(app, host="0.0.0.0", port=args.port)
+    print(f"[mcp_server] Serving memory bank with hot-reload on http://{args.host}:{args.port}/memory")
+    uvicorn.run(app, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
