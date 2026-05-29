@@ -1,10 +1,10 @@
 # Demo Workflow – Cursor Memory Project
 
-> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a public demonstration of AI-assisted development workflow infrastructure, persistent memory, retrieval, summarization, MCP-oriented context delivery, local-first backend structure, optional local API token protection, configurable CORS, structured logging, and CI/QA practices.
+> This document explains how a technical reviewer can evaluate the Cursor Memory Project as a local-first AI-assisted development methodology demo, with persistent project memory, retrieval, summarization, lightweight backend APIs, documentation discipline, and QA practices.
 
 ---
 
-## 1. What This Demo Proves
+## 1. What This Demo Shows
 
 This repository demonstrates how an AI-assisted development workflow can preserve project context across long-running work without relying only on Cursor chat history, ChatGPT memory, or one-off prompt context.
 
@@ -30,7 +30,7 @@ It shows:
 - separation between public smoke tests and environment-specific integration workflows
 - tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, retrieval metadata, CLI compatibility, local token security, CORS behavior, and safe logging configuration
 
-This demo is not intended to prove a complete production SaaS product. It is intended to show the technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable setup method before a real project begins.
+This demo is not intended to prove a complete production SaaS product or enterprise compliance system. It is intended to show the local technical workflow layer behind AI-assisted development systems and the way this repository can serve as a reusable methodology before a real project begins.
 
 ---
 
@@ -39,13 +39,13 @@ This demo is not intended to prove a complete production SaaS product. It is int
 A reviewer can inspect the repository in this order:
 
 1. `README.md`  
-   Public overview, system purpose, memory-bank template mode, scope, CI strategy, implemented backend slices, local token security, configurable CORS, structured logging, and production evolution path.
+   Public overview, methodology scope, memory-bank template mode, implemented backend slices, local-first boundaries, CI strategy, and reviewer path.
 
 2. `memory-bank/README.md`  
    Explains why memory-bank files start mostly empty and how they should be populated after real project kickoff.
 
 3. `docs/ARCHITECTURE.md`  
-   System architecture, data flow, runtime modes, failure modes, tradeoffs, and production roadmap.
+   System architecture, data flow, runtime modes, failure modes, tradeoffs, and optional production-evolution notes.
 
 4. `docs/BACKEND_DESIGN.md`  
    Backend architecture, implemented FastAPI slices, service/model structure, API surface, metadata-aware retrieval, retrieval status, summarization API, optional local API token protection, configurable CORS, structured logging, tests, and next backend evolution steps.
@@ -105,7 +105,7 @@ A reviewer can inspect the repository in this order:
     FastAPI TestClient and CLI tests for the implemented backend slices, retrieval metadata fields, retrieval status, summarization behavior, token security, metrics protection, CORS behavior, and CLI compatibility.
 
 23. `status/roadmap.md`  
-    Roadmap for evolving the project toward a stronger local-first backend/service layer.
+    Roadmap for evolving the project as a local-first AI-assisted development methodology repository.
 
 ---
 
@@ -766,7 +766,7 @@ Example local endpoint:
 http://localhost:7331/memory
 ```
 
-This script remains useful while the backend package evolves. Over time, it may become a wrapper around `app.main`.
+This script remains useful as a legacy/local memory server path alongside the tested FastAPI backend slices.
 
 ---
 
@@ -781,7 +781,7 @@ status/checklist_onboarding.md
 status/checklist_deployment.md
 ```
 
-These files show how the project separates template setup, local development, deployment assumptions, release readiness, and future backend evolution.
+These files show how the project separates template setup, local development, release readiness, and future methodology/backend evolution. Deployment-related files should be read as scope-dependent and subject to separate review.
 
 ---
 
@@ -851,7 +851,7 @@ The public CI demonstrates:
 
 - linting discipline
 - type-checking discipline
-- dependency/security awareness
+- dependency/security check awareness
 - smoke-test coverage for public workflows
 - public CI that does not depend on private secrets
 
