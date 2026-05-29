@@ -1,5 +1,5 @@
-import os
 import shutil
+import subprocess
 import sys
 import textwrap
 from datetime import datetime
@@ -51,9 +51,9 @@ def copy_template(dest: Path, tier: str):
 def init_git(dest: Path):
     if (dest / ".git").exists():
         return
-    os.system(f"git init {dest}")
-    os.chdir(dest)
-    os.system("git add . && git commit -m 'Initial commit via bootstrap'")
+    subprocess.run(["git", "init", str(dest)], check=True)
+    subprocess.run(["git", "add", "."], cwd=dest, check=True)
+    subprocess.run(["git", "commit", "-m", "Initial commit via bootstrap"], cwd=dest, check=True)
 
 
 def write_env(dest: Path, openai_key: str, gpg_id: str):
