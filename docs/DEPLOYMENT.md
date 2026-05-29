@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This document is a reference-only deployment scaffold for running the local MCP server, optional backups, and optional single-VM support services. It is preserved as deployment guidance, not as evidence that this repository is a production SaaS platform.
+This document is a reference-only deployment scaffold. The previous Docker, Nginx, Prometheus, and single-VM support files have been archived under archive/deprecated-deployment/ and are not part of the active local-first workflow surface. This document is preserved as deployment guidance, not as evidence that this repository is a production SaaS platform.
 
 ## 1. Prerequisites
 * Python 3.11
@@ -70,7 +70,7 @@ secrets/gpg_key_id       # GPG recipient key ID (email or fingerprint)
 Docker compose mounts these into `/run/secrets/` for the `memory` service. Remove plaintext keys from `.env` in production. 
 
 ### Metrics & Monitoring
-Prometheus and Grafana services are included in `docker-compose.yml`.
+Prometheus and Grafana service examples are preserved in `archive/deprecated-deployment/docker-compose.yml`.
 
 1. Start stack: `docker compose up -d --build`
 2. Prometheus UI: http://localhost:9090 (scrapes MCP `/metrics`)

@@ -583,10 +583,10 @@ or your preferred shell mechanism.
 | `status/` | Current status, checklists, and roadmap |
 | `diary/` | Project diary and development log |
 | `logs/solutions/` | Error logs, fixes, and implementation notes |
-| `nginx/` | Web/server configuration examples |
+| `archive/deprecated-deployment/nginx/` | Archived web/server configuration reference |
 | `.github/` | CI, Dependabot, and workflow automation |
-| `Dockerfile` | Container setup |
-| `docker-compose.yml` | Local orchestration setup |
+| `archive/deprecated-deployment/Dockerfile` | Archived container setup reference |
+| `archive/deprecated-deployment/docker-compose.yml` | Archived local orchestration reference |
 | `Makefile` | Common developer commands |
 | `PROJECT_RULES.md` | Project operating rules and development constraints |
 

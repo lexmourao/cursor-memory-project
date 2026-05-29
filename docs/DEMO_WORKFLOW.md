@@ -1193,7 +1193,7 @@ It should not be interpreted as a complete production SaaS application. Instead,
 - tested FastAPI backend slices for health, memory access, metrics, retrieval, retrieval status, summarization, security behavior, and CORS behavior
 - public CI
 - GitHub code scanning / CodeQL through repository security configuration
-- Docker/Nginx starter configuration
+- Archived Docker/Nginx starter configuration preserved as reference-only deployment scaffolding
 - documentation and status checklists
 
 ### Implemented Backend Slices

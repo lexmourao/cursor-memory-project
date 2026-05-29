@@ -33,8 +33,8 @@ scripts/
 status/
 tests/
 .github/
-Dockerfile
-docker-compose.yml
+archive/deprecated-deployment/Dockerfile
+archive/deprecated-deployment/docker-compose.yml
 Makefile
 ```
 
