@@ -1,46 +1,61 @@
-# Cursor Memory Project 📚🤖
+# Cursor Memory Project
 
 ![CI](https://github.com/lexmourao/cursor-memory-project/actions/workflows/ci.yml/badge.svg)
 
-Maintenance note: This repository is a public demonstration of Cursor-based AI-assisted development workflows, persistent project memory, retrieval, MCP server structure, FastAPI backend structure, local-first security controls, configurable CORS, structured logging, documentation, automated logging, testing, and QA practices.
+This repository is a local-first AI-assisted development methodology project.
 
-Welcome to the **Cursor Memory Project**.
+It demonstrates how persistent project memory, retrieval workflows, summarization, lightweight backend APIs, documentation discipline, tests, and GitHub workflow hygiene can support long-running AI-assisted software work.
 
-The objective of this repository is to provide a turn-key template that empowers the Cursor AI assistant and human collaborators with persistent project context, reproducible workflows, structured documentation, retrieval, local memory APIs, summarization workflows, optional local API token protection, configurable CORS, structured backend logging, and auditable development practices.
+The project is designed as a public technical portfolio artifact. It shows how I structure AI implementation work across context engineering, Python automation, FastAPI slices, retrieval/RAG-oriented workflows, local QA, documentation governance, and supervised AI-assisted development with Cursor, ChatGPT, and Claude.
 
----
+## What this project is
 
-## What This Demonstrates
+This project is:
 
-This repository demonstrates my approach to AI-assisted systems development:
+- A local-first Cursor Memory and AI-assisted development methodology repository.
+- A working example of persistent project context for long-running AI-assisted work.
+- A Python and FastAPI-based implementation layer for memory access, retrieval, summarization, health checks, metrics, optional local token protection, CORS configuration, and structured logging.
+- A documentation-first engineering workflow with project rules, status notes, generated-file expectations, architecture docs, tests, and review paths.
+- A demonstration of how AI tools can be used as supervised engineering collaborators rather than uncontrolled autopilot.
 
-- Cursor-based AI-assisted development workflows
-- Persistent project memory and rolling context for long-running AI projects
-- Retrieval and context-loading patterns for LLM-assisted work
-- Metadata-aware retrieval with source filename and chunk index traceability
-- Retrieval status/readiness reporting for local index and metadata state
-- Summarization API workflows for active context updates
-- MCP server structure for exposing project memory to an AI coding environment
-- Tested FastAPI backend slices for memory access, retrieval, summarization, health checks, metrics, optional local token protection, configurable CORS, and structured logging
-- Python automation for summarization, retrieval, logging, backups, and status updates
-- CI practices using linting, type checking, dependency/security checks, and smoke tests
-- GitHub code scanning / CodeQL through repository security configuration
-- Documentation-first project structure for auditable and reproducible AI workflows
-- Human-in-the-loop fallback modes when API keys or external services are unavailable
-- Separation between public smoke tests and environment-specific integration tests
-- Local-first security assumptions with optional token enforcement for protected routes
-- Explicit CORS configuration for trusted local dashboards or frontends
-- Safe backend logging that avoids tokens, request bodies, authorization headers, secrets, and memory-bank content
+## What this project is not
 
----
+This project should not be presented as:
 
-## Why This Matters for LLM & Agent Systems
+- A production SaaS platform.
+- An enterprise compliance system.
+- A fully managed security operations system.
+- A multi-tenant hosted RAG product.
+- A replacement for production-grade authentication, authorization, monitoring, deployment, or compliance review.
 
-LLM and agent-based systems depend heavily on context quality, memory structure, retrieval reliability, summarization, workflow documentation, traceability, security boundaries, observability, and repeatable development practices.
+Earlier production-style workflows and compliance documents were intentionally moved into archive/ for auditability and future reference.
 
-This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support better continuity between human decisions, automated summaries, retrieval workflows, backend APIs, security controls, CORS boundaries, logging, and implementation tasks.
+## What this demonstrates
 
-The repository is not intended to represent a complete production SaaS platform. It is a public technical artifact showing how I structure AI-assisted development infrastructure, retrieval patterns, project memory, backend evolution, CI/QA practices, local-first security assumptions, configurable CORS, structured logging, and documentation workflows that can support larger LLM and agent-based systems.
+This repository demonstrates my approach to AI-assisted systems development and engineering workflow design:
+
+- Cursor-based AI-assisted development workflows.
+- Persistent project memory and rolling context for long-running AI projects.
+- Retrieval and context-loading patterns for LLM-assisted work.
+- Metadata-aware retrieval with source filename and chunk index traceability.
+- Summarization workflows for active context updates.
+- MCP-style local memory server structure.
+- Tested FastAPI backend slices for memory, retrieval, summarization, health, metrics, local token protection, CORS, and logging.
+- Python automation for summarization, retrieval, logging, backups, and status updates.
+- Local test baseline stabilization with pytest.
+- CI hygiene with Ruff, mypy, pip-audit, smoke tests, and CodeQL.
+- Documentation-first project structure for auditable and reproducible AI workflows.
+- Human-in-the-loop fallback modes when API keys or external services are unavailable.
+- Explicit separation between public smoke tests and environment-specific integration tests.
+- Scope control through archival of overbuilt workflows and production-style documentation.
+
+## Why this matters for LLM and agent systems
+
+LLM and agent-based systems depend on more than prompts. They need context quality, memory structure, retrieval reliability, summarization, workflow documentation, traceability, testing, safety boundaries, and repeatable development practices.
+
+This project explores how an AI-assisted development environment can maintain project memory across long-running work, expose structured context to an AI coding assistant, and support continuity between human decisions, automated summaries, retrieval workflows, backend APIs, tests, and documentation.
+
+The value of this repository is not only the codebase itself. It is the engineering process around it: diagnosing failures, separating concerns, keeping main green, documenting decisions, preserving history, and using AI tools under human review.
 
 ---
 
