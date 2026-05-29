@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This document outlines how to run the MCP server and nightly backups in a production environment.
+This document is a reference-only deployment scaffold for running the local MCP server, optional backups, and optional single-VM support services. It is preserved as deployment guidance, not as evidence that this repository is a production SaaS platform.
 
 ## 1. Prerequisites
 * Python 3.11
@@ -46,7 +46,7 @@ tar -xzf backups/project_backup_YYYYMMDD_HHMMSS.tar.gz
 ```
 
 ## 5. GitHub Actions Nightly Artifact
-Nightly backups can also be uploaded as workflow artifacts. See `.github/workflows/backup.yml`. 
+The previous GitHub Actions backup artifact workflow has been archived at `archive/deprecated-workflows/backup.yml` and is not part of the active workflow set. 
 
 ## 6. Docker Compose (single-VM)
 
