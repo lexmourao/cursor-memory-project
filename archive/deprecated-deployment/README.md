@@ -10,6 +10,7 @@ Archived files include:
 - docker-compose.yml
 - nginx/
 - prometheus.yml
+- gen_self_signed.sh
 
 Why these files were archived:
 
