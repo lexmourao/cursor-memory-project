@@ -15,6 +15,7 @@ Workflows in `.github/workflows/` run as active GitHub Actions. The archived wor
 - `performance.yml` — scheduled/manual performance benchmark workflow.
 - `security.yml` — pull-request security scan workflow using Bandit and TruffleHog.
 - `nightly-integration.yml` — scheduled integration workflow that ran pytest, backup/restore validation, and Slack failure alerts.
+- `weekly-openai.yml` — scheduled/manual OpenAI smoke workflow that used OPENAI_API_KEY to run a real summarization check.
 
 ## Future handling
 

@@ -49,7 +49,6 @@ Purpose:
 After the cleanup, the active GitHub Actions workflows are:
 
 - .github/workflows/ci.yml
-- .github/workflows/weekly-openai.yml
 
 The following workflows were archived:
 
@@ -58,6 +57,7 @@ The following workflows were archived:
 - archive/deprecated-workflows/performance.yml
 - archive/deprecated-workflows/security.yml
 - archive/deprecated-workflows/nightly-integration.yml
+- archive/deprecated-workflows/weekly-openai.yml
 
 ## Current archived documentation
 
@@ -93,6 +93,8 @@ It should not be presented as:
 ## Post-checkpoint update
 
 PR #17 later archived the scheduled nightly integration workflow. The workflow is now preserved at `archive/deprecated-workflows/nightly-integration.yml` and is no longer part of the active `.github/workflows/` set.
+
+This follow-up cleanup later archived the scheduled OpenAI smoke workflow. The workflow is now preserved at `archive/deprecated-workflows/weekly-openai.yml` and is no longer part of the active `.github/workflows/` set.
 
 ## Next recommended work
 
