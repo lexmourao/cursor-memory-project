@@ -338,13 +338,13 @@ For incidents involving accidental exposure, leaked secrets, sensitive memory-ba
 6. Document the incident and remediation.
 7. Review whether `.gitignore`, docs, or tests need updates.
 
-Refer to:
+The previous production-style incident response plan has been archived for reference:
 
 ```text
-docs/INCIDENT_RESPONSE.md
+archive/deprecated-docs/INCIDENT_RESPONSE.md
 ```
 
-for roles, severity levels, and procedures.
+It is not part of the active local-first methodology documentation surface.
 
 ---
 
