@@ -14,6 +14,7 @@ Workflows in `.github/workflows/` run as active GitHub Actions. The archived wor
 - `health.yml` — scheduled health-check workflow.
 - `performance.yml` — scheduled/manual performance benchmark workflow.
 - `security.yml` — pull-request security scan workflow using Bandit and TruffleHog.
+- `nightly-integration.yml` — scheduled integration workflow that ran pytest, backup/restore validation, and Slack failure alerts.
 
 ## Future handling
 
