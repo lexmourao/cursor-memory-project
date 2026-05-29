@@ -1,8 +1,11 @@
+import os
 import shutil
 import signal
 import subprocess
 import time
 from pathlib import Path
+
+import pytest
 
 import requests
 
@@ -25,7 +28,10 @@ def wait_health(port: int, timeout: int = 15) -> bool:
     return False
 
 
+@pytest.mark.integration
 def test_backup_restore_e2e(tmp_path):
+    if not os.getenv("GPG_KEY_ID"):
+        pytest.skip("GPG_KEY_ID is required for encrypted backup integration test.")
     # 1. Start MCP server
     proc = subprocess.Popen(["python", str(RUN_SERVER), "--port", str(BASE_PORT)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:

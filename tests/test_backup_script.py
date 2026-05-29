@@ -1,9 +1,14 @@
+import os
 import subprocess
 import tarfile
 from pathlib import Path
 
+import pytest
+
 def test_backup_creation(tmp_path, monkeypatch):
     """Run backup script and ensure archive created and valid tar."""
+    if not os.getenv("GPG_KEY_ID"):
+        pytest.skip("GPG_KEY_ID is required for encrypted backup tests.")
     # Work in isolated tmp dir
     proj = tmp_path
     (proj / "memory-bank").mkdir()
