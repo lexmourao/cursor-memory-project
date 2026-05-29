@@ -1,401 +1,111 @@
 # Roadmap
 
-> Roadmap for evolving the Cursor Memory Project as a reusable Cursor/Codex/ChatGPT memory setup template and local-first AI-assisted development backend.
+> Roadmap for the Cursor Memory Project as a local-first AI-assisted development methodology repository.
 
 ## Current Version Scope
 
-This repository is considered complete for its current public scope: a local-first AI-assisted development backend demonstrating persistent memory, retrieval, summarization, metadata traceability, optional local API token protection, configurable CORS, structured logging, CLI compatibility, documentation, and public CI/QA discipline.
+This repository is complete for its current public scope: a local-first AI-assisted development system that demonstrates persistent project memory, retrieval, summarization, metadata traceability, optional local API protection, configurable CORS, structured logging, CLI compatibility, documentation, and public CI/QA discipline.
 
-The remaining roadmap items are not required for the current version to be useful or technically complete. They represent future production-evolution paths that could extend the project into a more advanced platform depending on real deployment needs.
-
-Future extensions may include retrieval evaluation tests, backup/restore hardening, MCP server consolidation, a memory/retrieval dashboard, and cloud deployment templates. These are intentionally kept as roadmap items to avoid overbuilding the current local-first demonstration.
+The project should be presented as a technical portfolio and methodology artifact, not as a production SaaS platform, enterprise compliance system, or fully managed hosted service.
 
 ## Current Focus
 
 - Keep the repository internally consistent as a public technical artifact.
 - Preserve the distinction between template mode and active project mode.
 - Maintain green public CI and GitHub code scanning.
-- Avoid adding fake project knowledge to `memory-bank/`.
-- Improve the backend/service layer only through small, auditable, green steps.
-- Preserve existing CLI workflows while exposing selected capabilities through the FastAPI backend.
-- Record important architecture decisions through ADRs before making risky storage, security, or infrastructure changes.
 - Keep generated runtime artifacts out of version control unless intentionally curated as safe examples.
 - Keep security and exposure controls explicit, local-first, and tested.
+- Preserve historical material through `archive/` instead of deleting it.
 - Keep future production-evolution items clearly separated from current release completeness.
 
-## Completed Foundation
+## Completed Methodology Milestones
 
-- [x] Add `memory-bank/README.md` to explain template-mode behavior.
-- [x] Align README references with `env.template`.
-- [x] Align `.cursor-rules.md` with existing scripts and docs.
-- [x] Add backend design document for the local-first memory API.
-- [x] Add technical review guide for recruiters and engineering reviewers.
-- [x] Add demo workflow documentation for reviewer inspection.
-- [x] Clarify status checklists as starter templates.
-- [x] Fix Docker Compose service structure.
-- [x] Clarify Nginx as a starter local/single-VM reverse proxy.
-- [x] Keep public CI green without requiring private secrets.
-- [x] Keep GitHub code scanning active through repository security configuration.
-- [x] Update `.gitignore` for generated retrieval metadata exports.
-- [x] Add `docs/GENERATED_FILES.md`.
-- [x] Document generated metadata files and version-control expectations.
+### Foundation and Positioning
 
-## Completed Architecture Decisions
+- [x] Clarified the repository as a local-first AI-assisted development methodology project.
+- [x] Clarified that the repository is not a production SaaS platform.
+- [x] Updated README positioning.
+- [x] Aligned reviewer-facing guides with the methodology scope.
+- [x] Added and updated the methodology cleanup checkpoint.
+- [x] Preserved historical material through `archive/`.
 
-- [x] Add `docs/adr/0001-public-ci-vs-integration-tests.md`.
-- [x] Separate public CI smoke tests from secret-dependent integration workflows.
-- [x] Add `docs/adr/0002-retrieval-metadata-storage.md`.
-- [x] Decide to keep pickle for current FAISS metadata compatibility.
-- [x] Document JSON metadata export as the next inspectability step.
-- [x] Document SQLite as a later option for queryable dashboards or multi-project retrieval.
+### Test and QA Baseline
 
-## Completed Backend Slices
+- [x] Stabilized the local pytest baseline.
+- [x] Kept public CI green.
+- [x] Verified `ruff check .`.
+- [x] Verified `bandit -q -ll -r scripts tests`.
+- [x] Verified `pytest -q` with 42 passed and 2 skipped.
+- [x] Kept GitHub code scanning active.
 
-### Slice 1 — Health, Memory, Metrics
+### Workflow and Deployment Scope Cleanup
 
-- [x] Introduce `app/main.py` as the main FastAPI entry point.
-- [x] Add `app/core/config.py` for local-first environment and path configuration.
-- [x] Add `app/models/health.py`.
-- [x] Add `app/models/memory.py`.
-- [x] Add `app/services/memory_service.py`.
-- [x] Add `app/api/routes_health.py`.
-- [x] Add `app/api/routes_memory.py`.
-- [x] Add `GET /health`.
-- [x] Add `GET /memory`.
-- [x] Add `GET /memory/{record_id}`.
-- [x] Add `GET /metrics`.
-- [x] Add `tests/test_api_health.py`.
-- [x] Add `tests/test_api_memory.py`.
+- [x] Archived overbuilt GitHub Actions workflows under `archive/deprecated-workflows/`.
+- [x] Kept only `.github/workflows/ci.yml` active.
+- [x] Archived production-style compliance and incident-response docs under `archive/deprecated-docs/`.
+- [x] Archived Docker, Docker Compose, Nginx, and Prometheus deployment scaffolding under `archive/deprecated-deployment/`.
+- [x] Updated active docs so archived deployment material is described as reference-only.
 
-### Slice 2 — Retrieval API
+### Code Safety and Local Security
 
-- [x] Add `app/models/retrieval.py`.
-- [x] Add `app/services/retrieval_service.py`.
-- [x] Add `app/api/routes_retrieval.py`.
-- [x] Register retrieval router in `app/main.py`.
-- [x] Add `POST /retrieval/query`.
-- [x] Add validation for empty query text.
-- [x] Add validation for `top_k` lower and upper bounds.
-- [x] Add `tests/test_api_retrieval.py`.
-- [x] Preserve existing `scripts/retrieve_context.py` CLI workflow.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `docs/DEMO_WORKFLOW.md`.
-- [x] Update `README.md`.
+- [x] Replaced shell-based bootstrap git calls with `subprocess.run(...)`.
+- [x] Defaulted the MCP stub server host to `127.0.0.1`.
+- [x] Documented the trusted local retrieval metadata pickle boundary with a narrow Bandit suppression.
+- [x] Kept Bandit passing without medium/high findings.
+- [x] Preserved local-first security assumptions in active documentation.
 
-### Slice 2B — Metadata-Aware Retrieval
+### Backend and Memory System
 
-- [x] Add `query_with_metadata()` to `scripts/retrieve_context.py`.
-- [x] Preserve existing `query()` function behavior.
-- [x] Preserve CLI retrieval behavior.
-- [x] Add source filename to retrieval API results.
-- [x] Add chunk index to retrieval API results.
-- [x] Add `chunk_idx` to `app/models/retrieval.py`.
-- [x] Update `app/services/retrieval_service.py` to return source metadata.
-- [x] Update `tests/test_api_retrieval.py` to validate metadata fields.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `docs/DEMO_WORKFLOW.md`.
-- [x] Update `README.md`.
+- [x] Preserved the local FastAPI backend for health, memory, retrieval, retrieval status, summarization, metrics, optional local token protection, configurable CORS, and structured logging.
+- [x] Preserved CLI workflows for summarization and retrieval.
+- [x] Preserved FAISS-based local retrieval.
+- [x] Preserved pickle as the internal FAISS runtime metadata format for now.
+- [x] Preserved JSON metadata export for inspection and review.
+- [x] Preserved tests for API, CLI, retrieval, summarization, edge cases, and local security behavior.
 
-### Slice 2C — Retrieval Reliability
+## Current Verified State
 
-- [x] Test missing retrieval index behavior explicitly.
-- [x] Test missing metadata file behavior with missing index state.
-- [x] Test empty retrieval index behavior explicitly.
-- [x] Confirm retrieval API returns empty results safely when local retrieval state is not ready.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `status/roadmap.md`.
+Latest verified cleanup state:
 
-### Slice 2D — Retrieval After Rebuild
+- `main` is up to date with `origin/main`.
+- Working tree is clean.
+- Active workflow surface is minimal.
+- Active deployment scaffolding has been archived.
+- `ruff check .` passes.
+- `bandit -q -ll -r scripts tests` passes.
+- `pytest -q` passes with 42 passed and 2 skipped.
+- Known warnings are dependency/runtime deprecation warnings and are not blocking.
 
-- [x] Add deeper retrieval behavior test after index rebuild.
-- [x] Use temporary memory-bank for retrieval rebuild test.
-- [x] Use temporary FAISS index and metadata file.
-- [x] Rebuild retrieval index inside isolated test state.
-- [x] Query retrieval API after rebuild.
-- [x] Validate returned source filename after rebuild.
-- [x] Validate returned chunk index after rebuild.
-- [x] Validate returned text content after rebuild.
-- [x] Avoid polluting real `memory-bank/`.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `status/roadmap.md`.
+## Remaining Work for This Cleanup Cycle
 
-### Slice 2E — Formal Chunk Metadata Schema
+- [ ] Add a final methodology cleanup release note.
+- [ ] Run one final stale-reference scan before tagging or calling the cleanup complete.
+- [ ] Decide whether to tag a methodology cleanup release.
 
-- [x] Add `app/models/chunk.py`.
-- [x] Add `ChunkMetadata`.
-- [x] Add `RetrievedChunk`.
-- [x] Update `RetrievalResult` to inherit from `RetrievedChunk`.
-- [x] Preserve existing retrieval API response shape.
-- [x] Keep retrieval API tests green.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `status/roadmap.md`.
+## Deferred Future Evolution
 
-### Slice 2F — JSON Metadata Export
+These items are intentionally deferred. They are not required for the current local-first public scope.
 
-- [x] Add `META_JSON_FILE` to `scripts/retrieve_context.py`.
-- [x] Add `_metadata_json_payload()`.
-- [x] Add `export_metadata_json()`.
-- [x] Add `export-meta-json` CLI command.
-- [x] Preserve pickle as the internal FAISS runtime metadata format.
-- [x] Add JSON metadata export test coverage.
-- [x] Validate JSON `schema_version`.
-- [x] Validate JSON source pickle path.
-- [x] Validate JSON FAISS index path.
-- [x] Validate JSON record count.
-- [x] Validate JSON exported records.
-- [x] Validate exported source filename, chunk index, and text content.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `status/roadmap.md`.
+- Retrieval evaluation tests and quality scoring.
+- SQLite or another queryable metadata store if dashboard or multi-project retrieval becomes necessary.
+- A memory/retrieval dashboard.
+- Hosted or containerized deployment templates after separate operational review.
+- Backup/restore hardening if real operational usage requires it.
+- More formal type checking gates.
+- Dependency update automation beyond the current public CI scope.
+- Additional API hardening before any public or multi-user exposure.
 
-### Slice 2G — Retrieval Status Endpoint
+## Archive Policy
 
-- [x] Add `RetrievalStatusResponse`.
-- [x] Add retrieval service `status()`.
-- [x] Add index, metadata, and JSON export existence checks.
-- [x] Add vector, metadata, and JSON record counts.
-- [x] Add conservative readiness calculation.
-- [x] Add `GET /retrieval/status`.
-- [x] Add retrieval status API tests for missing retrieval state.
-- [x] Add retrieval status API tests for ready state after rebuild and JSON export.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `status/roadmap.md`.
+Do not delete historical scaffolding unless there is a clear reason. Prefer moving files to `archive/` with a README explaining:
 
-### Slice 3 — Summarization API
+- what was archived,
+- why it was archived,
+- whether it is reference-only,
+- and what must be reviewed before restoring it.
 
-- [x] Add `app/models/summarization.py`.
-- [x] Add `SummarizationRequest`.
-- [x] Add `SummarizationResponse`.
-- [x] Add `app/services/summarization_service.py`.
-- [x] Add manual summarization mode.
-- [x] Add fallback summarization mode.
-- [x] Add active context writing.
-- [x] Add optional embedding behavior.
-- [x] Add `app/api/routes_summarization.py`.
-- [x] Add `POST /summarization/summarize`.
-- [x] Register summarization router in `app/main.py`.
-- [x] Add `tests/test_api_summarization.py`.
-- [x] Test manual mode.
-- [x] Test fallback mode.
-- [x] Test empty text validation.
-- [x] Isolate active context writing in tests.
-- [x] Keep existing `scripts/summarize_chat.py` workflow intact.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `status/roadmap.md`.
-- [x] Update `README.md`.
-- [x] Update `docs/DEMO_WORKFLOW.md`.
+Current archived areas include:
 
-### Slice 3B — Summarization CLI Service Reuse
-
-- [x] Refactor `scripts/summarize_chat.py` to reuse `SummarizationService` for active context writing and optional embedding.
-- [x] Preserve backward-compatible `call_openai_summarize()` helper for existing tests and monkeypatches.
-- [x] Preserve existing CLI behavior for file input, stdin input, manual mode, model selection, and no-embed mode.
-- [x] Restore public CI compatibility after the service refactor.
-- [x] Keep the FastAPI summarization API intact.
-
-### Slice 3C — Summarization CLI Compatibility Tests
-
-- [x] Add `tests/test_cli_summarize_chat.py`.
-- [x] Test CLI file input behavior.
-- [x] Test CLI manual stdin behavior.
-- [x] Test empty stdin handling.
-- [x] Test `--no-embed` behavior.
-- [x] Test isolated `activeContext.md` writing.
-- [x] Test backward-compatible `call_openai_summarize()` availability.
-- [x] Keep public CI green.
-
-### Slice 4 — Local Security Documentation
-
-- [x] Expand `docs/SECURITY.md`.
-- [x] Document local-first security assumptions.
-- [x] Document API exposure boundaries.
-- [x] Document local CORS assumptions.
-- [x] Document localhost vs Docker/Nginx exposure modes.
-- [x] Document authentication boundary for current local-first usage.
-- [x] Document generated-file and data-handling expectations.
-- [x] Document public CI vs secret-dependent workflow separation.
-- [x] Document future hardening items before public exposure.
-
-### Slice 4B — Optional Local API Token Protection
-
-- [x] Add optional local API token settings to `app/core/config.py`.
-- [x] Add `ENABLE_LOCAL_API_TOKEN`.
-- [x] Add `LOCAL_API_TOKEN`.
-- [x] Add reusable token validation helper in `app/core/security.py`.
-- [x] Protect `GET /memory`.
-- [x] Protect `GET /memory/{record_id}`.
-- [x] Protect `GET /retrieval/status`.
-- [x] Protect `POST /retrieval/query`.
-- [x] Protect `POST /summarization/summarize`.
-- [x] Protect `GET /metrics`.
-- [x] Keep `GET /health` public for local readiness checks.
-- [x] Add security tests in `tests/test_api_security.py`.
-- [x] Test default open local-first behavior.
-- [x] Test missing token rejection.
-- [x] Test wrong token rejection.
-- [x] Test correct Bearer token access.
-- [x] Test fail-closed behavior when token mode is enabled without `LOCAL_API_TOKEN`.
-- [x] Test protected retrieval route behavior.
-- [x] Test protected summarization route behavior.
-- [x] Test protected metrics route behavior.
-- [x] Update `env.template`.
-- [x] Update `README.md`.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `docs/DEMO_WORKFLOW.md`.
-- [x] Update `status/roadmap.md`.
-
-### Slice 4C — Configurable CORS
-
-- [x] Add `ENABLE_CORS` setting to `app/core/config.py`.
-- [x] Add `CORS_ALLOW_ORIGINS` setting to `app/core/config.py`.
-- [x] Add comma-separated origin parsing for `CORS_ALLOW_ORIGINS`.
-- [x] Keep CORS disabled by default.
-- [x] Wire `CORSMiddleware` into `app/main.py`.
-- [x] Refactor `create_app(settings)` to support testable settings injection.
-- [x] Limit CORS methods to `GET`, `POST`, and `OPTIONS`.
-- [x] Limit CORS headers to `Authorization` and `Content-Type`.
-- [x] Keep `allow_credentials=False`.
-- [x] Add `tests/test_api_cors.py`.
-- [x] Test CORS headers are absent by default.
-- [x] Test allowed origin receives CORS headers.
-- [x] Test disallowed origin does not receive CORS headers.
-- [x] Test configured preflight `OPTIONS` behavior.
-- [x] Update `env.template`.
-- [x] Update `README.md`.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `docs/DEMO_WORKFLOW.md`.
-- [x] Update `status/roadmap.md`.
-
-### Slice 4D — Structured Logging
-
-- [x] Add `LOG_LEVEL` setting to `app/core/config.py`.
-- [x] Add `LOG_FORMAT` setting to `app/core/config.py`.
-- [x] Add `app/core/logging.py`.
-- [x] Add `configure_logging(settings)`.
-- [x] Add `get_logger(name)`.
-- [x] Support `plain` log format.
-- [x] Support `compact` log format.
-- [x] Configure logging to stdout.
-- [x] Wire logging into `create_app(settings)`.
-- [x] Add safe startup logs for service name, runtime mode, token-protection status, and CORS status.
-- [x] Log configured CORS origin count without logging origin values.
-- [x] Avoid logging tokens, secrets, authorization headers, request bodies, memory-bank content, retrieved content, or summarized content.
-- [x] Update `env.template`.
-- [x] Update `README.md`.
-- [x] Update `docs/BACKEND_DESIGN.md`.
-- [x] Update `docs/DEMO_WORKFLOW.md`.
-- [x] Update `status/roadmap.md`.
-
-## Current Release Closure
-
-- [ ] Run final local QA.
-- [ ] Confirm public CI is green.
-- [ ] Freeze current version as the complete local-first backend showcase.
-- [ ] Optionally create a release tag or final release note.
-
-Recommended final QA commands:
-
-```bash
-pytest -q
-ruff check .
-mypy scripts tests
-```
-
-## Future Evolution, Not Required for Current Scope
-
-The current local-first backend showcase is complete. The items below are optional extensions for a later production-oriented version.
-
-- [ ] Retrieval evaluation tests for measuring search quality over time.
-- [ ] Backup/restore hardening for stronger operational recovery workflows.
-- [ ] MCP server wrapper around the FastAPI backend for consolidation.
-- [ ] Dashboard for inspecting memory records, summaries, retrieval chunks, and metadata.
-- [ ] Cloud deployment template for hosted or production-like environments.
-- [ ] Request size limits for stronger API safety.
-- [ ] Broader readiness endpoint if needed beyond retrieval status.
-- [ ] Configured integration CI examples that use GitHub Actions secrets.
-- [ ] Optional managed vector database integration such as Qdrant, Pinecone, or PgVector.
-- [ ] Terraform or infrastructure-as-code example if cloud deployment becomes a real target.
-
-## Retrieval & Memory Improvements
-
-- [ ] Add retrieval evaluation tests as future production-evolution work.
-- [x] Add explicit retrieval index status endpoint or readiness check.
-- [x] Add JSON metadata export for inspectability.
-- [x] Validate JSON metadata export against current retrieval metadata shape.
-- [x] Document generated metadata files and version-control expectations.
-- [ ] Evaluate local embedding fallback instead of zero-vector fallback.
-- [ ] Add example populated memory-bank documentation under `docs/examples/` without filling the real starter memory-bank.
-- [ ] Consider SQLite metadata storage only after dashboard, queryability, or multi-project requirements become real.
-- [ ] Add dashboard-ready retrieval metadata notes for future UI work.
-
-## Summarization Improvements
-
-- [x] Add summarization API models.
-- [x] Add summarization service.
-- [x] Add summarization route.
-- [x] Add summarization API tests.
-- [x] Preserve existing `scripts/summarize_chat.py` CLI workflow.
-- [x] Refactor `scripts/summarize_chat.py` to reuse `SummarizationService` for active context writing and optional embedding.
-- [x] Preserve backward-compatible `call_openai_summarize()` for existing tests and monkeypatches.
-- [x] Restore CI compatibility after the summarization CLI refactor.
-- [x] Add dedicated CLI compatibility tests for `scripts/summarize_chat.py`.
-- [ ] Add additional service-level summarization tests if summarization behavior expands.
-
-## Security & Reliability
-
-- [x] Document local CORS assumptions.
-- [x] Document localhost vs Docker/Nginx exposure modes.
-- [x] Add optional local API token authentication for non-localhost usage.
-- [x] Protect memory routes when token mode is enabled.
-- [x] Protect retrieval routes when token mode is enabled.
-- [x] Protect summarization route when token mode is enabled.
-- [x] Protect metrics route when token mode is enabled.
-- [x] Keep health route public for readiness checks.
-- [x] Add optional local API token tests.
-- [x] Document optional local API token usage in README.
-- [x] Document optional local API token usage in backend design.
-- [x] Document optional local API token usage in demo workflow.
-- [x] Add configurable CORS settings for local vs Docker/Nginx modes.
-- [x] Keep CORS disabled by default.
-- [x] Require explicit allowed origins when CORS is enabled.
-- [x] Add CORS tests for default, allowed-origin, disallowed-origin, and preflight behavior.
-- [x] Document configurable CORS usage in README.
-- [x] Document configurable CORS usage in backend design.
-- [x] Document configurable CORS usage in demo workflow.
-- [x] Add structured logging for backend service events.
-- [x] Add logging settings for `LOG_LEVEL` and `LOG_FORMAT`.
-- [x] Add safe startup logging without token values, request bodies, authorization headers, secrets, or memory-bank content.
-- [x] Document structured logging usage in README.
-- [x] Document structured logging usage in backend design.
-- [x] Document structured logging usage in demo workflow.
-- [ ] Improve encrypted backup restore workflow as future production-evolution work.
-- [ ] Evaluate `age` as an alternative to current GPG-encrypted backup flow.
-- [ ] Add stronger integration tests if deployment or production-like usage becomes a real target.
-
-## Pending Non-Blocking Cleanup
-
-- [ ] Review GitHub Actions Node.js 20 deprecation warnings.
-- [ ] Consider updating stable actions when appropriate:
-  - [ ] `actions/checkout@v4` → `actions/checkout@v5`
-  - [ ] `actions/setup-python@v5` → `actions/setup-python@v6`
-- [ ] Keep this cleanup non-blocking while workflows remain green.
-
-## Later
-
-- [ ] Add cloud deployment template if hosted usage becomes a real target.
-- [ ] Add Terraform or infrastructure-as-code example if cloud deployment becomes a real target.
-- [ ] Add multi-project memory dashboard if multi-project management becomes a real requirement.
-- [ ] Add dashboard for inspecting memory records, retrieval chunks, summaries, and retrieval metadata.
-- [ ] Add observability examples for logs, traces, and retrieval quality metrics.
-- [ ] Add release packaging or tagged demo version.
-- [ ] Add optional managed vector database integration such as Qdrant, Pinecone, or PgVector.
-- [ ] Consider converting `scripts/run_mcp_server.py` into a wrapper around `app.main`.
-
-## Non-Goals
-
-- Do not turn the starter memory-bank into fake project memory.
-- Do not represent this repository as a complete production SaaS platform.
-- Do not require private secrets in public CI.
-- Do not add complex infrastructure before the local-first backend is clean and tested.
-- Do not break existing CLI workflows while adding backend APIs.
-- Do not migrate retrieval metadata storage before documenting and testing a safe transition path.
-- Do not commit generated retrieval indexes, pickle metadata, JSON metadata exports, logs, backups, secrets, caches, or temporary files unless intentionally curated as safe examples.
+- `archive/deprecated-workflows/`
+- `archive/deprecated-docs/`
+- `archive/deprecated-deployment/`
