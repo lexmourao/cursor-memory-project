@@ -4,7 +4,7 @@ import os
 import pickle
 import sys
 from pathlib import Path
-from typing import List, Tuple, TypedDict
+from typing import Any, List, Tuple, TypedDict
 
 import numpy as np
 
@@ -13,10 +13,11 @@ try:
 except ImportError as e:
     raise SystemExit("faiss is required. Install faiss-cpu via pip.") from e
 
+OpenAIClient: Any
 try:
-    import openai  # type: ignore
+    from openai import OpenAI as OpenAIClient
 except ImportError:
-    openai = None  # type: ignore[assignment]
+    OpenAIClient = None
 
 MEMORY_BANK_DIR = Path("memory-bank")
 INDEX_FILE = MEMORY_BANK_DIR / "embeddings.faiss"
@@ -45,11 +46,12 @@ class RetrievalMatch(TypedDict):
 
 def get_openai_embedding(text: str) -> np.ndarray:
     """Return embedding vector (np.float32). Falls back to zeros if unavailable."""
-    if openai is None or os.getenv("OPENAI_API_KEY") is None:
+    if OpenAIClient is None or os.getenv("OPENAI_API_KEY") is None:
         return np.zeros(EMBED_DIM, dtype="float32")
 
-    response = openai.Embedding.create(input=[text], model=EMBED_MODEL)  # type: ignore[attr-defined]
-    vec = np.array(response["data"][0]["embedding"], dtype="float32")
+    client = OpenAIClient()
+    response = client.embeddings.create(input=[text], model=EMBED_MODEL)
+    vec = np.array(response.data[0].embedding, dtype="float32")
     return vec
 
 
