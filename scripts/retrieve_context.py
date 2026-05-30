@@ -14,9 +14,9 @@ except ImportError as e:
     raise SystemExit("faiss is required. Install faiss-cpu via pip.") from e
 
 try:
-    import openai  # type: ignore
+    from openai import OpenAI
 except ImportError:
-    openai = None  # type: ignore[assignment]
+    OpenAI = None  # type: ignore[assignment]
 
 MEMORY_BANK_DIR = Path("memory-bank")
 INDEX_FILE = MEMORY_BANK_DIR / "embeddings.faiss"
@@ -45,11 +45,12 @@ class RetrievalMatch(TypedDict):
 
 def get_openai_embedding(text: str) -> np.ndarray:
     """Return embedding vector (np.float32). Falls back to zeros if unavailable."""
-    if openai is None or os.getenv("OPENAI_API_KEY") is None:
+    if OpenAI is None or os.getenv("OPENAI_API_KEY") is None:
         return np.zeros(EMBED_DIM, dtype="float32")
 
-    response = openai.Embedding.create(input=[text], model=EMBED_MODEL)  # type: ignore[attr-defined]
-    vec = np.array(response["data"][0]["embedding"], dtype="float32")
+    client = OpenAI()
+    response = client.embeddings.create(input=[text], model=EMBED_MODEL)
+    vec = np.array(response.data[0].embedding, dtype="float32")
     return vec
 
 
