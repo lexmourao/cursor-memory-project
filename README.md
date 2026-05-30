@@ -545,7 +545,7 @@ The project reads the following variables. See `env.template`.
 | Variable | Purpose |
 |---|---|
 | `OPENAI_API_KEY` | Enables automated summarization and embeddings via OpenAI API. Leaving it blank triggers fallback modes. |
-| `OPENAI_API_KEY_FILE` | Path inside container to a file containing the key when using Docker secrets. |
+| `OPENAI_API_KEY_FILE` | Optional path to a local file containing the OpenAI key when using file-based secret loading. |
 | `ENABLE_LOCAL_API_TOKEN` | Enables optional Bearer token protection for protected local API routes when set to `true`. Defaults to `false`. |
 | `LOCAL_API_TOKEN` | Token required in `Authorization: Bearer <LOCAL_API_TOKEN>` when local API token protection is enabled. |
 | `ENABLE_CORS` | Enables CORS middleware when set to `true`. Defaults to `false`. |
@@ -583,10 +583,8 @@ or your preferred shell mechanism.
 | `status/` | Current status, checklists, and roadmap |
 | `diary/` | Project diary and development log |
 | `logs/solutions/` | Error logs, fixes, and implementation notes |
-| `archive/deprecated-deployment/nginx/` | Archived web/server configuration reference |
+| `archive/` | Historical reference: archived workflows, docs, and deployment scaffolding |
 | `.github/` | CI, Dependabot, and workflow automation |
-| `archive/deprecated-deployment/Dockerfile` | Archived container setup reference |
-| `archive/deprecated-deployment/docker-compose.yml` | Archived local orchestration reference |
 | `Makefile` | Common developer commands |
 | `PROJECT_RULES.md` | Project operating rules and development constraints |
 
