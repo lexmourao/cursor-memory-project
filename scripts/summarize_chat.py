@@ -23,13 +23,15 @@ import argparse
 import os
 from pathlib import Path
 import sys
+from typing import Any
 
 from app.services.summarization_service import SummarizationService
 
+OpenAIClient: Any
 try:
-    from openai import OpenAI
+    from openai import OpenAI as OpenAIClient
 except ImportError:
-    OpenAI = None  # type: ignore[assignment]
+    OpenAIClient = None
 
 
 def read_chat_lines_from_file(path: Path, max_lines: int | None = None) -> list[str]:
@@ -49,7 +51,7 @@ def call_openai_summarize(chat_lines: list[str], model: str = "gpt-4o") -> str:
     This function is intentionally preserved for existing tests and scripts that
     monkeypatch or import it directly.
     """
-    if OpenAI is None or os.getenv("OPENAI_API_KEY") is None:
+    if OpenAIClient is None or os.getenv("OPENAI_API_KEY") is None:
         print("[summarize_chat] OpenAI not configured; using fallback summarizer.")
         return "\n".join(chat_lines[-10:])
 
@@ -61,7 +63,7 @@ def call_openai_summarize(chat_lines: list[str], model: str = "gpt-4o") -> str:
     prompt_user = "\n".join(chat_lines)
 
     try:
-        client = OpenAI()
+        client = OpenAIClient()
         response = client.chat.completions.create(
             model=model,
             messages=[

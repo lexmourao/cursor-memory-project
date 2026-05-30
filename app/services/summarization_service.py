@@ -3,14 +3,16 @@
 from datetime import datetime
 import os
 from pathlib import Path
+from typing import Any
 
 from app.models.summarization import SummarizationResponse
 from scripts.retrieve_context import add_chunk
 
+OpenAIClient: Any
 try:
-    from openai import OpenAI
+    from openai import OpenAI as OpenAIClient
 except ImportError:
-    OpenAI = None  # type: ignore[assignment]
+    OpenAIClient = None
 
 
 MEMORY_BANK_PATH = Path("memory-bank/activeContext.md")
@@ -50,7 +52,7 @@ class SummarizationService:
 
     def _summarize_with_model(self, text: str, model: str) -> tuple[str, bool]:
         """Summarize with OpenAI when configured, otherwise use fallback."""
-        if OpenAI is None or os.getenv("OPENAI_API_KEY") is None:
+        if OpenAIClient is None or os.getenv("OPENAI_API_KEY") is None:
             return self._fallback_summary(text), True
 
         prompt_system = (
@@ -60,7 +62,7 @@ class SummarizationService:
         )
 
         try:
-            client = OpenAI()
+            client = OpenAIClient()
             response = client.chat.completions.create(
                 model=model,
                 messages=[

@@ -54,7 +54,7 @@ def test_summarization_endpoint_fallback_mode(
     active_context_file = tmp_path / "activeContext.md"
 
     monkeypatch.setattr(summarization_service, "MEMORY_BANK_PATH", active_context_file)
-    monkeypatch.setattr(summarization_service, "OpenAI", None)
+    monkeypatch.setattr(summarization_service, "OpenAIClient", None)
 
     response = client.post(
         "/summarization/summarize",
