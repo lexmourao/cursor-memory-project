@@ -709,20 +709,18 @@ Backend logging is configured through `LOG_LEVEL` and `LOG_FORMAT`. Startup logs
 
 ---
 
-## Pending Non-Blocking Cleanup
+## Deferred Maintenance Notes
 
-Some GitHub Actions runs may show a warning that certain actions are running on Node.js 20 and may need future updates.
+Some GitHub Actions runs may show warnings that certain actions are running on Node.js 20 and may need future updates.
 
-This is non-blocking because workflows are passing successfully.
+This is non-blocking because workflows are passing successfully and the methodology-applied release is complete.
 
-Future cleanup may include reviewing stable action versions such as:
+Future maintenance may include reviewing stable action versions such as:
 
-```text
-actions/checkout@v4 → actions/checkout@v5
-actions/setup-python@v5 → actions/setup-python@v6
-```
+- actions/checkout@v4 → actions/checkout@v5
+- actions/setup-python@v5 → actions/setup-python@v6
 
-This should be done later, after the backend documentation and implemented backend slices are stable.
+This can be handled in a future maintenance cycle if GitHub Actions warnings become noisy, if newer stable action versions are required, or if the repository enters another active development phase.
 
 ---
 
