@@ -57,6 +57,34 @@ This project explores how an AI-assisted development environment can maintain pr
 
 The value of this repository is not only the codebase itself. It is the engineering process around it: diagnosing failures, separating concerns, keeping main green, documenting decisions, preserving history, and using AI tools under human review.
 
+## System at a glance
+
+```text
+Cursor / ChatGPT / Claude
+        ↓
+Project Rules + Memory Bank
+        ↓
+Retrieval + Summarization Scripts
+        ↓
+FastAPI Local Backend
+        ↓
+Health / Memory / Retrieval / Summarization / Metrics APIs
+        ↓
+Tests + CI + Security Checks + Documentation Governance
+```
+
+This repository demonstrates a local-first AI-assisted development workflow where AI tools are supervised through persistent project memory, retrieval, summarization, backend API slices, local QA, CI, and documentation governance.
+
+## Reviewer in 3 minutes
+
+1. Read the project scope: what this project is and what it is not.
+2. Check the backend implementation: `app/main.py` and `app/api/`.
+3. Check the tests: `tests/`.
+4. Check CI: `.github/workflows/ci.yml`.
+5. Check the documentation: `docs/ARCHITECTURE.md`, `docs/BACKEND_DESIGN.md`, and `docs/TECHNICAL_REVIEW.md`.
+
+This project should be reviewed as a local-first AI-assisted development methodology and tooling repository, not as a production SaaS backend, hosted RAG platform, or enterprise compliance product.
+
 ---
 
 ## Core System Concepts
