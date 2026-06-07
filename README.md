@@ -87,6 +87,14 @@ This repository demonstrates a local-first AI-assisted development workflow wher
 
 This project should be reviewed as a local-first AI-assisted development methodology and tooling repository, not as a production SaaS backend, hosted RAG platform, or enterprise compliance product.
 
+## Quick proof points
+
+- CI badge is visible and workflow is active.
+- FastAPI backend slices are implemented and tested.
+- Tests cover health, memory, retrieval, summarization, security, CORS, and CLI compatibility.
+- Local token protection, CORS controls, safe logging, and retrieval traceability are documented.
+- The project clearly separates public smoke tests from secret-dependent integration tests.
+
 ---
 
 ## Core System Concepts
