@@ -8,6 +8,8 @@ It demonstrates how persistent project memory, retrieval workflows, summarizatio
 
 The project is designed as a public technical portfolio artifact. It shows how I structure AI implementation work across context engineering, Python automation, FastAPI slices, retrieval/RAG-oriented workflows, local QA, documentation governance, and supervised AI-assisted development with Cursor, ChatGPT, and Claude.
 
+Best reviewed as: AI-assisted engineering methodology, local developer tooling, RAG/memory workflow, and documentation-governed implementation system.
+
 ## What this project is
 
 This project is:
