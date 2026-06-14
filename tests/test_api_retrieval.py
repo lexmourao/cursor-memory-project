@@ -34,6 +34,7 @@ def test_retrieval_status_endpoint_reports_not_ready_for_missing_index(
     assert payload["metadata_record_count"] == 0
     assert payload["json_record_count"] == 0
     assert payload["ready"] is False
+    assert payload["embedding_mode"] == "missing_index"
 
 
 def test_retrieval_status_endpoint_reports_ready_after_rebuild(
@@ -75,6 +76,46 @@ def test_retrieval_status_endpoint_reports_ready_after_rebuild(
     assert payload["metadata_record_count"] == 2
     assert payload["json_record_count"] == 2
     assert payload["ready"] is True
+    assert payload["embedding_mode"] == "zero_vector_fallback"
+
+
+def test_retrieval_status_endpoint_reports_openai_mode_when_api_key_configured(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Retrieval status should report openai mode when index is ready and API key is set."""
+    memory_bank = tmp_path / "memory-bank"
+    memory_bank.mkdir()
+
+    memory_file = memory_bank / "projectbrief.md"
+    memory_file.write_text(
+        "Project vision: build a local-first Cursor memory backend.\n\n"
+        "Architecture note: FastAPI exposes memory and retrieval endpoints.",
+        encoding="utf-8",
+    )
+
+    index_file = tmp_path / "test.faiss"
+    meta_file = tmp_path / "test_meta.pkl"
+    json_file = tmp_path / "test_meta.json"
+
+    monkeypatch.setattr(retrieve_context, "MEMORY_BANK_DIR", memory_bank)
+    monkeypatch.setattr(retrieve_context, "INDEX_FILE", index_file)
+    monkeypatch.setattr(retrieve_context, "META_FILE", meta_file)
+    monkeypatch.setattr(retrieve_context, "META_JSON_FILE", json_file)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    retrieve_context.rebuild_index()
+    retrieve_context.export_metadata_json()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    response = client.get("/retrieval/status")
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["ready"] is True
+    assert payload["embedding_mode"] == "openai"
 
 
 def test_retrieval_query_endpoint_returns_response_shape() -> None:

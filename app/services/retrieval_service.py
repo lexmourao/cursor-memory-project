@@ -1,8 +1,9 @@
 """Retrieval service for memory-bank query workflows."""
 
 import json
+import os
 
-from app.models.retrieval import RetrievalResult, RetrievalStatusResponse
+from app.models.retrieval import EmbeddingMode, RetrievalResult, RetrievalStatusResponse
 import scripts.retrieve_context as retrieve_context
 
 
@@ -41,6 +42,12 @@ class RetrievalService:
             and index_vector_count == metadata_record_count
         )
 
+        embedding_mode = self._derive_embedding_mode(
+            index_exists=index_exists,
+            metadata_exists=metadata_exists,
+            ready=ready,
+        )
+
         return RetrievalStatusResponse(
             index_exists=index_exists,
             metadata_exists=metadata_exists,
@@ -49,7 +56,28 @@ class RetrievalService:
             metadata_record_count=metadata_record_count,
             json_record_count=json_record_count,
             ready=ready,
+            embedding_mode=embedding_mode,
         )
+
+    def _derive_embedding_mode(
+        self,
+        *,
+        index_exists: bool,
+        metadata_exists: bool,
+        ready: bool,
+    ) -> EmbeddingMode:
+        """Report how embeddings are sourced for retrieval status."""
+        if not index_exists or not metadata_exists:
+            return "missing_index"
+
+        if not ready:
+            return "unknown"
+
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key and api_key.strip():
+            return "openai"
+
+        return "zero_vector_fallback"
 
     def _index_vector_count(self) -> int:
         """Return the number of vectors in the FAISS index."""

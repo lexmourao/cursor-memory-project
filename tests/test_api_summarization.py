@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 import pytest
 
 from app.main import app
-import app.services.summarization_service as summarization_service
 
 
 client = TestClient(app)
@@ -17,8 +16,8 @@ def test_summarization_endpoint_manual_mode(
     tmp_path: Path,
 ) -> None:
     """Summarization endpoint should accept manual summaries and write active context."""
+    monkeypatch.setenv("MEMORY_BANK_DIR", str(tmp_path))
     active_context_file = tmp_path / "activeContext.md"
-    monkeypatch.setattr(summarization_service, "MEMORY_BANK_PATH", active_context_file)
 
     response = client.post(
         "/summarization/summarize",
@@ -51,9 +50,11 @@ def test_summarization_endpoint_fallback_mode(
     tmp_path: Path,
 ) -> None:
     """Summarization endpoint should use fallback mode when OpenAI is unavailable."""
+    monkeypatch.setenv("MEMORY_BANK_DIR", str(tmp_path))
     active_context_file = tmp_path / "activeContext.md"
 
-    monkeypatch.setattr(summarization_service, "MEMORY_BANK_PATH", active_context_file)
+    import app.services.summarization_service as summarization_service
+
     monkeypatch.setattr(summarization_service, "OpenAIClient", None)
 
     response = client.post(
@@ -77,6 +78,33 @@ def test_summarization_endpoint_fallback_mode(
     assert payload["embedded"] is False
 
     assert active_context_file.exists()
+
+
+def test_summarization_respects_memory_bank_dir_setting(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Summarization should write activeContext.md under MEMORY_BANK_DIR."""
+    memory_bank_dir = tmp_path / "custom-memory-bank"
+    memory_bank_dir.mkdir()
+    monkeypatch.setenv("MEMORY_BANK_DIR", str(memory_bank_dir))
+
+    response = client.post(
+        "/summarization/summarize",
+        json={
+            "text": "Custom memory bank path test.",
+            "model": "gpt-4o",
+            "manual": True,
+            "embed": False,
+        },
+    )
+
+    assert response.status_code == 200
+
+    active_context_file = memory_bank_dir / "activeContext.md"
+    assert active_context_file.exists()
+    written_text = active_context_file.read_text(encoding="utf-8")
+    assert "Custom memory bank path test." in written_text
 
 
 def test_summarization_endpoint_rejects_empty_text() -> None:

@@ -6,7 +6,6 @@ import sys
 
 import pytest
 
-import app.services.summarization_service as summarization_service
 import scripts.summarize_chat as summarize_chat
 
 
@@ -24,7 +23,7 @@ def test_summarize_chat_cli_file_input_preserves_legacy_summary_helper(
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(summarization_service, "MEMORY_BANK_PATH", active_context_file)
+    monkeypatch.setenv("MEMORY_BANK_DIR", str(tmp_path))
     monkeypatch.setattr(
         sys,
         "argv",
@@ -58,7 +57,7 @@ def test_summarize_chat_cli_manual_stdin_writes_active_context(
     """CLI manual stdin mode should write provided text as active context."""
     active_context_file = tmp_path / "activeContext.md"
 
-    monkeypatch.setattr(summarization_service, "MEMORY_BANK_PATH", active_context_file)
+    monkeypatch.setenv("MEMORY_BANK_DIR", str(tmp_path))
     monkeypatch.setattr(sys, "stdin", io.StringIO("Manual summary\nSecond line"))
     monkeypatch.setattr(
         sys,
@@ -92,7 +91,7 @@ def test_summarize_chat_cli_empty_stdin_does_not_write_active_context(
     """CLI should exit safely when stdin input is empty."""
     active_context_file = tmp_path / "activeContext.md"
 
-    monkeypatch.setattr(summarization_service, "MEMORY_BANK_PATH", active_context_file)
+    monkeypatch.setenv("MEMORY_BANK_DIR", str(tmp_path))
     monkeypatch.setattr(sys, "stdin", io.StringIO(""))
     monkeypatch.setattr(
         sys,

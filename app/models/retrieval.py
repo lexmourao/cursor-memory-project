@@ -1,8 +1,12 @@
 """Retrieval API request and response models."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from app.models.chunk import RetrievedChunk
+
+EmbeddingMode = Literal["openai", "zero_vector_fallback", "missing_index", "unknown"]
 
 
 class RetrievalRequest(BaseModel):
@@ -33,3 +37,4 @@ class RetrievalStatusResponse(BaseModel):
     metadata_record_count: int
     json_record_count: int
     ready: bool
+    embedding_mode: EmbeddingMode

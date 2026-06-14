@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+from app.core.config import get_settings
 from app.models.summarization import SummarizationResponse
 from scripts.retrieve_context import add_chunk
 
@@ -13,9 +14,6 @@ try:
     from openai import OpenAI as OpenAIClient
 except ImportError:
     OpenAIClient = None
-
-
-MEMORY_BANK_PATH = Path("memory-bank/activeContext.md")
 
 
 class SummarizationService:
@@ -82,14 +80,19 @@ class SummarizationService:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         return "\n".join(lines[-10:])
 
+    def _active_context_path(self) -> Path:
+        """Resolve activeContext.md from configured memory bank directory."""
+        return get_settings().memory_bank_dir / "activeContext.md"
+
     def _write_active_context(self, summary: str) -> bool:
         """Write summary to activeContext.md."""
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
         header = "# Active Context (Auto-Generated)\n\n"
         header += f"> **Generated:** {timestamp}\n\n---\n\n"
 
-        MEMORY_BANK_PATH.parent.mkdir(parents=True, exist_ok=True)
-        MEMORY_BANK_PATH.write_text(header + summary, encoding="utf-8")
+        active_context_path = self._active_context_path()
+        active_context_path.parent.mkdir(parents=True, exist_ok=True)
+        active_context_path.write_text(header + summary, encoding="utf-8")
         return True
 
     def _embed_summary(self, summary: str) -> bool:
