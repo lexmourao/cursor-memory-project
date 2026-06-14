@@ -25,7 +25,7 @@ project_root/
 │   ├── checklist_data.md
 │   ├── checklist_deployment.md
 │   └── roadmap.md
-├── dairy/                       # Project log and daily diary
+├── diary/                       # Project log and daily diary
 │   ├── project_log.md
 │   └── log_action.py
 ├── scripts/                     # Automation, backup, error logging
