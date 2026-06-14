@@ -2,6 +2,8 @@
 
 This guide will help you set up a professional, automated, and context-aware Cursor project. Follow these steps to ensure robust documentation, error tracking, automation, and team collaboration from day one.
 
+**Setup package note:** `cursor_setup_instructions/` is a reusable instruction package for generating a new project scaffold. The folder tree below describes the **target structure** Cursor should create in a new project—not a checklist of files that must already exist at the root of this repository. Cursor should create and populate those files when this package is used; existing root-level repository files should not be duplicated just because they appear here.
+
 ---
 
 ## 1. Create the Folder Structure
@@ -165,7 +167,7 @@ project_root/
 
 ## Access Control
 - Only authorized contributors may edit scripts, data, or documentation
-- All changes must be logged in dairy/project_log.md
+- All changes must be logged in diary/project_log.md
 - Use version control for all code and notebooks
 
 ## Compliance
@@ -174,7 +176,7 @@ project_root/
 - Maintain audit trails via project logs and version control
 
 ## Incident Response
-- If data integrity or privacy is compromised, log the incident in dairy/project_log.md and notify the project owner
+- If data integrity or privacy is compromised, log the incident in diary/project_log.md and notify the project owner
 - Archive affected files and document the response
 
 ---
@@ -192,7 +194,7 @@ Before taking ANY action, all contributors MUST verify they have read and unders
 - [ ] docs/ARCHITECTURE.md - System architecture and data flow
 - [ ] docs/DEPLOYMENT.md - Deployment and maintenance guide
 - [ ] docs/SECURITY.md - Security and compliance
-- [ ] dairy/project_log.md - Project log and daily diary
+- [ ] diary/project_log.md - Project log and daily diary
 
 ### Project Files (REFERENCE)
 - [ ] data/raw/ - Original data
