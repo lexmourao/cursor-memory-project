@@ -87,6 +87,18 @@ This repository demonstrates a local-first AI-assisted development workflow wher
 
 This project should be reviewed as a local-first AI-assisted development methodology and tooling repository, not as a production SaaS backend, hosted RAG platform, or enterprise compliance product.
 
+## How I use this workflow in real projects
+
+When I start a new project in Cursor, I use this repository as a reusable setup and methodology reference—not as a finished application to deploy as-is.
+
+1. I copy or include [`cursor_setup_instructions/`](cursor_setup_instructions/) inside the new project folder.
+2. In the first prompt, I state the goal of that project in plain language.
+3. Cursor reads the setup instructions and generates the **target scaffold**: folders, rules, status files, diary, logs, error tracking, and automation hooks.
+4. As work proceeds, **local** diary, logs, errors, and solutions record what happened, what failed, and what was solved.
+5. Those local tracking files stay on my machine; they are **not pushed to GitHub** unless I explicitly approve a public change.
+6. Memory-bank and context files fill in only after real discovery, implementation, decisions, and milestones—not with placeholder project history.
+7. The outcome is modular, versioned, traceable, auditable AI-assisted work where the assistant does not restart from zero every session.
+
 ## Quick proof points
 
 - CI badge is visible and workflow is active.
