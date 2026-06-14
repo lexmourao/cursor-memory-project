@@ -1,5 +1,7 @@
 """Security helpers for the Cursor Memory Project backend."""
 
+import secrets
+
 from fastapi import Header, HTTPException, status
 
 from app.core.config import get_settings
@@ -25,8 +27,12 @@ def require_local_api_token(authorization: str | None = Header(default=None)) ->
         )
 
     expected_header = f"Bearer {settings.local_api_token}"
+    provided_header = authorization or ""
 
-    if authorization != expected_header:
+    if not secrets.compare_digest(
+        provided_header.encode("utf-8"),
+        expected_header.encode("utf-8"),
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing local API token.",
