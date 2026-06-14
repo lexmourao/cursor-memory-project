@@ -1,0 +1,50 @@
+---
+description: Safe and honest use of memory-bank/ as project memory scaffold
+globs: memory-bank/**/*
+alwaysApply: false
+---
+
+# Memory Bank Rules
+
+The `memory-bank/` directory is a **project memory scaffold**, not a place for invented history.
+
+## Core principles
+
+- Treat `memory-bank/` as structured long-term memory for real project work.
+- Do **not** fabricate project knowledge, fake milestones, or placeholder history.
+- Do **not** pre-fill files with assumptions about a project that has not happened yet.
+- Populate memory only after real discovery, decisions, implementation, errors, solutions, and milestones.
+- Keep context **factual, traceable, and attributable** to actual work.
+- When uncertain whether something belongs in persistent memory, **ask before writing**.
+
+## What to write (and when)
+
+| File | Write when |
+|------|------------|
+| `projectbrief.md` | Real project kickoff and goals are known |
+| `productContext.md` | Real user/persona discovery has occurred |
+| `activeContext.md` | Generated or summarized from real sessions |
+| `systemPatterns.md` | Real architecture or design decisions are made |
+| `techContext.md` | Real stack and constraints are confirmed |
+| `progress.md` | Real status, blockers, or next steps exist |
+
+## Local tracking boundary
+
+- Diary, logs, errors, and solutions may track session work **locally**.
+- Do **not** assume local tracking files should be pushed to GitHub.
+- Do **not** copy sensitive local session notes into memory-bank without review.
+
+## Security
+
+Do **not** store in memory-bank:
+
+- API keys, passwords, tokens, or credentials
+- Personal data, PHI, or client-confidential information
+- Secrets or proprietary data without authorization
+
+Use `.env`, approved secret storage, or environment configuration for sensitive values.
+
+## Companion references
+
+- See `memory-bank/README.md` for file roles.
+- Legacy rules remain in `.cursor-rules.md` (do not remove).

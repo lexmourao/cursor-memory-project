@@ -1,0 +1,44 @@
+---
+description: Reusable local-first Cursor setup workflow and batch discipline
+alwaysApply: true
+---
+
+# Project Workflow Rules
+
+This repository is a **reusable local-first Cursor setup framework** and methodology artifact—not an application intended to be deployed as-is.
+
+## How this setup is used in real projects
+
+1. Copy or include `cursor_setup_instructions/` into a **new** Cursor project.
+2. In the **first prompt**, state the project goal in plain language.
+3. Cursor reads the setup instructions and generates the **target scaffold** (folders, rules, status files, diary, logs, error tracking, archive workflow).
+4. Work proceeds in **modular, versioned, traceable, auditable** steps across sessions.
+5. Use diary, logs, errors, and solutions to record what happened, what failed, and what was solved.
+
+## Local vs public GitHub
+
+| Local (this clone) | GitHub (public repo) |
+|--------------------|----------------------|
+| Diary, logs, errors, solutions, local progress notes | Intentional, scoped, reviewed public changes |
+| Session tracking for continuity | Product/docs/code the owner approves for sharing |
+| **Not pushed unless explicitly approved** | One batch = one purpose = one diff = one commit |
+
+Before any public change:
+
+- Confirm scope with the user when unclear.
+- Show diff before commit when requested.
+- Do not bundle unrelated changes.
+
+## Engineering discipline
+
+- Prefer the smallest correct change.
+- Do not overbuild, rewrite broadly, or create loops.
+- Preserve project identity: local-first methodology artifact, not production SaaS.
+- Keep `.cursor-rules.md`; these modular rules complement it.
+- Re-run relevant tests before committing **code** changes (when code batches are approved).
+
+## Batch workflow
+
+- One batch = one purpose = one diff = one commit.
+- Stop after each batch for review unless the user approves continuation.
+- Do not execute later roadmap batches without separate approval.

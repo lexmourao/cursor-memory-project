@@ -1,0 +1,47 @@
+---
+description: Local-first safety, git hygiene, and public repository boundaries
+alwaysApply: true
+---
+
+# Local-First Security Rules
+
+Treat this project as **local-first**. Its value is methodology and workflow—not public network exposure.
+
+## Local exposure
+
+- Do **not** expose local memory endpoints, MCP stubs, or dev servers beyond localhost without explicit user approval and hardening review.
+- Assume memory APIs and local stubs are for **trusted local development only**.
+- Do not present local-first defaults as production security controls.
+
+## Never commit or push
+
+Do **not** stage, commit, or push:
+
+- `.env`, secrets, tokens, credentials, or private keys
+- `.DS_Store`, virtual environments (`.venv/`, `venv/`)
+- Generated indexes and local artifacts (`memory-bank/*.faiss`, `memory-bank/*.pkl`, metadata exports unless intentionally curated)
+- Local data, backups, or private files
+- **Diary, logs, errors, solutions, or local progress/roadmap tracking** unless the user **explicitly** approves a public change
+
+## Before staging
+
+1. Run `git status --short`.
+2. Stage **only** files intended for the approved batch.
+3. Never stage skip-worktree or local-only tracking files by mistake.
+4. Show diff before commit when requested.
+
+## Destructive actions
+
+- Do **not** run destructive git commands (`git reset --hard`, force push to `main`, `git clean -fd`) unless the user explicitly requests them.
+- Do **not** delete project knowledge; archive when preservation is required (see `PROJECT_RULES.md`).
+- Prefer explicit user approval before public-facing changes.
+
+## Sensitive content in memory
+
+- Do not store secrets in `memory-bank/`, diary, or logs.
+- Follow `docs/SECURITY.md` for active security guidance.
+
+## Companion references
+
+- Legacy operational rules: `.cursor-rules.md`
+- Public security docs: `docs/SECURITY.md`
