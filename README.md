@@ -75,10 +75,10 @@ This repository demonstrates my approach to AI-assisted systems development and 
 - Tested FastAPI backend slices for memory, retrieval, summarization, health, metrics, local token protection, CORS, and logging.
 - Python automation for summarization, retrieval, logging, backups, and status updates.
 - Local test baseline stabilization with pytest.
-- CI hygiene with Ruff, mypy, pip-audit, smoke tests, and CodeQL.
+- CI hygiene with Ruff, mypy, pip-audit, safe non-integration tests, and CodeQL.
 - Documentation-first project structure for auditable and reproducible AI workflows.
 - Human-in-the-loop fallback modes when API keys or external services are unavailable.
-- Explicit separation between public smoke tests and environment-specific integration tests.
+- Explicit separation between public non-integration tests and environment-specific integration tests.
 - Scope control through archival of overbuilt workflows and production-style documentation.
 
 ## Why this matters for LLM and agent systems
@@ -690,7 +690,7 @@ Current scope:
 - Metadata-aware retrieval with source file and chunk index traceability
 - JSON metadata export for retrieval inspection
 - Python automation scripts
-- Public CI smoke tests
+- Public CI non-integration tests
 - Documentation and audit-oriented folder structure
 - GitHub code scanning through repository security configuration
 
