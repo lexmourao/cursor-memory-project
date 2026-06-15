@@ -21,7 +21,7 @@ Running secret-dependent integration tests in public CI would either fail consis
 The public CI workflow will run:
 
 - `ruff check .`
-- `mypy scripts tests`
+- `mypy app scripts tests`
 - `pip-audit --strict`
 - `pytest -q -m "not integration"`
 

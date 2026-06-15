@@ -381,7 +381,7 @@ The public CI workflow validates the repository without requiring private secret
 It runs:
 
 - `ruff check .`
-- `mypy scripts tests`
+- `mypy app scripts tests` (type checking for app, scripts, and tests)
 - `pip-audit --strict`
 - focused smoke tests
 

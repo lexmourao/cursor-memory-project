@@ -45,7 +45,7 @@
 
 - [ ] Run relevant tests before committing code changes
 - [ ] Run `ruff check .` for linting when editing Python
-- [ ] Run `mypy scripts tests` when editing typed Python code
+- [ ] Run `mypy app scripts tests` when editing typed Python code
 - [ ] Review public CI results after each commit
 - [ ] Review CodeQL results after relevant commits
 

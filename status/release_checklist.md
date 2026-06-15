@@ -8,7 +8,7 @@
 - [ ] Public CI workflow is green
 - [ ] CodeQL workflow is green
 - [ ] `ruff check .` passes
-- [ ] `mypy scripts tests` passes
+- [ ] `mypy app scripts tests` passes
 - [ ] `pip-audit --strict` passes
 - [ ] Focused public smoke tests pass
 - [ ] Integration and coverage gates pass in the configured environment, if enabled
