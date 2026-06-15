@@ -6,7 +6,6 @@ from app.core.config import get_settings
 from app.models.health import HealthResponse
 from app.services.memory_service import MemoryService
 
-
 router = APIRouter(tags=["health"])
 
 

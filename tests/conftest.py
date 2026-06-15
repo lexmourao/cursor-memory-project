@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import sys
 
+
 # Auto-apply fixture to every test
 @pytest.fixture(autouse=True)
 def mock_openai(monkeypatch):
@@ -25,4 +26,4 @@ def mock_openai(monkeypatch):
     monkeypatch.setattr(retrieve_context, "get_openai_embedding", _fake_embed)
 
     # Ensure any direct openai import is None
-    monkeypatch.setitem(sys.modules, "openai", None) 
+    monkeypatch.setitem(sys.modules, "openai", None)

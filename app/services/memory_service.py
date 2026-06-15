@@ -4,7 +4,6 @@ from pathlib import Path
 
 from app.models.memory import MemoryRecord
 
-
 ALLOWED_MEMORY_FILES = {
     "README.md",
     "projectbrief.md",

@@ -5,7 +5,9 @@ import re
 PROGRESS_FILE = Path("memory-bank/progress.md")
 INDEX_FILE = Path("memory-bank/embeddings.faiss")
 
-STATUS_PATTERN = re.compile(r"^\| (Memory Bank|Summarization Engine|Retrieval Engine) .*", re.MULTILINE)
+STATUS_PATTERN = re.compile(
+    r"^\| (Memory Bank|Summarization Engine|Retrieval Engine) .*", re.MULTILINE
+)
 
 
 def derive_status() -> dict[str, str]:
@@ -43,5 +45,6 @@ def main():
     PROGRESS_FILE.write_text("\n".join(updated), encoding="utf-8")
     print("[update_status] progress.md updated.")
 
+
 if __name__ == "__main__":
-    main() 
+    main()

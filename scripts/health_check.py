@@ -1,6 +1,7 @@
 import sys
 import requests
 
+
 def main():
     base_url = "http://localhost:7331"
     try:
@@ -18,5 +19,6 @@ def main():
         sys.exit(1)
     print(f"[health_check] OK – {mem_count} memory records served")
 
+
 if __name__ == "__main__":
-    main() 
+    main()

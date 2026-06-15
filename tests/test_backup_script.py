@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+
 def test_backup_creation(tmp_path, monkeypatch):
     """Run backup script and ensure archive created and valid tar."""
     if not os.getenv("GPG_KEY_ID"):
@@ -27,4 +28,4 @@ def test_backup_creation(tmp_path, monkeypatch):
     # Verify tar integrity
     with tarfile.open(archive, "r:gz") as tar:
         names = tar.getnames()
-        assert any(name.endswith("dummy.md") for name in names) 
+        assert any(name.endswith("dummy.md") for name in names)

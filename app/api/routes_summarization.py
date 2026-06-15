@@ -6,7 +6,6 @@ from app.core.security import require_local_api_token
 from app.models.summarization import SummarizationRequest, SummarizationResponse
 from app.services.summarization_service import SummarizationService
 
-
 router = APIRouter(
     prefix="/summarization",
     tags=["summarization"],

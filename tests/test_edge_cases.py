@@ -18,6 +18,7 @@ def test_health_check_failure(monkeypatch):
         def __init__(self, status=200, json_val=None):
             self.status_code = status
             self._json_val = json_val or {}
+
         def json(self):
             return self._json_val
 
@@ -26,7 +27,9 @@ def test_health_check_failure(monkeypatch):
             return DummyResp(status=500)
         return DummyResp()
 
-    monkeypatch.setattr(hc, "requests", type("FakeReq", (), {"get": staticmethod(fake_get)}))
+    monkeypatch.setattr(
+        hc, "requests", type("FakeReq", (), {"get": staticmethod(fake_get)})
+    )
     with pytest.raises(SystemExit):
         hc.main()
 
@@ -40,4 +43,4 @@ def test_index_rebuild_with_corrupted_markdown(tmp_path, monkeypatch):
     finally:
         bad_file.unlink()
     index_path = Path("memory-bank/embeddings.faiss")
-    assert index_path.exists() 
+    assert index_path.exists()

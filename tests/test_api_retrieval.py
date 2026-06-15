@@ -9,7 +9,6 @@ import pytest
 from app.main import app
 import scripts.retrieve_context as retrieve_context
 
-
 client = TestClient(app)
 
 
@@ -20,7 +19,9 @@ def test_retrieval_status_endpoint_reports_not_ready_for_missing_index(
     """Retrieval status should report not ready when index and metadata are missing."""
     monkeypatch.setattr(retrieve_context, "INDEX_FILE", tmp_path / "missing.faiss")
     monkeypatch.setattr(retrieve_context, "META_FILE", tmp_path / "missing_meta.pkl")
-    monkeypatch.setattr(retrieve_context, "META_JSON_FILE", tmp_path / "missing_meta.json")
+    monkeypatch.setattr(
+        retrieve_context, "META_JSON_FILE", tmp_path / "missing_meta.json"
+    )
 
     response = client.get("/retrieval/status")
 

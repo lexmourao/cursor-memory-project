@@ -76,19 +76,29 @@ def call_openai_summarize(chat_lines: list[str], model: str = "gpt-4o") -> str:
         content = response.choices[0].message.content or ""
         return content.strip()
     except Exception as exc:
-        print(f"[summarize_chat] OpenAI request failed: {exc}. Falling back to naive summary.")
+        print(
+            f"[summarize_chat] OpenAI request failed: {exc}. Falling back to naive summary."
+        )
         return "\n".join(chat_lines[-10:])
 
 
 def main() -> None:
     """Summarize recent chat and update activeContext.md."""
-    parser = argparse.ArgumentParser(description="Summarize recent chat and update activeContext.md")
+    parser = argparse.ArgumentParser(
+        description="Summarize recent chat and update activeContext.md"
+    )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--chat-log", type=Path, help="Path to chat log file")
     group.add_argument("--stdin", action="store_true", help="Read chat log from stdin")
-    parser.add_argument("--max-lines", type=int, default=2000, help="Limit to last N lines of chat")
-    parser.add_argument("--model", default="gpt-4o", help="OpenAI model name or local model identifier")
-    parser.add_argument("--manual", action="store_true", help="Treat provided input as the summary")
+    parser.add_argument(
+        "--max-lines", type=int, default=2000, help="Limit to last N lines of chat"
+    )
+    parser.add_argument(
+        "--model", default="gpt-4o", help="OpenAI model name or local model identifier"
+    )
+    parser.add_argument(
+        "--manual", action="store_true", help="Treat provided input as the summary"
+    )
     parser.add_argument(
         "--no-embed",
         action="store_true",

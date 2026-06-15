@@ -10,7 +10,6 @@ from app.models.retrieval import (
 )
 from app.services.retrieval_service import RetrievalService
 
-
 router = APIRouter(
     prefix="/retrieval",
     tags=["retrieval"],

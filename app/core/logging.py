@@ -5,7 +5,6 @@ import sys
 
 from app.core.config import Settings
 
-
 _LOG_FORMATS = {
     "plain": "%(asctime)s %(levelname)s [%(name)s] %(message)s",
     "compact": "%(levelname)s [%(name)s] %(message)s",

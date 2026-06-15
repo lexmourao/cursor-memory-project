@@ -33,7 +33,11 @@ def test_backup_restore_e2e(tmp_path):
     if not os.getenv("GPG_KEY_ID"):
         pytest.skip("GPG_KEY_ID is required for encrypted backup integration test.")
     # 1. Start MCP server
-    proc = subprocess.Popen(["python", str(RUN_SERVER), "--port", str(BASE_PORT)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ["python", str(RUN_SERVER), "--port", str(BASE_PORT)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     try:
         assert wait_health(BASE_PORT), "Server did not become healthy"
         # 2. Run backup script
@@ -54,10 +58,12 @@ def test_backup_restore_e2e(tmp_path):
         subprocess.check_call(["tar", "-xzf", str(archive)], cwd=PROJECT_ROOT)
 
         # 5. Rebuild index
-        subprocess.check_call(["python", "scripts/retrieve_context.py", "rebuild"], cwd=PROJECT_ROOT)
+        subprocess.check_call(
+            ["python", "scripts/retrieve_context.py", "rebuild"], cwd=PROJECT_ROOT
+        )
 
         # 6. Health check again
         assert wait_health(BASE_PORT), "Server unhealthy after restore"
     finally:
         proc.send_signal(signal.SIGINT)
-        proc.wait(timeout=5) 
+        proc.wait(timeout=5)

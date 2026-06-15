@@ -1,7 +1,6 @@
 import importlib
 from pathlib import Path
 
-
 # Import modules dynamically to avoid circular CLI execution
 summarize_chat = importlib.import_module("scripts.summarize_chat")
 retrieve_context = importlib.import_module("scripts.retrieve_context")
@@ -24,4 +23,4 @@ def test_retrieval_build_and_query(tmp_path):
     assert index_path.exists(), "Index file should be created"
     res = retrieve_context.query("project", top_k=3)
     assert isinstance(res, list)
-    # Even with zero-vector fallback, query returns list (possibly empty). Accept. 
+    # Even with zero-vector fallback, query returns list (possibly empty). Accept.

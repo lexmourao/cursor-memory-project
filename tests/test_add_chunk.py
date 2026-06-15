@@ -15,4 +15,4 @@ def test_add_chunk_increments_index(tmp_path, monkeypatch):
     idx_path = tmp_path / "memory-bank" / "embeddings.faiss"
     assert idx_path.exists()
     # Size >0
-    assert idx_path.stat().st_size > 0 
+    assert idx_path.stat().st_size > 0

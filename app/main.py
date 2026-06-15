@@ -1,4 +1,5 @@
 """FastAPI application entry point for the Cursor Memory Project backend."""
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response

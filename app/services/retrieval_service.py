@@ -98,7 +98,9 @@ class RetrievalService:
     def _json_record_count(self) -> int:
         """Return the number of records in the JSON metadata export."""
         try:
-            payload = json.loads(retrieve_context.META_JSON_FILE.read_text(encoding="utf-8"))
+            payload = json.loads(
+                retrieve_context.META_JSON_FILE.read_text(encoding="utf-8")
+            )
         except (OSError, json.JSONDecodeError):
             return 0
 

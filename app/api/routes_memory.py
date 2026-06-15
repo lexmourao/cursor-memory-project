@@ -7,7 +7,6 @@ from app.core.security import require_local_api_token
 from app.models.memory import MemoryListResponse, MemoryRecord
 from app.services.memory_service import MemoryService
 
-
 router = APIRouter(tags=["memory"], dependencies=[Depends(require_local_api_token)])
 
 

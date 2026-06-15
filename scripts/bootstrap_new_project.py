@@ -11,7 +11,7 @@ EXCLUDE = {".git", "backups", "benchmarks", "__pycache__"}
 TIERS = {
     "1": "Cursor-only (offline)",
     "2": "Cursor + OpenAI key (no Docker)",
-    "3": "Full Docker stack (TLS, Prometheus)"
+    "3": "Full Docker stack (TLS, Prometheus)",
 }
 
 BANNER = """
@@ -20,8 +20,10 @@ BANNER = """
 ===========================
 """
 
+
 def prompt(msg: str) -> str:
     return input(f"{msg.strip()} ").strip()
+
 
 def choose_tier() -> str:
     print("Select setup tier:")
@@ -33,18 +35,25 @@ def choose_tier() -> str:
             return tier
         print("Invalid choice.")
 
+
 def copy_template(dest: Path, tier: str):
     def _ignore(dirpath: str, names: List[str]):
         ignored = set()
         for n in names:
             if n in EXCLUDE:
                 ignored.add(n)
-            if tier == "1" and n in {"docker-compose.yml", "Dockerfile", "nginx", "prometheus.yml"}:
+            if tier == "1" and n in {
+                "docker-compose.yml",
+                "Dockerfile",
+                "nginx",
+                "prometheus.yml",
+            }:
                 ignored.add(n)
             if tier != "3" and n in {"docker-compose.yml", "nginx", "prometheus.yml"}:
                 if n not in ignored:
                     ignored.add(n)
         return ignored
+
     shutil.copytree(TEMPLATE_ROOT, dest, ignore=_ignore, dirs_exist_ok=True)
 
 
@@ -53,7 +62,9 @@ def init_git(dest: Path):
         return
     subprocess.run(["git", "init", str(dest)], check=True)
     subprocess.run(["git", "add", "."], cwd=dest, check=True)
-    subprocess.run(["git", "commit", "-m", "Initial commit via bootstrap"], cwd=dest, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit via bootstrap"], cwd=dest, check=True
+    )
 
 
 def write_env(dest: Path, openai_key: str, gpg_id: str):
@@ -77,7 +88,9 @@ def main():
     gpg_id = ""
     if tier in {"2", "3"}:
         openai_key = prompt("Optional OPENAI_API_KEY (press Enter to skip):")
-    gpg_id = prompt("GPG_KEY_ID for encrypted backups (required, press Enter to skip & disable backups):")
+    gpg_id = prompt(
+        "GPG_KEY_ID for encrypted backups (required, press Enter to skip & disable backups):"
+    )
 
     print("\nCopying template…")
     copy_template(target_dir, tier)
@@ -104,5 +117,6 @@ def main():
         4. {'docker compose up -d --build' if tier=='3' else 'make dev'}
     """))
 
+
 if __name__ == "__main__":
-    main() 
+    main()

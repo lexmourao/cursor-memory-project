@@ -28,18 +28,33 @@ def run_benchmark(chunk_count: int, output_file: Path):
 
     # Measure rebuild index time
     start = time.perf_counter()
-    subprocess.check_call(["python", "scripts/retrieve_context.py", "rebuild"], cwd=PROJECT_ROOT, stdout=subprocess.DEVNULL)
+    subprocess.check_call(
+        ["python", "scripts/retrieve_context.py", "rebuild"],
+        cwd=PROJECT_ROOT,
+        stdout=subprocess.DEVNULL,
+    )
     rebuild_sec = time.perf_counter() - start
 
     # Measure single query
 
     q_start = time.perf_counter()
-    subprocess.check_call(["python", "scripts/retrieve_context.py", "query", "--text", "test"], cwd=PROJECT_ROOT, stdout=subprocess.DEVNULL)
+    subprocess.check_call(
+        ["python", "scripts/retrieve_context.py", "query", "--text", "test"],
+        cwd=PROJECT_ROOT,
+        stdout=subprocess.DEVNULL,
+    )
     query_sec = time.perf_counter() - q_start
 
     # store JSON
-    output_file.write_text(json.dumps({"chunks": chunk_count, "rebuild_sec": rebuild_sec, "query_sec": query_sec}, indent=2))
-    print(f"[benchmark] chunks={chunk_count} rebuild={rebuild_sec:.2f}s query={query_sec:.2f}s saved to {output_file}")
+    output_file.write_text(
+        json.dumps(
+            {"chunks": chunk_count, "rebuild_sec": rebuild_sec, "query_sec": query_sec},
+            indent=2,
+        )
+    )
+    print(
+        f"[benchmark] chunks={chunk_count} rebuild={rebuild_sec:.2f}s query={query_sec:.2f}s saved to {output_file}"
+    )
 
 
 if __name__ == "__main__":
@@ -47,4 +62,4 @@ if __name__ == "__main__":
     parser.add_argument("--chunks", type=int, default=10000)
     args = parser.parse_args()
     out = RESULTS_DIR / f"benchmark_{args.chunks}.json"
-    run_benchmark(args.chunks, out) 
+    run_benchmark(args.chunks, out)

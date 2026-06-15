@@ -9,6 +9,7 @@ LOG_ROOT.mkdir(exist_ok=True)
 ERRORS_DIR.mkdir(exist_ok=True)
 SOLUTIONS_DIR.mkdir(exist_ok=True)
 
+
 def write_log(entry_type: str, message: str) -> None:
     ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     fname = datetime.utcnow().strftime("%Y-%m-%d") + ".md"
@@ -18,6 +19,7 @@ def write_log(entry_type: str, message: str) -> None:
         fh.write(f"### {ts}\n{message}\n\n")
     print(f"[log_action] Logged {entry_type} -> {path}")
 
+
 def main():
     parser = argparse.ArgumentParser(description="Log an error or solution entry.")
     parser.add_argument("--type", choices=["error", "solution"], required=True)
@@ -25,5 +27,6 @@ def main():
     args = parser.parse_args()
     write_log(args.type, args.message)
 
+
 if __name__ == "__main__":
-    main() 
+    main()

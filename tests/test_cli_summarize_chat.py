@@ -46,7 +46,9 @@ def test_summarize_chat_cli_file_input_preserves_legacy_summary_helper(
     assert "# Active Context (Auto-Generated)" in written_text
     assert "FAKE SUMMARY GENERATED FOR TESTING" in written_text
     assert "[summarize_chat] Wrote summary to memory-bank/activeContext.md" in output
-    assert "[summarize_chat] Skipped embedding because --no-embed was provided." in output
+    assert (
+        "[summarize_chat] Skipped embedding because --no-embed was provided." in output
+    )
 
 
 def test_summarize_chat_cli_manual_stdin_writes_active_context(
@@ -80,7 +82,9 @@ def test_summarize_chat_cli_manual_stdin_writes_active_context(
     assert "Manual summary" in written_text
     assert "Second line" in written_text
     assert "[summarize_chat] Wrote summary to memory-bank/activeContext.md" in output
-    assert "[summarize_chat] Skipped embedding because --no-embed was provided." in output
+    assert (
+        "[summarize_chat] Skipped embedding because --no-embed was provided." in output
+    )
 
 
 def test_summarize_chat_cli_empty_stdin_does_not_write_active_context(
@@ -113,6 +117,8 @@ def test_summarize_chat_cli_empty_stdin_does_not_write_active_context(
 
 def test_call_openai_summarize_legacy_helper_remains_available() -> None:
     """Legacy call_openai_summarize helper should remain importable and callable."""
-    summary = summarize_chat.call_openai_summarize(["Line one", "Line two"], model="gpt-test")
+    summary = summarize_chat.call_openai_summarize(
+        ["Line one", "Line two"], model="gpt-test"
+    )
 
     assert summary == "FAKE SUMMARY GENERATED FOR TESTING"

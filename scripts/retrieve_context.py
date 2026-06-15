@@ -112,7 +112,9 @@ def rebuild_index() -> None:
 
     _save_index(index)
     _save_meta(meta)
-    print(f"[retrieve_context] Rebuilt index with {index.ntotal} vectors from {len(md_files)} files.")
+    print(
+        f"[retrieve_context] Rebuilt index with {index.ntotal} vectors from {len(md_files)} files."
+    )
 
 
 def add_chunk(text: str, source: str = "activeContext") -> None:
@@ -191,7 +193,10 @@ def query(text: str, top_k: int = 5) -> List[Tuple[float, str]]:
     This function preserves the original public API and CLI behavior.
     Use query_with_metadata() when source file and chunk index are needed.
     """
-    return [(match["score"], match["text"]) for match in query_with_metadata(text, top_k=top_k)]
+    return [
+        (match["score"], match["text"])
+        for match in query_with_metadata(text, top_k=top_k)
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -206,9 +211,13 @@ def _cli() -> None:
     sub.add_parser("rebuild", help="Rebuild vector index from scratch")
 
     cmd_add = sub.add_parser("add", help="Add a new chunk to the index (stdin)")
-    cmd_add.add_argument("--source", default="activeContext", help="Source label for chunk")
+    cmd_add.add_argument(
+        "--source", default="activeContext", help="Source label for chunk"
+    )
 
-    cmd_export = sub.add_parser("export-meta-json", help="Export retrieval metadata to JSON")
+    cmd_export = sub.add_parser(
+        "export-meta-json", help="Export retrieval metadata to JSON"
+    )
     cmd_export.add_argument(
         "--output",
         type=Path,

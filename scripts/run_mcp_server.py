@@ -14,21 +14,20 @@ MEMORY_BANK_DIR = Path("memory-bank")
 
 app = FastAPI(title="Cursor Memory Bank MCP Stub", docs_url=None, redoc_url=None)
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
-    allow_headers=["*"]
+    CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"]
 )
 
-REQUEST_COUNT = Counter('mcp_requests_total', 'Total HTTP requests', ['endpoint'])
+REQUEST_COUNT = Counter("mcp_requests_total", "Total HTTP requests", ["endpoint"])
 
-@app.middleware('http')
+
+@app.middleware("http")
 async def count_requests(request, call_next):
     response = await call_next(request)
     REQUEST_COUNT.labels(endpoint=request.url.path).inc()
     return response
 
-@app.get('/metrics')
+
+@app.get("/metrics")
 async def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
@@ -38,16 +37,19 @@ def load_memory() -> List[Dict[str, str]]:
     records: List[Dict[str, str]] = []
     for md_file in sorted(MEMORY_BANK_DIR.glob("*.md")):
         content = md_file.read_text(encoding="utf-8")
-        records.append({
-            "id": md_file.stem,
-            "type": "markdown",
-            "source": str(md_file),
-            "content": content,
-        })
+        records.append(
+            {
+                "id": md_file.stem,
+                "type": "markdown",
+                "source": str(md_file),
+                "content": content,
+            }
+        )
     return records
 
 
 memory_cache: List[Dict[str, str]] = load_memory()
+
 
 class _ReloadHandler(FileSystemEventHandler):
     def on_any_event(self, event):
@@ -55,11 +57,13 @@ class _ReloadHandler(FileSystemEventHandler):
         memory_cache = load_memory()
         print("[mcp_server] Memory-bank change detected → reloaded cache")
 
+
 def _start_watcher():
     observer = Observer()
     handler = _ReloadHandler()
     observer.schedule(handler, str(MEMORY_BANK_DIR), recursive=False)
     observer.start()
+
 
 @app.get("/health")
 async def health():
@@ -72,15 +76,23 @@ async def memory():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run local MCP stub server for memory bank")
+    parser = argparse.ArgumentParser(
+        description="Run local MCP stub server for memory bank"
+    )
     parser.add_argument("--port", type=int, default=7331)
-    parser.add_argument("--host", default="127.0.0.1", help="Host interface to bind. Defaults to local-only 127.0.0.1.")
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Host interface to bind. Defaults to local-only 127.0.0.1.",
+    )
     args = parser.parse_args()
 
     _start_watcher()
-    print(f"[mcp_server] Serving memory bank with hot-reload on http://{args.host}:{args.port}/memory")
+    print(
+        f"[mcp_server] Serving memory bank with hot-reload on http://{args.host}:{args.port}/memory"
+    )
     uvicorn.run(app, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
-    main() 
+    main()
