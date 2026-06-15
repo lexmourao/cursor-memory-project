@@ -101,6 +101,20 @@ Public deployment:
 
 Wildcard CORS should not be used for a backend that exposes memory records, retrieval results, summaries, or project context.
 
+### MCP-Style Local Memory Server (Stub)
+
+The optional MCP-style local memory server in `scripts/run_mcp_server.py` is a separate lightweight stub for trusted local development. It is not a full production MCP protocol implementation.
+
+Current assumptions:
+
+- It binds to `127.0.0.1` by default.
+- It exposes local memory-bank markdown through `GET /health`, `GET /memory`, and `GET /metrics`.
+- It is intended for trusted local development and technical review only.
+- It does not enable wildcard CORS.
+- It does not provide production-grade authentication or authorization.
+
+Do not expose this stub publicly without adding production-grade authentication, authorization, network controls, and deployment review.
+
 ---
 
 ## 5. Localhost vs Docker/Nginx Exposure

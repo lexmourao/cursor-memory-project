@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Dict
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -12,10 +11,10 @@ from fastapi.responses import Response
 
 MEMORY_BANK_DIR = Path("memory-bank")
 
+# Local-only MCP-style memory stub: not a full production MCP protocol server.
+# Binds to 127.0.0.1 by default and does not enable wildcard CORS because it
+# exposes local project memory-bank content to trusted local development only.
 app = FastAPI(title="Cursor Memory Bank MCP Stub", docs_url=None, redoc_url=None)
-app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"]
-)
 
 REQUEST_COUNT = Counter("mcp_requests_total", "Total HTTP requests", ["endpoint"])
 
@@ -75,7 +74,8 @@ async def memory():
     return {"memory": memory_cache}
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser for the MCP-style local memory stub."""
     parser = argparse.ArgumentParser(
         description="Run local MCP stub server for memory bank"
     )
@@ -85,7 +85,11 @@ def main():
         default="127.0.0.1",
         help="Host interface to bind. Defaults to local-only 127.0.0.1.",
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main():
+    args = build_parser().parse_args()
 
     _start_watcher()
     print(
