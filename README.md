@@ -558,7 +558,7 @@ pytest -q
 The public CI workflow runs:
 
 - `ruff check .` for linting
-- `mypy scripts tests` for type checking
+- `mypy app scripts tests` for type checking
 - `pip-audit --strict` for dependency/security checks
 - safe non-integration tests with `pytest -q -m "not integration"`
 
