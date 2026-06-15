@@ -10,6 +10,36 @@ The project is designed as a public technical portfolio artifact. It shows how I
 
 Best reviewed as: AI-assisted engineering methodology, local developer tooling, RAG/memory workflow, and documentation-governed implementation system.
 
+## Reviewer in 3 minutes
+
+1. Read the short positioning above, then review the project scope: what this project is and what it is not.
+2. Check the backend implementation: `app/main.py` and `app/api/`.
+3. Check the tests: `tests/`.
+4. Check CI: `.github/workflows/ci.yml`.
+5. Check the documentation: `docs/ARCHITECTURE.md`, `docs/BACKEND_DESIGN.md`, and `docs/TECHNICAL_REVIEW.md`.
+
+This project should be reviewed as a local-first AI-assisted development methodology and tooling repository, not as a production SaaS backend, hosted RAG platform, or enterprise compliance product.
+
+## How I use this workflow in real projects
+
+When I start a new project in Cursor, I use this repository as a reusable setup and methodology reference—not as a finished application to deploy as-is.
+
+1. I copy or include [`cursor_setup_instructions/`](cursor_setup_instructions/) inside the new project folder.
+2. In the first prompt, I state the goal of that project in plain language.
+3. Cursor reads the setup instructions and generates the **target scaffold**: folders, rules, status files, diary, logs, error tracking, and automation hooks.
+4. As work proceeds, **local** diary, logs, errors, and solutions record what happened, what failed, and what was solved.
+5. Those local tracking files stay on my machine; they are **not pushed to GitHub** unless I explicitly approve a public change.
+6. Memory-bank and context files fill in only after real discovery, implementation, decisions, and milestones—not with placeholder project history.
+7. The outcome is modular, versioned, traceable, auditable AI-assisted work where the assistant does not restart from zero every session.
+
+## Quick proof points
+
+- CI badge is visible and workflow is active.
+- FastAPI backend slices are implemented and tested.
+- Tests cover health, memory, retrieval, summarization, security, CORS, and CLI compatibility.
+- Local token protection, CORS controls, safe logging, and retrieval traceability are documented.
+- The project clearly separates public smoke tests from secret-dependent integration tests.
+
 ## What this project is
 
 This project is:
@@ -76,36 +106,6 @@ Tests + CI + Security Checks + Documentation Governance
 ```
 
 This repository demonstrates a local-first AI-assisted development workflow where AI tools are supervised through persistent project memory, retrieval, summarization, backend API slices, local QA, CI, and documentation governance.
-
-## Reviewer in 3 minutes
-
-1. Read the project scope: what this project is and what it is not.
-2. Check the backend implementation: `app/main.py` and `app/api/`.
-3. Check the tests: `tests/`.
-4. Check CI: `.github/workflows/ci.yml`.
-5. Check the documentation: `docs/ARCHITECTURE.md`, `docs/BACKEND_DESIGN.md`, and `docs/TECHNICAL_REVIEW.md`.
-
-This project should be reviewed as a local-first AI-assisted development methodology and tooling repository, not as a production SaaS backend, hosted RAG platform, or enterprise compliance product.
-
-## How I use this workflow in real projects
-
-When I start a new project in Cursor, I use this repository as a reusable setup and methodology reference—not as a finished application to deploy as-is.
-
-1. I copy or include [`cursor_setup_instructions/`](cursor_setup_instructions/) inside the new project folder.
-2. In the first prompt, I state the goal of that project in plain language.
-3. Cursor reads the setup instructions and generates the **target scaffold**: folders, rules, status files, diary, logs, error tracking, and automation hooks.
-4. As work proceeds, **local** diary, logs, errors, and solutions record what happened, what failed, and what was solved.
-5. Those local tracking files stay on my machine; they are **not pushed to GitHub** unless I explicitly approve a public change.
-6. Memory-bank and context files fill in only after real discovery, implementation, decisions, and milestones—not with placeholder project history.
-7. The outcome is modular, versioned, traceable, auditable AI-assisted work where the assistant does not restart from zero every session.
-
-## Quick proof points
-
-- CI badge is visible and workflow is active.
-- FastAPI backend slices are implemented and tested.
-- Tests cover health, memory, retrieval, summarization, security, CORS, and CLI compatibility.
-- Local token protection, CORS controls, safe logging, and retrieval traceability are documented.
-- The project clearly separates public smoke tests from secret-dependent integration tests.
 
 ---
 
