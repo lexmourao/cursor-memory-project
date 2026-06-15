@@ -560,7 +560,7 @@ The public CI workflow runs:
 - `ruff check .` for linting
 - `mypy scripts tests` for type checking
 - `pip-audit --strict` for dependency/security checks
-- focused smoke tests for public workflow validation
+- safe non-integration tests with `pytest -q -m "not integration"`
 
 Backend API and CLI tests include:
 
