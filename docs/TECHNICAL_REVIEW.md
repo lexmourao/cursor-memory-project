@@ -112,11 +112,11 @@ The current implementation includes tested local FastAPI backend slices with:
 
 The repository uses:
 
-- GitHub Actions
+- GitHub Actions (committed `.github/workflows/ci.yml` for Ruff, mypy, pip-audit, and non-integration tests)
 - Ruff
 - Mypy
 - pip-audit
-- CodeQL
+- GitHub code scanning / CodeQL through repository security settings (runs separately from the committed CI workflow)
 - smoke tests
 - Dependabot
 - local-first security documentation

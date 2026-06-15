@@ -6,7 +6,7 @@
 ## Code & Tests
 
 - [ ] Public CI workflow is green
-- [ ] CodeQL workflow is green
+- [ ] GitHub code scanning (CodeQL) is green on the repository security page
 - [ ] `ruff check .` passes
 - [ ] `mypy app scripts tests` passes
 - [ ] `pip-audit --strict` passes

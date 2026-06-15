@@ -1122,6 +1122,8 @@ Inspect:
 .github/workflows/ci.yml
 ```
 
+The committed CI workflow runs Ruff, mypy, pip-audit, and non-integration tests. It does not include a CodeQL workflow file.
+
 Also review the repository security page for GitHub code scanning / CodeQL status.
 
 These demonstrate public quality and security checks.

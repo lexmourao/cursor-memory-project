@@ -71,7 +71,7 @@ This repository covers:
 - MCP server structure for exposing context to Cursor
 - Python automation scripts for logging, status updates, retrieval, summarization, and backups
 - local-first developer workflows
-- CI smoke tests, linting, type checking, dependency/security checks, and CodeQL
+- CI smoke tests, linting, type checking, dependency/security checks, and GitHub code scanning (CodeQL via repository security settings)
 - Archived Docker/Nginx starter configuration preserved as reference-only deployment scaffolding
 - documentation-first project governance
 
@@ -128,8 +128,11 @@ graph TD
         Ruff[Ruff]
         Mypy[Mypy]
         Audit[pip-audit]
-        CodeQL[CodeQL]
         Tests[Smoke Tests]
+    end
+
+    subgraph GitHubSecurity[GitHub Security]
+        CodeQL[CodeQL]
     end
 
     C -->|reads context| MCP
@@ -156,8 +159,9 @@ graph TD
     CI --> Mypy
     CI --> Audit
     CI --> Tests
-    CodeQL -->|security analysis| CI
 ```
+
+CodeQL runs through GitHub repository security settings, separately from the committed `.github/workflows/ci.yml` workflow.
 
 ### Legend
 
@@ -171,7 +175,8 @@ graph TD
 - **Embedding & Vector DB:** Local FAISS-based retrieval index.
 - **Retrieval Engine:** Fetches relevant memory chunks for new prompts or tasks.
 - **Automation Scripts:** Maintain logs, status, backups, and project continuity.
-- **CI/QA Layer:** Runs linting, type checking, dependency/security checks, smoke tests, and CodeQL.
+- **CI/QA Layer:** Runs linting, type checking, dependency/security checks, and smoke tests via the committed CI workflow.
+- **GitHub Code Scanning:** CodeQL runs through repository security settings, not inside the committed CI workflow file.
 
 ---
 
@@ -272,7 +277,8 @@ Capabilities:
 - type checking with `mypy`
 - dependency/security checks with `pip-audit`
 - focused smoke tests
-- CodeQL security checks
+
+The committed CI workflow (`.github/workflows/ci.yml`) does not include CodeQL. GitHub code scanning / CodeQL runs separately through repository security settings.
 
 Public CI intentionally avoids secret-dependent backup and E2E flows.
 
@@ -293,7 +299,7 @@ Capabilities:
 
 ```text
 cursor-memory-project/
-  ├── .github/                       # CI, CodeQL, Dependabot, workflows
+  ├── .github/                       # CI workflow, Dependabot, workflows (CodeQL via repo security settings)
   ├── cursor_setup_instructions/     # Canonical setup guide
   ├── diary/                         # Project diary and development log
   ├── docs/                          # Architecture, security, deployment docs
@@ -355,7 +361,7 @@ In Template Mode, these files may be mostly empty. In Active Project Mode, they 
 | Linting | Ruff | Fast Python linting |
 | Type checking | Mypy | Static type confidence |
 | Dependency/security checks | pip-audit | Dependency vulnerability detection |
-| Security analysis | CodeQL | GitHub-native code scanning |
+| Security analysis | CodeQL | GitHub code scanning via repository security settings (not in committed `ci.yml`) |
 | Archived container scaffolding | Docker / docker-compose | Preserved under archive/deprecated-deployment/ as reference material, not part of the active local-first workflow surface |
 | Archived reverse proxy scaffold | Nginx starter config | Preserved under archive/deprecated-deployment/ for future review before any hosted or single-VM usage |
 | Environment template | env.template | Safe local setup template without committed secrets |
@@ -461,8 +467,8 @@ The public workflow is intentionally limited to checks that do not require secre
 
 The repository uses:
 
-- `pip-audit` for dependency checks
-- CodeQL for code scanning
+- `pip-audit` for dependency checks in the committed CI workflow
+- GitHub code scanning / CodeQL through repository security settings (no committed `.github/workflows/codeql.yml`)
 - branch protection for safer repository maintenance
 - focused smoke tests for public workflow validation
 
@@ -620,7 +626,7 @@ This architecture demonstrates a local-first, AI-assisted development memory sys
 - summarization and fallback modes
 - Python automation
 - documentation-first project governance
-- CI, type checking, linting, dependency auditing, and CodeQL
+- CI, type checking, linting, dependency auditing, and GitHub code scanning (CodeQL via repository security settings)
 - clear separation between public smoke tests and configured integration tests
 - documented backend and production evolution path
 
