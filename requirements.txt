@@ -15,4 +15,4 @@ bandit>=1.7
 watchdog>=6.0.0
 pip-audit>=2.10.0
 prometheus-client>=0.20
-setuptools>=65.5.1
+setuptools>=82.0.1
