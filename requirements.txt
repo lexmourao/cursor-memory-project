@@ -13,6 +13,6 @@ types-requests>=2.33.0
 pytest-cov>=7.1.0
 bandit>=1.7
 watchdog>=6.0.0
-pip-audit>=2.10.0
+pip-audit>=2.10.1
 prometheus-client>=0.20
 setuptools>=65.5.1
